@@ -1,0 +1,40 @@
+[package]
+name = "goxlr-usb"
+version = "0.12.4"
+edition = "2021"
+authors = ["Nathan Adams <dinnerbone@dinnerbone.com>", "Craig McLure <craig@mclure.net>", "Lars Mühlbauer <lm41@dismail.de>"]
+description = "A direct interface to the TC-Helicon GoXLR & GoXLR Mini via usb."
+repository = "https://github.com/GoXLR-on-Linux/GoXLR-Utility"
+license = "MIT"
+categories = ["hardware-support", "api-bindings"]
+
+[dependencies]
+goxlr-types = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", branch="dev-1.0.0" }
+rusb = "0.9.1"
+thiserror = "1.0.38"
+byteorder = "1.4.3"
+log = "0.4.17"
+enumset = "1.0.12"
+strum = "0.25"
+enum-map = "2.4.2"
+anyhow = "1.0.68"
+cfg-if = "1.0.0"
+
+# REMOVE THIS LATER! USED FOR FIRMWARE TESTING
+rand = "0.8.5"
+
+# New, some fun async stuff..
+tokio = { version = "1.27.0", features = ["sync", "rt", "time"] }
+
+# Dependencies specifically for building under Windows..
+[target.'cfg(windows)'.dependencies]
+winreg = "0.50.0"
+libloading = "0.8.0"
+widestring = "1.0.2"
+lazy_static = "1.4.0"
+windows = { version = "0.48.0", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_Threading",
+    "Win32_UI_WindowsAndMessaging",
+] }

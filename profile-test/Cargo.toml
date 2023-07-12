@@ -1,0 +1,32 @@
+[package]
+name = "profile-test"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+goxlr-profile = { path = "../goxlr-profile" }
+goxlr-usb = { path="../usb" }
+goxlr-scribbles = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", rev="d6a556396c56f756c4bf5c0acec11c554069351f" }
+goxlr-types = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", branch="dev-1.0.0" }
+
+# For handling the Enum Maps and sets inside the profile..
+strum = { version = "0.25", features = ["derive"] }
+enum-map = { version = "2.5.0", features = ["serde"] }
+
+# For handling button states
+enumset = "1.1.2"
+
+# General Serialisation / Deserialisation
+serde = "1.0.164"
+serde_json = "1.0.99"
+
+# Stuff for Communicating with the GoXLR..
+
+
+# tokio for async USB communication
+tokio = { version = "1.27.0", features = ["full"] }
+
+# Anyhow for simply Error Handling..
+anyhow = "1.0.70"

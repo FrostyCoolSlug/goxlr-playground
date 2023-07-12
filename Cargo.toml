@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+	"goxlr-profile",
+	"usb",
+	"profile-test",
+]
