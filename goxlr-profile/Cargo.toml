@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 # We need to strip this out at some point..
 goxlr-types = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", branch="dev-1.0.0", features=["serde"] }
+goxlr-shared = { path="../goxlr-shared", features = ["serde"] }
 
 # Various things for enhancing Enums..
 enum-map = { version = "2.5.0", features = ["serde"] }

@@ -3,5 +3,7 @@
 members = [
 	"goxlr-profile",
 	"usb",
+	"goxlr-usb",
 	"profile-test",
+	"goxlr-shared",
 ]

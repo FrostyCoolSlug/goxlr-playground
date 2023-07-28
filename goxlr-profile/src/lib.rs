@@ -1,10 +1,14 @@
-mod types;
+use std::path::PathBuf;
 
 use enum_map::{enum_map, Enum, EnumMap};
-use goxlr_types::ChannelName;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use strum::{EnumIter, IntoEnumIterator};
+use strum::IntoEnumIterator;
+
+use goxlr_shared::channels::OutputChannels;
+use goxlr_shared::colours::Colour;
+use goxlr_shared::faders::FaderSources;
+
+mod types;
 
 #[derive(Serialize, Deserialize)]
 pub struct Profile {
@@ -56,19 +60,6 @@ pub struct FaderChannel {
 
     /// A struct detailing how a fader is displayed on the GoXLR
     pub display: FaderDisplay,
-}
-
-/// A Simple Colour object containing Red, Green and Blue values, Defaults to Black
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
-pub struct Colour {
-    /// The Red Value
-    pub red: u8,
-
-    /// The Green Value
-    pub green: u8,
-
-    /// The Blue Value
-    pub blue: u8,
 }
 
 /// A struct that defines top to bottom how a fader is displayed on the Device
@@ -174,138 +165,7 @@ pub enum MuteState {
     MutedToAll,
 }
 
-/// Defines a Fader, from Left to Right, with the leftmost fader being A
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum Faders {
-    A,
-    B,
-    C,
-    D,
-}
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum ChannelType {
-    INPUT,
-    OUTPUT,
-}
-
-/// A list of channels which can be assigned to a fader.
-/// Missing From this List: MicMonitor
-#[derive(Debug, Copy, Clone, Enum, EnumIter, Serialize, Deserialize)]
-pub enum FaderSources {
-    Microphone,
-    Chat,
-    Music,
-    Game,
-    Console,
-    LineIn,
-    System,
-    Sample,
-    Headphones,
-    LineOut,
-}
-
-/// This struct attaches to Fader Sources to provide mapping to a channel, as well as whether
-/// a Fader is an INPUT or and OUTPUT (used when determining Mute behaviour, OUTPUTs can only
-/// 'Mute to All'.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub struct FaderSource {
-    pub channel_map: ChannelName,
-    channel_type: ChannelType,
-}
-
-impl FaderSources {
-    pub fn get_type(self) -> ChannelType {
-        match self {
-            FaderSources::Microphone => ChannelType::INPUT,
-            FaderSources::Chat => ChannelType::INPUT,
-            FaderSources::Music => ChannelType::INPUT,
-            FaderSources::Game => ChannelType::INPUT,
-            FaderSources::Console => ChannelType::INPUT,
-            FaderSources::LineIn => ChannelType::INPUT,
-            FaderSources::System => ChannelType::INPUT,
-            FaderSources::Sample => ChannelType::INPUT,
-            FaderSources::Headphones => ChannelType::OUTPUT,
-            FaderSources::LineOut => ChannelType::OUTPUT,
-        }
-    }
-
-    /// Responds with a 'FaderSource' defining the mapping to ChannelName and the type of
-    /// channel (INPUT / OUTPUT) - TODO, Relevance?
-    pub fn get_source(self) -> FaderSource {
-        match self {
-            FaderSources::Microphone => FaderSource {
-                channel_map: ChannelName::Mic,
-                channel_type: ChannelType::INPUT,
-            },
-            FaderSources::Chat => FaderSource {
-                channel_map: ChannelName::Chat,
-                channel_type: ChannelType::INPUT,
-            },
-            FaderSources::Music => FaderSource {
-                channel_map: ChannelName::Music,
-                channel_type: ChannelType::INPUT,
-            },
-            FaderSources::Game => FaderSource {
-                channel_map: ChannelName::Game,
-                channel_type: ChannelType::INPUT,
-            },
-            FaderSources::Console => FaderSource {
-                channel_map: ChannelName::Console,
-                channel_type: ChannelType::INPUT,
-            },
-            FaderSources::LineIn => FaderSource {
-                channel_map: ChannelName::LineIn,
-                channel_type: ChannelType::INPUT,
-            },
-            FaderSources::System => FaderSource {
-                channel_map: ChannelName::System,
-                channel_type: ChannelType::INPUT,
-            },
-            FaderSources::Sample => FaderSource {
-                channel_map: ChannelName::Sample,
-                channel_type: ChannelType::INPUT,
-            },
-            FaderSources::Headphones => FaderSource {
-                channel_map: ChannelName::Headphones,
-                channel_type: ChannelType::OUTPUT,
-            },
-            FaderSources::LineOut => FaderSource {
-                channel_map: ChannelName::LineOut,
-                channel_type: ChannelType::OUTPUT,
-            },
-        }
-    }
-}
-
-/// A list of channels classified as 'Inputs'
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum InputChannels {
-    Microphone,
-    Chat,
-    Music,
-    Game,
-    Console,
-    LineIn,
-    System,
-    Sample,
-}
-
-/// A list of channels classified as 'Outputs'
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum OutputChannels {
-    Headphones,
-    StreamMix,
-    LineOut,
-    ChatMic,
-    Sampler,
-}
-
-/// These are channels which simply have volume management
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum VolumeChannels {
-    MicrophoneMonitor,
-}
 
 /// This needs to be improved..
 impl Default for Profile {

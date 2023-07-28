@@ -11,7 +11,7 @@ use goxlr_usb::colours;
 use goxlr_usb::colours::TwoColourTargets::{
     Fader1Mute, Fader2Mute, Fader3Mute, Fader4Mute, Scribble1, Scribble2, Scribble3, Scribble4,
 };
-use goxlr_usb::colours::{ColourScheme, FaderTarget};
+use goxlr_usb::colours::{Colour, ColourScheme, FaderTarget};
 use goxlr_usb::device::base::FullGoXLRDevice;
 use strum::IntoEnumIterator;
 
@@ -239,8 +239,8 @@ impl Device {
     }
 }
 
-fn map_colour_to_usb(profile: goxlr_profile::Colour) -> colours::Colour {
-    colours::Colour {
+fn map_colour_to_usb(profile: goxlr_types::Colour) -> goxlr_usb::colours::Colour {
+    Colour {
         red: profile.red as u32,
         green: profile.green as u32,
         blue: profile.blue as u32,
