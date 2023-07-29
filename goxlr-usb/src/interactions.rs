@@ -13,7 +13,7 @@ use goxlr_shared::interaction::{
 };
 use tokio::sync::mpsc;
 
-struct GoXLRState {
+struct GoXLRStateTracker {
     buttonStates: EnumMap<InteractiveButtons, ButtonState>,
     volumeMap: EnumMap<InteractiveFaders, u8>,
     encoderMap: EnumMap<InteractiveEncoders, u8>,
@@ -28,7 +28,18 @@ struct GoXLRState {
 // This needs to be platform specific, on Windows we use the TUSB event handler to trigger events,
 // where as under Linux, we use RUSB polling for events. We need to cleanly support both.
 
-impl GoXLRState {}
+impl GoXLRStateTracker {
+    pub fn new(
+        receiver: mpsc::Receiver<IncomingChange>,
+        sender: mpsc::Sender<OutgoingChange>,
+    ) -> Self {
+        Self {
+            sender,
+            receiver,
+            ..Default::default()
+        }
+    }
+}
 
 // It's important not to map these together, under Linux with polling the 'Incoming' change may
 // match the existing value, we need to only trigger an outgoing change if the incoming != the
