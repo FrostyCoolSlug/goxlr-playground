@@ -20,6 +20,10 @@ goxlr-shared = { path="../goxlr-shared" }
 # For handling bytes to be sent to the GoXLR
 byteorder = "1.4.3"
 
+# For handling internal enums
+enum-map = "2.6.0"
+
+
 #goxlr-types = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", branch="dev-1.0.0" }
 #rusb = "0.9.1"
 #thiserror = "1.0.38"

@@ -1,7 +1,9 @@
+mod buttons;
 pub mod channels;
 pub mod colours;
-pub mod faders;
 pub mod encoders;
+pub mod faders;
+pub mod interaction;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

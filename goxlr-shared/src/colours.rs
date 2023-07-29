@@ -5,8 +5,10 @@
  */
 use strum::EnumIter;
 
+use crate::buttons::Buttons;
 use crate::encoders::Encoders;
 use crate::faders::Faders;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -177,4 +179,35 @@ pub enum TwoColourTargets {
     // Finally, the Mic Buttons
     Swear,
     CoughButton,
+}
+
+impl Into<TwoColourTargets> for Buttons {
+    fn into(self) -> TwoColourTargets {
+        match self {
+            Buttons::Fader1Mute => TwoColourTargets::Fader1Mute,
+            Buttons::Fader2Mute => TwoColourTargets::Fader2Mute,
+            Buttons::Fader3Mute => TwoColourTargets::Fader3Mute,
+            Buttons::Fader4Mute => TwoColourTargets::Fader4Mute,
+            Buttons::Swear => TwoColourTargets::Swear,
+            Buttons::CoughButton => TwoColourTargets::CoughButton,
+            Buttons::EffectSelect1 => TwoColourTargets::EffectSelect1,
+            Buttons::EffectSelect2 => TwoColourTargets::EffectSelect2,
+            Buttons::EffectSelect3 => TwoColourTargets::EffectSelect3,
+            Buttons::EffectSelect4 => TwoColourTargets::EffectSelect4,
+            Buttons::EffectSelect5 => TwoColourTargets::EffectSelect5,
+            Buttons::EffectSelect6 => TwoColourTargets::EffectSelect6,
+            Buttons::EffectFx => TwoColourTargets::EffectFx,
+            Buttons::EffectMegaphone => TwoColourTargets::EffectMegaphone,
+            Buttons::EffectRobot => TwoColourTargets::EffectRobot,
+            Buttons::EffectHardTune => TwoColourTargets::EffectHardTune,
+            Buttons::SamplerSelectA => TwoColourTargets::SamplerSelectA,
+            Buttons::SamplerSelectB => TwoColourTargets::SamplerSelectB,
+            Buttons::SamplerSelectC => TwoColourTargets::SamplerSelectC,
+            Buttons::SamplerTopLeft => TwoColourTargets::SamplerTopLeft,
+            Buttons::SamplerTopRight => TwoColourTargets::SamplerTopRight,
+            Buttons::SamplerBottomLeft => TwoColourTargets::SamplerBottomLeft,
+            Buttons::SamplerBottomRight => TwoColourTargets::SamplerBottomRight,
+            Buttons::SamplerClear => TwoColourTargets::SamplerClear,
+        }
+    }
 }

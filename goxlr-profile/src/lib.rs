@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use enum_map::{enum_map, Enum, EnumMap};
+use goxlr_types::FaderName;
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
@@ -25,19 +26,18 @@ pub struct FaderPages {
 
 #[derive(Serialize, Deserialize)]
 pub struct FaderPage {
-    pub fader_a: FaderSources,
-    pub fader_b: FaderSources,
-    pub fader_c: FaderSources,
-    pub fader_d: FaderSources,
+    pub faders: EnumMap<FaderName, FaderSources>,
 }
 
 impl Default for FaderPage {
     fn default() -> Self {
         Self {
-            fader_a: FaderSources::Microphone,
-            fader_b: FaderSources::Music,
-            fader_c: FaderSources::Chat,
-            fader_d: FaderSources::System,
+            faders: enum_map! {
+                FaderName::A => FaderSources::Microphone,
+                FaderName::B => FaderSources::Music,
+                FaderName::C => FaderSources::Chat,
+                FaderName::D => FaderSources::System
+            },
         }
     }
 }
@@ -164,8 +164,6 @@ pub enum MuteState {
     MutedToTarget,
     MutedToAll,
 }
-
-
 
 /// This needs to be improved..
 impl Default for Profile {
@@ -307,16 +305,20 @@ impl Default for Profile {
 
         let page = FaderPage::default();
         let page2 = FaderPage {
-            fader_a: FaderSources::System,
-            fader_b: FaderSources::Game,
-            fader_c: FaderSources::LineIn,
-            fader_d: FaderSources::LineOut,
+            faders: enum_map! {
+                FaderName::A => FaderSources::System,
+                FaderName::B => FaderSources::Game,
+                FaderName::C => FaderSources::LineIn,
+                FaderName::D => FaderSources::LineOut
+            },
         };
         let page3 = FaderPage {
-            fader_a: FaderSources::Sample,
-            fader_b: FaderSources::Chat,
-            fader_c: FaderSources::Console,
-            fader_d: FaderSources::Microphone,
+            faders: enum_map! {
+                FaderName::A => FaderSources::Sample,
+                FaderName::B => FaderSources::Chat,
+                FaderName::C => FaderSources::Console,
+                FaderName::D => FaderSources::Microphone
+            },
         };
 
         let pages = FaderPages {

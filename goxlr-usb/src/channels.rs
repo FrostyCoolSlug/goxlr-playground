@@ -41,7 +41,7 @@ impl Into<AssignableChannel> for OutputChannels {
             OutputChannels::LineOut => AssignableChannel::LineOut,
 
             // Panicking isn't the best option here, but there shouldn't be attempts to
-            // adjust the volume / mute state of channels which can't be adjusted!
+            // adjust the volume / assignment / mute state of channels which can't be adjusted!
             _ => panic!("Attempted to adjust a non-adjustable Channel!"),
         }
     }
@@ -72,13 +72,3 @@ impl Into<AssignableChannel> for VolumeChannels {
         }
     }
 }
-
-/*
-
-
-    Headphones,
-    StreamMix,
-    LineOut,
-    ChatMic,
-    Sampler,
-*/
