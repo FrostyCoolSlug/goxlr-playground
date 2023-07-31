@@ -1,8 +1,8 @@
 [workspace]
 
 members = [
-	"goxlr-profile",
+	"goxlr-daemon",
 	"goxlr-usb",
-	"profile-test",
+	"goxlr-daemon",
 	"goxlr-shared",
 ]

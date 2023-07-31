@@ -22,11 +22,12 @@ enumset = "1.1.2"
 serde = "1.0.164"
 serde_json = "1.0.99"
 
-# Stuff for Communicating with the GoXLR..
-
-
-# tokio for async USB communication
+# tokio for task management
 tokio = { version = "1.27.0", features = ["full"] }
 
 # Anyhow for simply Error Handling..
 anyhow = "1.0.70"
+
+# Logging..
+simplelog = "0.12.1"
+log = "0.4.19"

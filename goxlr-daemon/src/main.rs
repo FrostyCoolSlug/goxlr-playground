@@ -1,12 +1,26 @@
 mod device;
+mod primary_worker;
 
-use anyhow::Result;
-
-use crate::device::Device;
+use crate::primary_worker::run_worker;
+use anyhow::{Context, Result};
 use goxlr_profile::Profile;
+use log::LevelFilter;
+use simplelog::{ColorChoice, CombinedLogger, ConfigBuilder, TermLogger, TerminalMode};
+use tokio::{join, task};
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    CombinedLogger::init(vec![TermLogger::new(
+        LevelFilter::Debug,
+        ConfigBuilder::new().build(),
+        TerminalMode::Mixed,
+        ColorChoice::Auto,
+    )])
+    .context("Could not configure the logger")?;
+
+    let task = task::spawn(run_worker());
+    join!(task);
+
     let profile = Profile::default();
 
     // Grab the Devices..
@@ -31,8 +45,4 @@ async fn main() -> Result<()> {
     // let _ = tokio::join!(runtime);
 
     Ok(())
-}
-
-async fn run_handler(mut device: Device) {
-    device.run_handler().await;
 }

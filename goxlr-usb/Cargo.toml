@@ -22,10 +22,17 @@ byteorder = "1.4.3"
 
 # For handling internal enums
 enum-map = "2.6.0"
+enumset = "1.1.2"
+strum = "0.25.0"
 
 # For handling logging
 log = "0.4.19"
 
+# libusb handler..
+rusb = "0.9.2"
+
+# Error Handling
+anyhow = "1.0.72"
 
 #goxlr-types = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", branch="dev-1.0.0" }
 #rusb = "0.9.1"

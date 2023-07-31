@@ -5,7 +5,7 @@ use strum::EnumIter;
 use serde::{Deserialize, Serialize};
 
 /// A Simple list of the faders, with A being the far left
-#[derive(Debug, Copy, Clone, Enum, EnumIter)]
+#[derive(Debug, Copy, Clone, Enum, EnumIter, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Fader {
     A,

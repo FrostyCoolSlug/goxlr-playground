@@ -4,7 +4,8 @@ use goxlr_shared::faders::FaderSources;
 /// While this technically matches FaderSources, it's imperative that this order is maintained, as
 /// it's the order the GoXLR expects (hence why it's hidden away inside the 'USB' crate). In the
 /// event something messages with the ordering of any things that map here, this will remain safe!
-enum AssignableChannel {
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub(crate) enum AssignableChannel {
     Microphone,
     LineIn,
     Console,
@@ -16,6 +17,12 @@ enum AssignableChannel {
     Headphones,
     MicrophoneMonitor,
     LineOut,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub(crate) enum ChannelState {
+    Unmuted,
+    Muted,
 }
 
 impl Into<AssignableChannel> for InputChannels {
