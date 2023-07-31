@@ -2,7 +2,6 @@ use crate::platform::unix::device::GoXLRUSB;
 use crate::state_tracker::GoXLRStateTracker;
 use crate::{ChangeEvent, GoXLRDevice};
 use anyhow::Result;
-use log::debug;
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
@@ -14,7 +13,7 @@ pub async fn spawn_device_handler(
     event_sender: Sender<ChangeEvent>,
 ) {
     let device = GoXLRUSB::from_device(goxlr).await;
-    let state = GoXLRStateTracker::new(event_sender);
+    let mut state = GoXLRStateTracker::new(event_sender);
 
     let mut device = match device {
         Ok(device) => device,
@@ -33,13 +32,12 @@ pub async fn spawn_device_handler(
     let _ = ready.send(Ok(()));
 
     // Create an interval for polling the device status..
-    let mut ticker = time::interval(Duration::from_millis(500));
+    let mut ticker = time::interval(Duration::from_millis(20));
     loop {
         tokio::select! {
             _ = ticker.tick() => {
-                debug!("Tick..");
-                // Poll Status
-
+                let states = device.get_button_states().await;
+                state.update_states(states.unwrap()).await;
             }
         }
     }

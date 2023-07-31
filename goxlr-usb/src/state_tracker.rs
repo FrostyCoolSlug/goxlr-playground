@@ -7,18 +7,21 @@
 // Nor do we need to care about what fader is assigned to what, nor it's volume. All we care about
 // here is whether something has physically changed on the GoXLR.
 
+use crate::buttonstate::{ButtonIndex, CurrentButtonStates};
 use crate::ChangeEvent;
 use enum_map::EnumMap;
+use enumset::EnumSet;
 use goxlr_shared::interaction::{
     ButtonState, InteractiveButtons, InteractiveEncoders, InteractiveFaders,
 };
+use strum::IntoEnumIterator;
 use tokio::sync::mpsc;
 
 #[derive(Debug)]
 pub(crate) struct GoXLRStateTracker {
     button_states: EnumMap<InteractiveButtons, ButtonState>,
     volume_map: EnumMap<InteractiveFaders, u8>,
-    encoder_map: EnumMap<InteractiveEncoders, u8>,
+    encoder_map: EnumMap<InteractiveEncoders, i8>,
 
     // TODO: We need independent receivers for this struct, as well as an upstream sender.
     // Under Linux, the receiver will be the timed poller, and under Windows the receiver will
@@ -43,7 +46,51 @@ impl GoXLRStateTracker {
 
     /// Called when a GetStatus response has completed, we check for any changes to the state
     /// and trigger events events for any confirmed changes.
-    async fn update_states(&self) {}
+    pub async fn update_states(&mut self, states: CurrentButtonStates) {
+        self.update_volumes(states.volumes).await;
+        self.update_encoders(states.encoders).await;
+        self.update_buttons(states.pressed).await;
+    }
+
+    async fn update_volumes(&mut self, volumes: [u8; 4]) {
+        for fader in InteractiveFaders::iter() {
+            let volume = volumes[fader as usize];
+            if self.volume_map[fader] != volume {
+                self.volume_map[fader] = volumes[fader as usize];
+                let _ = self
+                    .sender
+                    .send(ChangeEvent::VolumeChange(fader, volume))
+                    .await;
+            }
+        }
+    }
+
+    async fn update_encoders(&mut self, encoders: [i8; 4]) {
+        for encoder in InteractiveEncoders::iter() {
+            let value = encoders[encoder as usize];
+            if self.encoder_map[encoder] != value {
+                self.encoder_map[encoder] = value;
+                let _ = self
+                    .sender
+                    .send(ChangeEvent::EncoderChange(encoder, value))
+                    .await;
+            }
+        }
+    }
+
+    async fn update_buttons(&mut self, buttons: EnumSet<ButtonIndex>) {
+        for button in InteractiveButtons::iter() {
+            let current_state = self.button_states[button];
+            if buttons.contains(button.into()) && current_state == ButtonState::NotPressed {
+                let _ = self.sender.send(ChangeEvent::ButtonDown(button)).await;
+                self.button_states[button] = ButtonState::Pressed;
+            }
+            if !buttons.contains(button.into()) && current_state == ButtonState::Pressed {
+                let _ = self.sender.send(ChangeEvent::ButtonUp(button)).await;
+                self.button_states[button] = ButtonState::NotPressed;
+            }
+        }
+    }
 }
 
 // It's important not to map these together, under Linux with polling the 'Incoming' change may

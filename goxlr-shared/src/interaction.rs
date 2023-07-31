@@ -5,8 +5,9 @@
 */
 
 use enum_map::Enum;
+use strum::EnumIter;
 
-#[derive(Debug, Enum, Copy, Clone)]
+#[derive(Debug, Enum, EnumIter, Copy, Clone)]
 pub enum InteractiveButtons {
     Fader1Mute,
     Fader2Mute,
@@ -42,7 +43,7 @@ pub enum InteractiveButtons {
     SamplerClear,
 }
 
-#[derive(Debug, Enum, Copy, Clone)]
+#[derive(Debug, Enum, EnumIter, Copy, Clone)]
 pub enum InteractiveFaders {
     A,
     B,
@@ -50,7 +51,7 @@ pub enum InteractiveFaders {
     D,
 }
 
-#[derive(Debug, Enum, Copy, Clone)]
+#[derive(Debug, Enum, EnumIter, Copy, Clone)]
 pub enum InteractiveEncoders {
     Pitch,
     Gender,
@@ -58,7 +59,7 @@ pub enum InteractiveEncoders {
     Echo,
 }
 
-#[derive(Debug, Default, Enum, Copy, Clone)]
+#[derive(Debug, Default, Enum, Copy, Clone, Eq, PartialEq)]
 pub enum ButtonState {
     #[default]
     NotPressed,

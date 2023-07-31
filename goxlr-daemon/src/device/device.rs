@@ -6,8 +6,8 @@ use anyhow::{bail, Result};
 use log::debug;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::{mpsc, oneshot, Mutex};
-use tokio::task;
 use tokio::time::sleep;
+use tokio::{task, time};
 
 use goxlr_shared::interaction::InteractiveButtons;
 use goxlr_usb::platform::unix::device_handler::spawn_device_handler;
@@ -269,15 +269,35 @@ fn get_epoch_ms() -> u128 {
 
 async fn spawn_event_handler(
     device: Arc<Mutex<DeviceInner>>,
-    event_receiver: mpsc::Receiver<ChangeEvent>,
+    mut event_receiver: mpsc::Receiver<ChangeEvent>,
     stop_signal: Arc<AtomicBool>,
 ) {
+    let mut ticker = time::interval(Duration::from_millis(20));
+
     loop {
-        if device.lock().await.should_stop.load(Ordering::Relaxed) {
-            debug!("Asked to Stop!");
-            break;
+        tokio::select! {
+            _ = ticker.tick() => {
+                if device.lock().await.should_stop.load(Ordering::Relaxed) {
+                    debug!("Asked to Stop!");
+                    break;
+                }
+            }
+            Some(ChangeEvent) = event_receiver.recv() => {
+                match ChangeEvent {
+                    ChangeEvent::VolumeChange(fader, volume) => {
+                        debug!("Volume Changed for Fader {:?} to {}", fader, volume);
+                    }
+                    ChangeEvent::ButtonDown(button) => {
+                        debug!("Button {:?} Pressed", button);
+                    }
+                    ChangeEvent::ButtonUp(button) => {
+                        debug!("Button {:?} Released", button);
+                    }
+                    ChangeEvent::EncoderChange(encoder, value) => {
+                        debug!("Encoder {:?} changed to {}", encoder, value);
+                    }
+                }
+            }
         }
-        debug!("Looping..");
-        sleep(Duration::from_secs(5)).await;
     }
 }

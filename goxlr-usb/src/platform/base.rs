@@ -10,8 +10,10 @@ use anyhow::{bail, Result};
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
 use goxlr_shared::faders::Fader;
 
+use crate::buttonstate::{ButtonIndex, CurrentButtonStates};
 use crate::routing::RoutingInputDevice;
 use async_trait::async_trait;
+use enumset::EnumSet;
 use goxlr_shared::channels::InputChannels;
 use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 use log::debug;
@@ -269,36 +271,36 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     //     Ok(())
     // }
 
-    // fn get_button_states(&mut self) -> Result<CurrentButtonStates> {
-    //     let result = self.request_data(Command::GetButtonStates, &[])?;
-    //     let mut pressed = EnumSet::empty();
-    //     let mut mixers = [0; 4];
-    //     let mut encoders = [0; 4];
-    //     let button_states = LittleEndian::read_u32(&result[0..4]);
-    //
-    //     mixers[0] = result[8];
-    //     mixers[1] = result[9];
-    //     mixers[2] = result[10];
-    //     mixers[3] = result[11];
-    //
-    //     // These can technically be negative, cast straight to i8
-    //     encoders[0] = result[4] as i8; // Pitch
-    //     encoders[1] = result[5] as i8; // Gender
-    //     encoders[2] = result[6] as i8; // Reverb
-    //     encoders[3] = result[7] as i8; // Echo
-    //
-    //     for button in EnumSet::<Buttons>::all() {
-    //         if button_states & (1 << button as u8) != 0 {
-    //             pressed.insert(button);
-    //         }
-    //     }
-    //
-    //     Ok(CurrentButtonStates {
-    //         pressed,
-    //         volumes: mixers,
-    //         encoders,
-    //     })
-    // }
+    async fn get_button_states(&mut self) -> Result<CurrentButtonStates> {
+        let result = self.request_data(Command::GetButtonStates, &[]).await?;
+        let mut pressed = EnumSet::empty();
+        let mut mixers = [0; 4];
+        let mut encoders = [0; 4];
+        let button_states = LittleEndian::read_u32(&result[0..4]);
+
+        mixers[0] = result[8];
+        mixers[1] = result[9];
+        mixers[2] = result[10];
+        mixers[3] = result[11];
+
+        // These can technically be negative, cast straight to i8
+        encoders[0] = result[4] as i8; // Pitch
+        encoders[1] = result[5] as i8; // Gender
+        encoders[2] = result[6] as i8; // Reverb
+        encoders[3] = result[7] as i8; // Echo
+
+        for button in EnumSet::<ButtonIndex>::all() {
+            if button_states & (1 << button as u8) != 0 {
+                pressed.insert(button);
+            }
+        }
+
+        Ok(CurrentButtonStates {
+            pressed,
+            volumes: mixers,
+            encoders,
+        })
+    }
 
     // fn set_animation_mode(
     //     &mut self,

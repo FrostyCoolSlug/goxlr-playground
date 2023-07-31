@@ -194,7 +194,6 @@ impl ExecutableGoXLR for GoXLRUSB {
             );
 
             // Pause for a second, as we can grab devices a little too quickly!
-
             sleep(Duration::from_secs(2)).await;
         }
 

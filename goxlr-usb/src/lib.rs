@@ -27,7 +27,6 @@ pub struct GoXLRDevice {
 }
 
 pub enum ChangeEvent {
-    Ready,
     ButtonDown(InteractiveButtons),
     ButtonUp(InteractiveButtons),
     VolumeChange(InteractiveFaders, u8),
