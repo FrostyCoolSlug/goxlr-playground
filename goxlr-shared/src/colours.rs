@@ -7,7 +7,7 @@ use strum::EnumIter;
 
 use crate::buttons::Buttons;
 use crate::encoders::Encoders;
-use crate::faders::Faders;
+use crate::faders::Fader;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -84,7 +84,7 @@ impl ColourScheme {
         }
     }
 
-    pub fn get_fader_target(&mut self, target: Faders) -> &mut FaderColour {
+    pub fn get_fader_target(&mut self, target: Fader) -> &mut FaderColour {
         &mut self.faders[target as usize]
     }
 

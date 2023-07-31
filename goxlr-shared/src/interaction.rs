@@ -4,6 +4,9 @@
    to ensure there are no misconceptions regarding the types and associations.
 */
 
+use enum_map::Enum;
+
+#[derive(Debug, Enum, Copy, Clone)]
 pub enum InteractiveButtons {
     Fader1Mute,
     Fader2Mute,
@@ -39,6 +42,7 @@ pub enum InteractiveButtons {
     SamplerClear,
 }
 
+#[derive(Debug, Enum, Copy, Clone)]
 pub enum InteractiveFaders {
     A,
     B,
@@ -46,6 +50,7 @@ pub enum InteractiveFaders {
     D,
 }
 
+#[derive(Debug, Enum, Copy, Clone)]
 pub enum InteractiveEncoders {
     Pitch,
     Gender,
@@ -53,7 +58,9 @@ pub enum InteractiveEncoders {
     Echo,
 }
 
+#[derive(Debug, Default, Enum, Copy, Clone)]
 pub enum ButtonState {
+    #[default]
     NotPressed,
     Pressed,
 }

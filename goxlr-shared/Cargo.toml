@@ -11,5 +11,5 @@ default = []
 [dependencies]
 strum = { version = "0.25", features = ["derive"] }
 
-enum-map = { version = "2.6.0", features = ["serde"], optional = true }
+enum-map = { version = "2.6.0", features = ["serde"] }
 serde = { version = "1.0.177", features = ["derive"], optional = true }

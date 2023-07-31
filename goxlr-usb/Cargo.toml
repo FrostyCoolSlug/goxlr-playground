@@ -1,5 +1,5 @@
 [package]
-name = "goxlr-usb-async"
+name = "goxlr-usb"
 version = "0.12.4"
 edition = "2021"
 authors = ["Craig McLure <craig@mclure.net>", "Nathan Adams <dinnerbone@dinnerbone.com>", "Lars Mühlbauer <lm41@dismail.de>"]
@@ -22,6 +22,9 @@ byteorder = "1.4.3"
 
 # For handling internal enums
 enum-map = "2.6.0"
+
+# For handling logging
+log = "0.4.19"
 
 
 #goxlr-types = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", branch="dev-1.0.0" }

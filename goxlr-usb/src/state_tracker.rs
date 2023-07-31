@@ -13,10 +13,11 @@ use goxlr_shared::interaction::{
 };
 use tokio::sync::mpsc;
 
+#[derive(Debug)]
 struct GoXLRStateTracker {
-    buttonStates: EnumMap<InteractiveButtons, ButtonState>,
-    volumeMap: EnumMap<InteractiveFaders, u8>,
-    encoderMap: EnumMap<InteractiveEncoders, u8>,
+    button_states: EnumMap<InteractiveButtons, ButtonState>,
+    volume_map: EnumMap<InteractiveFaders, u8>,
+    encoder_map: EnumMap<InteractiveEncoders, u8>,
 
     // TODO: We need independent receivers for this struct, as well as an upstream sender.
     // Under Linux, the receiver will be the timed poller, and under Windows the receiver will
@@ -34,9 +35,16 @@ impl GoXLRStateTracker {
         Self {
             sender,
             receiver,
-            ..Default::default()
+
+            button_states: EnumMap::default(),
+            volume_map: EnumMap::default(),
+            encoder_map: EnumMap::default(),
         }
     }
+
+    /// Called when a GetStatus response has completed, we check for any changes to the state
+    /// and trigger events events for any confirmed changes.
+    async fn update_states(&self) {}
 }
 
 // It's important not to map these together, under Linux with polling the 'Incoming' change may

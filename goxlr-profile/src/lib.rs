@@ -1,13 +1,12 @@
 use std::path::PathBuf;
 
 use enum_map::{enum_map, Enum, EnumMap};
-use goxlr_types::FaderName;
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
 use goxlr_shared::channels::OutputChannels;
 use goxlr_shared::colours::Colour;
-use goxlr_shared::faders::FaderSources;
+use goxlr_shared::faders::{Fader, FaderSources};
 
 mod types;
 
@@ -26,17 +25,17 @@ pub struct FaderPages {
 
 #[derive(Serialize, Deserialize)]
 pub struct FaderPage {
-    pub faders: EnumMap<FaderName, FaderSources>,
+    pub faders: EnumMap<Fader, FaderSources>,
 }
 
 impl Default for FaderPage {
     fn default() -> Self {
         Self {
             faders: enum_map! {
-                FaderName::A => FaderSources::Microphone,
-                FaderName::B => FaderSources::Music,
-                FaderName::C => FaderSources::Chat,
-                FaderName::D => FaderSources::System
+                Fader::A => FaderSources::Microphone,
+                Fader::B => FaderSources::Music,
+                Fader::C => FaderSources::Chat,
+                Fader::D => FaderSources::System
             },
         }
     }
@@ -230,6 +229,7 @@ impl Default for Profile {
                 FaderSources::Sample => channel.clone(),
                 FaderSources::Headphones => channel.clone(),
                 FaderSources::LineOut => channel.clone(),
+                FaderSources::MicrophoneMonitor => channel.clone(),
         };
 
         let base_colour: EnumMap<FaderSources, Colour> = enum_map! {
@@ -290,7 +290,11 @@ impl Default for Profile {
                     red: 255,
                     green: 0,
                     blue: 255,
-
+                },
+                FaderSources::MicrophoneMonitor => Colour {
+                    red: 255,
+                    green: 0,
+                    blue: 255,
                 },
         };
 
@@ -306,18 +310,18 @@ impl Default for Profile {
         let page = FaderPage::default();
         let page2 = FaderPage {
             faders: enum_map! {
-                FaderName::A => FaderSources::System,
-                FaderName::B => FaderSources::Game,
-                FaderName::C => FaderSources::LineIn,
-                FaderName::D => FaderSources::LineOut
+                Fader::A => FaderSources::System,
+                Fader::B => FaderSources::Game,
+                Fader::C => FaderSources::LineIn,
+                Fader::D => FaderSources::LineOut
             },
         };
         let page3 = FaderPage {
             faders: enum_map! {
-                FaderName::A => FaderSources::Sample,
-                FaderName::B => FaderSources::Chat,
-                FaderName::C => FaderSources::Console,
-                FaderName::D => FaderSources::Microphone
+                Fader::A => FaderSources::Sample,
+                Fader::B => FaderSources::Chat,
+                Fader::C => FaderSources::Console,
+                Fader::D => FaderSources::Microphone
             },
         };
 
