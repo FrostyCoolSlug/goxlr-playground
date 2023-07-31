@@ -1,7 +1,8 @@
 use crate::platform::unix::device::GoXLRUSB;
-use crate::state_tracker::{ChangeEvent, GoXLRStateTracker};
-use crate::GoXLRDevice;
+use crate::state_tracker::GoXLRStateTracker;
+use crate::{ChangeEvent, GoXLRDevice};
 use anyhow::Result;
+use log::debug;
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
@@ -32,10 +33,11 @@ pub async fn spawn_device_handler(
     let _ = ready.send(Ok(()));
 
     // Create an interval for polling the device status..
-    let mut ticker = time::interval(Duration::from_millis(20));
+    let mut ticker = time::interval(Duration::from_millis(500));
     loop {
         tokio::select! {
             _ = ticker.tick() => {
+                debug!("Tick..");
                 // Poll Status
 
             }

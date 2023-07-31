@@ -27,7 +27,7 @@ pub async fn run_worker() {
                         info!("New Device Found: {:#?}", goxlr_device);
 
                         // Create the Device..
-                        let device = Device::new();
+                        let device = Device::new(goxlr_device.clone()).await;
                         match device {
                             Ok(device) => {
                                 // Store this device as 'known'.

@@ -2,7 +2,6 @@ use crate::commands::Command;
 use crate::platform::base::{
     AttachGoXLR, ExecutableGoXLR, FullGoXLRDevice, GoXLRCommands, UsbData,
 };
-use crate::state_tracker::{ChangeEvent, GoXLRStateTracker};
 use crate::{GoXLRDevice, PID_GOXLR_MINI};
 use anyhow::{anyhow, bail, Result};
 use async_trait::async_trait;
@@ -14,9 +13,6 @@ use rusb::{
     RequestType,
 };
 use std::time::Duration;
-use tokio::sync::mpsc::Sender;
-use tokio::sync::oneshot;
-use tokio::time;
 use tokio::time::sleep;
 
 pub(crate) struct GoXLRUSB {

@@ -1,3 +1,5 @@
+use goxlr_shared::interaction::{InteractiveButtons, InteractiveEncoders, InteractiveFaders};
+
 mod channels;
 mod colours;
 mod commands;
@@ -22,4 +24,12 @@ pub struct GoXLRDevice {
     pub(crate) bus_number: u8,
     pub(crate) address: u8,
     pub(crate) identifier: Option<String>,
+}
+
+pub enum ChangeEvent {
+    Ready,
+    ButtonDown(InteractiveButtons),
+    ButtonUp(InteractiveButtons),
+    VolumeChange(InteractiveFaders, u8),
+    EncoderChange(InteractiveEncoders, i8),
 }

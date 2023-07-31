@@ -7,6 +7,7 @@
 // Nor do we need to care about what fader is assigned to what, nor it's volume. All we care about
 // here is whether something has physically changed on the GoXLR.
 
+use crate::ChangeEvent;
 use enum_map::EnumMap;
 use goxlr_shared::interaction::{
     ButtonState, InteractiveButtons, InteractiveEncoders, InteractiveFaders,
@@ -48,10 +49,3 @@ impl GoXLRStateTracker {
 // It's important not to map these together, under Linux with polling the 'Incoming' change may
 // match the existing value, we need to only trigger an outgoing change if the incoming != the
 // current value.
-pub enum ChangeEvent {
-    Ready,
-    ButtonDown(InteractiveButtons),
-    ButtonUp(InteractiveButtons),
-    VolumeChange(InteractiveFaders, u8),
-    EncoderChange(InteractiveEncoders, i8),
-}

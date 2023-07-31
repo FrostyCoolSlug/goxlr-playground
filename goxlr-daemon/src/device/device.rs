@@ -2,14 +2,16 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use log::debug;
 use tokio::sync::mpsc::Sender;
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{mpsc, oneshot, Mutex};
 use tokio::task;
 use tokio::time::sleep;
 
 use goxlr_shared::interaction::InteractiveButtons;
+use goxlr_usb::platform::unix::device_handler::spawn_device_handler;
+use goxlr_usb::{ChangeEvent, GoXLRDevice};
 
 #[derive(Clone)]
 pub struct Device {
@@ -17,15 +19,15 @@ pub struct Device {
 }
 
 impl Device {
-    pub fn new() -> Result<Self> {
+    pub async fn new(device: GoXLRDevice) -> Result<Self> {
         // Create the event receiver..
-        //let (event_sender, event_receiver) = mpsc::channel(32);
+        let (event_sender, event_receiver) = mpsc::channel(32);
 
-        let inner = DeviceInner::new()?;
+        let inner = DeviceInner::new(device, event_sender).await?;
         let stop = inner.should_stop.clone();
         let wrapped = Arc::new(Mutex::new(inner));
 
-        task::spawn(spawn_event_handler(wrapped.clone(), stop));
+        task::spawn(spawn_event_handler(wrapped.clone(), event_receiver, stop));
 
         Ok(Self {
             inner: wrapped.clone(),
@@ -42,23 +44,39 @@ impl Device {
 }
 
 pub struct DeviceInner {
+    device: GoXLRDevice,
     should_stop: Arc<AtomicBool>,
     //event_sender: Sender<ChangeEvent>,
 }
 
 impl DeviceInner {
-    // event_sender: Sender<ChangeEvent>
-    pub fn new() -> Result<Self> {
-        // EZPZ.
-
-        let mut result = Self {
+    pub async fn new(device: GoXLRDevice, event_sender: Sender<ChangeEvent>) -> Result<Self> {
+        let device_inner = Self {
+            device: device.clone(),
             should_stop: Arc::new(AtomicBool::new(false)),
             //event_sender,
         };
-        
-        task::spawn(spawn_device_handler());
-        
-        return Ok(result);
+
+        let (ready_send, ready_recv) = oneshot::channel();
+        task::spawn(spawn_device_handler(device, ready_send, event_sender));
+
+        let result = ready_recv.await;
+        match result {
+            Ok(result) => match result {
+                Ok(_) => {
+                    debug!("Started!");
+                }
+                Err(error) => {
+                    bail!(error);
+                }
+            },
+            Err(error) => {
+                // Should never occur O_o
+                bail!(error);
+            }
+        }
+
+        return Ok(device_inner);
     }
 
     pub async fn monitor_inputs(&mut self) -> Result<()> {
@@ -230,8 +248,6 @@ impl DeviceInner {
         // let _ = self.goxlr.set_button_states(state);
     }
 
-    pub async fn run_handler(&mut self) {}
-
     pub async fn stop_handler(&self) {
         debug!("Attempting to Stop..");
         self.should_stop.store(true, Ordering::Relaxed);
@@ -253,7 +269,7 @@ fn get_epoch_ms() -> u128 {
 
 async fn spawn_event_handler(
     device: Arc<Mutex<DeviceInner>>,
-    //event_receiver: mpsc::Receiver<ChangeEvent>,
+    event_receiver: mpsc::Receiver<ChangeEvent>,
     stop_signal: Arc<AtomicBool>,
 ) {
     loop {
