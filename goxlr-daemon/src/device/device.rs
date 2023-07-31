@@ -282,8 +282,8 @@ async fn spawn_event_handler(
                     break;
                 }
             }
-            Some(ChangeEvent) = event_receiver.recv() => {
-                match ChangeEvent {
+            Some(event) = event_receiver.recv() => {
+                match event {
                     ChangeEvent::VolumeChange(fader, volume) => {
                         debug!("Volume Changed for Fader {:?} to {}", fader, volume);
                     }

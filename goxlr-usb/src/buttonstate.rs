@@ -6,23 +6,14 @@ use goxlr_shared::interaction::InteractiveButtons;
 use strum::EnumIter;
 
 #[derive(Debug, Copy, Clone)]
-pub enum ButtonStates {
-    Colour1 = 0x01,
-    Colour2 = 0x00,
-    DimmedColour1 = 0x02,
-    DimmedColour2 = 0x04,
-    Flashing = 0x03,
-}
-
-#[derive(Debug, Copy, Clone)]
 pub struct CurrentButtonStates {
-    pub pressed: EnumSet<ButtonIndex>,
+    pub pressed: EnumSet<StatusButton>,
     pub volumes: [u8; 4],
     pub encoders: [i8; 4],
 }
 
 #[derive(EnumSetType, Enum, EnumIter, Debug)]
-pub enum ButtonIndex {
+pub enum StatusButton {
     // These are all the buttons from the GoXLR Mini.
     Fader1Mute = 4,
     Fader2Mute = 9,
@@ -55,64 +46,64 @@ pub enum ButtonIndex {
     SamplerClear = 18,
 }
 
-impl Into<ButtonIndex> for InteractiveButtons {
-    fn into(self) -> ButtonIndex {
-        match self {
-            InteractiveButtons::Fader1Mute => ButtonIndex::Fader1Mute,
-            InteractiveButtons::Fader2Mute => ButtonIndex::Fader2Mute,
-            InteractiveButtons::Fader3Mute => ButtonIndex::Fader3Mute,
-            InteractiveButtons::Fader4Mute => ButtonIndex::Fader4Mute,
-            InteractiveButtons::Swear => ButtonIndex::Swear,
-            InteractiveButtons::CoughButton => ButtonIndex::CoughButton,
-            InteractiveButtons::EffectSelect1 => ButtonIndex::EffectSelect1,
-            InteractiveButtons::EffectSelect2 => ButtonIndex::EffectSelect2,
-            InteractiveButtons::EffectSelect3 => ButtonIndex::EffectSelect3,
-            InteractiveButtons::EffectSelect4 => ButtonIndex::EffectSelect4,
-            InteractiveButtons::EffectSelect5 => ButtonIndex::EffectSelect5,
-            InteractiveButtons::EffectSelect6 => ButtonIndex::EffectSelect6,
-            InteractiveButtons::EffectFx => ButtonIndex::EffectFx,
-            InteractiveButtons::EffectMegaphone => ButtonIndex::EffectMegaphone,
-            InteractiveButtons::EffectRobot => ButtonIndex::EffectRobot,
-            InteractiveButtons::EffectHardTune => ButtonIndex::EffectHardTune,
-            InteractiveButtons::SamplerSelectA => ButtonIndex::SamplerSelectA,
-            InteractiveButtons::SamplerSelectB => ButtonIndex::SamplerSelectB,
-            InteractiveButtons::SamplerSelectC => ButtonIndex::SamplerSelectC,
-            InteractiveButtons::SamplerTopLeft => ButtonIndex::SamplerTopLeft,
-            InteractiveButtons::SamplerTopRight => ButtonIndex::SamplerTopRight,
-            InteractiveButtons::SamplerBottomLeft => ButtonIndex::SamplerBottomLeft,
-            InteractiveButtons::SamplerBottomRight => ButtonIndex::SamplerBottomRight,
-            InteractiveButtons::SamplerClear => ButtonIndex::SamplerClear,
+impl From<InteractiveButtons> for StatusButton {
+    fn from(value: InteractiveButtons) -> Self {
+        match value {
+            InteractiveButtons::Fader1Mute => StatusButton::Fader1Mute,
+            InteractiveButtons::Fader2Mute => StatusButton::Fader2Mute,
+            InteractiveButtons::Fader3Mute => StatusButton::Fader3Mute,
+            InteractiveButtons::Fader4Mute => StatusButton::Fader4Mute,
+            InteractiveButtons::Swear => StatusButton::Swear,
+            InteractiveButtons::CoughButton => StatusButton::CoughButton,
+            InteractiveButtons::EffectSelect1 => StatusButton::EffectSelect1,
+            InteractiveButtons::EffectSelect2 => StatusButton::EffectSelect2,
+            InteractiveButtons::EffectSelect3 => StatusButton::EffectSelect3,
+            InteractiveButtons::EffectSelect4 => StatusButton::EffectSelect4,
+            InteractiveButtons::EffectSelect5 => StatusButton::EffectSelect5,
+            InteractiveButtons::EffectSelect6 => StatusButton::EffectSelect6,
+            InteractiveButtons::EffectFx => StatusButton::EffectFx,
+            InteractiveButtons::EffectMegaphone => StatusButton::EffectMegaphone,
+            InteractiveButtons::EffectRobot => StatusButton::EffectRobot,
+            InteractiveButtons::EffectHardTune => StatusButton::EffectHardTune,
+            InteractiveButtons::SamplerSelectA => StatusButton::SamplerSelectA,
+            InteractiveButtons::SamplerSelectB => StatusButton::SamplerSelectB,
+            InteractiveButtons::SamplerSelectC => StatusButton::SamplerSelectC,
+            InteractiveButtons::SamplerTopLeft => StatusButton::SamplerTopLeft,
+            InteractiveButtons::SamplerTopRight => StatusButton::SamplerTopRight,
+            InteractiveButtons::SamplerBottomLeft => StatusButton::SamplerBottomLeft,
+            InteractiveButtons::SamplerBottomRight => StatusButton::SamplerBottomRight,
+            InteractiveButtons::SamplerClear => StatusButton::SamplerClear,
         }
     }
 }
-
-impl Into<InteractiveButtons> for ButtonIndex {
-    fn into(self) -> InteractiveButtons {
-        match self {
-            ButtonIndex::Fader1Mute => InteractiveButtons::Fader1Mute,
-            ButtonIndex::Fader2Mute => InteractiveButtons::Fader2Mute,
-            ButtonIndex::Fader3Mute => InteractiveButtons::Fader3Mute,
-            ButtonIndex::Fader4Mute => InteractiveButtons::Fader4Mute,
-            ButtonIndex::Swear => InteractiveButtons::Swear,
-            ButtonIndex::CoughButton => InteractiveButtons::CoughButton,
-            ButtonIndex::EffectSelect1 => InteractiveButtons::EffectSelect1,
-            ButtonIndex::EffectSelect2 => InteractiveButtons::EffectSelect2,
-            ButtonIndex::EffectSelect3 => InteractiveButtons::EffectSelect3,
-            ButtonIndex::EffectSelect4 => InteractiveButtons::EffectSelect4,
-            ButtonIndex::EffectSelect5 => InteractiveButtons::EffectSelect5,
-            ButtonIndex::EffectSelect6 => InteractiveButtons::EffectSelect6,
-            ButtonIndex::EffectFx => InteractiveButtons::EffectFx,
-            ButtonIndex::EffectMegaphone => InteractiveButtons::EffectMegaphone,
-            ButtonIndex::EffectRobot => InteractiveButtons::EffectRobot,
-            ButtonIndex::EffectHardTune => InteractiveButtons::EffectHardTune,
-            ButtonIndex::SamplerSelectA => InteractiveButtons::SamplerSelectA,
-            ButtonIndex::SamplerSelectB => InteractiveButtons::SamplerSelectB,
-            ButtonIndex::SamplerSelectC => InteractiveButtons::SamplerSelectC,
-            ButtonIndex::SamplerTopLeft => InteractiveButtons::SamplerTopLeft,
-            ButtonIndex::SamplerTopRight => InteractiveButtons::SamplerTopRight,
-            ButtonIndex::SamplerBottomLeft => InteractiveButtons::SamplerBottomLeft,
-            ButtonIndex::SamplerBottomRight => InteractiveButtons::SamplerBottomRight,
-            ButtonIndex::SamplerClear => InteractiveButtons::SamplerClear,
-        }
-    }
-}
+//
+// impl From<StatusButton> for InteractiveButtons {
+//     fn from(value: StatusButton) -> Self {
+//         match value {
+//             StatusButton::Fader1Mute => InteractiveButtons::Fader1Mute,
+//             StatusButton::Fader2Mute => InteractiveButtons::Fader2Mute,
+//             StatusButton::Fader3Mute => InteractiveButtons::Fader3Mute,
+//             StatusButton::Fader4Mute => InteractiveButtons::Fader4Mute,
+//             StatusButton::Swear => InteractiveButtons::Swear,
+//             StatusButton::CoughButton => InteractiveButtons::CoughButton,
+//             StatusButton::EffectSelect1 => InteractiveButtons::EffectSelect1,
+//             StatusButton::EffectSelect2 => InteractiveButtons::EffectSelect2,
+//             StatusButton::EffectSelect3 => InteractiveButtons::EffectSelect3,
+//             StatusButton::EffectSelect4 => InteractiveButtons::EffectSelect4,
+//             StatusButton::EffectSelect5 => InteractiveButtons::EffectSelect5,
+//             StatusButton::EffectSelect6 => InteractiveButtons::EffectSelect6,
+//             StatusButton::EffectFx => InteractiveButtons::EffectFx,
+//             StatusButton::EffectMegaphone => InteractiveButtons::EffectMegaphone,
+//             StatusButton::EffectRobot => InteractiveButtons::EffectRobot,
+//             StatusButton::EffectHardTune => InteractiveButtons::EffectHardTune,
+//             StatusButton::SamplerSelectA => InteractiveButtons::SamplerSelectA,
+//             StatusButton::SamplerSelectB => InteractiveButtons::SamplerSelectB,
+//             StatusButton::SamplerSelectC => InteractiveButtons::SamplerSelectC,
+//             StatusButton::SamplerTopLeft => InteractiveButtons::SamplerTopLeft,
+//             StatusButton::SamplerTopRight => InteractiveButtons::SamplerTopRight,
+//             StatusButton::SamplerBottomLeft => InteractiveButtons::SamplerBottomLeft,
+//             StatusButton::SamplerBottomRight => InteractiveButtons::SamplerBottomRight,
+//             StatusButton::SamplerClear => InteractiveButtons::SamplerClear,
+//         }
+//     }
+// }

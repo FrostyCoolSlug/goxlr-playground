@@ -7,7 +7,7 @@
 // Nor do we need to care about what fader is assigned to what, nor it's volume. All we care about
 // here is whether something has physically changed on the GoXLR.
 
-use crate::buttonstate::{ButtonIndex, CurrentButtonStates};
+use crate::buttonstate::{CurrentButtonStates, StatusButton};
 use crate::ChangeEvent;
 use enum_map::EnumMap;
 use enumset::EnumSet;
@@ -23,7 +23,6 @@ pub(crate) struct GoXLRStateTracker {
     volume_map: EnumMap<InteractiveFaders, u8>,
     encoder_map: EnumMap<InteractiveEncoders, i8>,
 
-    // TODO: We need independent receivers for this struct, as well as an upstream sender.
     // Under Linux, the receiver will be the timed poller, and under Windows the receiver will
     // handle events received from TUSB. This class need to be generic, and simply handle the IO
     // from other locations.
@@ -78,21 +77,19 @@ impl GoXLRStateTracker {
         }
     }
 
-    async fn update_buttons(&mut self, buttons: EnumSet<ButtonIndex>) {
+    async fn update_buttons(&mut self, buttons: EnumSet<StatusButton>) {
         for button in InteractiveButtons::iter() {
             let current_state = self.button_states[button];
-            if buttons.contains(button.into()) && current_state == ButtonState::NotPressed {
+            let status_button = StatusButton::from(button);
+
+            if buttons.contains(status_button) && current_state == ButtonState::NotPressed {
                 let _ = self.sender.send(ChangeEvent::ButtonDown(button)).await;
                 self.button_states[button] = ButtonState::Pressed;
             }
-            if !buttons.contains(button.into()) && current_state == ButtonState::Pressed {
+            if !buttons.contains(status_button) && current_state == ButtonState::Pressed {
                 let _ = self.sender.send(ChangeEvent::ButtonUp(button)).await;
                 self.button_states[button] = ButtonState::NotPressed;
             }
         }
     }
 }
-
-// It's important not to map these together, under Linux with polling the 'Incoming' change may
-// match the existing value, we need to only trigger an outgoing change if the incoming != the
-// current value.

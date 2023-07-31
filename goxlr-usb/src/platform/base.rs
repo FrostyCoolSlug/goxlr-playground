@@ -10,7 +10,7 @@ use anyhow::{bail, Result};
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
 use goxlr_shared::faders::Fader;
 
-use crate::buttonstate::{ButtonIndex, CurrentButtonStates};
+use crate::buttonstate::{CurrentButtonStates, StatusButton};
 use crate::routing::RoutingInputDevice;
 use async_trait::async_trait;
 use enumset::EnumSet;
@@ -289,7 +289,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         encoders[2] = result[6] as i8; // Reverb
         encoders[3] = result[7] as i8; // Echo
 
-        for button in EnumSet::<ButtonIndex>::all() {
+        for button in EnumSet::<StatusButton>::all() {
             if button_states & (1 << button as u8) != 0 {
                 pressed.insert(button);
             }
