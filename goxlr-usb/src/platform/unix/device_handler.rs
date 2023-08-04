@@ -3,6 +3,7 @@ use crate::pnp_base::DeviceEvents;
 use crate::state_tracker::GoXLRStateTracker;
 use crate::{ChangeEvent, GoXLRDevice};
 use anyhow::{bail, Result};
+use log::debug;
 use std::fmt::Error;
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
@@ -15,7 +16,7 @@ pub async fn spawn_device_handler(
     event_sender: Sender<ChangeEvent>,
     device_sender: Sender<DeviceEvents>,
 ) {
-    let device = GoXLRUSB::from_device(goxlr).await;
+    let device = GoXLRUSB::from_device(goxlr.clone()).await;
     let mut state = GoXLRStateTracker::new(event_sender);
 
     let mut device = match device {
@@ -36,11 +37,21 @@ pub async fn spawn_device_handler(
 
     // Create an interval for polling the device status..
     let mut ticker = time::interval(Duration::from_millis(20));
+
     loop {
         tokio::select! {
             _ = ticker.tick() => {
                 let states = device.get_button_states().await;
-                state.update_states(states.unwrap()).await;
+                match states {
+                    Ok(states) => state.update_states(states).await,
+                    Err(error) => {
+                        debug!("Error Updating States: {:?}", error);
+                        let _ = device_sender.send(DeviceEvents::Error(goxlr.clone())).await;
+
+                        // Break out the loop, something bad has happened.
+                        break;
+                    },
+                }
             }
         }
     }
