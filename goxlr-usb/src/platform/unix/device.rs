@@ -1,4 +1,4 @@
-use crate::commands::Command;
+use crate::goxlr_commands::Command;
 use crate::platform::base::{
     AttachGoXLR, ExecutableGoXLR, FullGoXLRDevice, GoXLRCommands, UsbData,
 };
@@ -34,16 +34,13 @@ impl ExecutableGoXLR for GoXLRUSB {
         &mut self,
         command: Command,
         body: &[u8],
-        retry: bool,
+        is_retry_attempt: bool,
     ) -> Result<Vec<u8>> {
         if command == Command::ResetCommandIndex {
             self.command_count = 0;
         } else {
             if self.command_count == u16::MAX {
-                let result = self.request_data(Command::ResetCommandIndex, &[]).await;
-                if result.is_err() {
-                    return result;
-                }
+                self.request_data(Command::ResetCommandIndex, &[]).await?;
             }
             self.command_count += 1;
         }
@@ -111,22 +108,18 @@ impl ExecutableGoXLR for GoXLRUSB {
                 debug!("Response Header: {:?}", response_header);
                 debug!("Response Body: {:?}", response);
 
-                return if !retry {
+                // If this isn't a retry, attempt a re-sync and re-execution
+                if !is_retry_attempt {
                     debug!("Attempting Resync and Retry");
-                    let result = self
-                        .perform_request(Command::ResetCommandIndex, &[], true)
-                        .await;
-                    if result.is_err() {
-                        return result;
-                    }
+                    self.perform_request(Command::ResetCommandIndex, &[], true)
+                        .await?;
 
-                    debug!("Resync complete, retrying Command..");
-                    let result = self.perform_request(command, body, true).await;
-                    return result;
+                    debug!("Re-sync Complete, Retrying Command..");
+                    return self.perform_request(command, body, true).await;
                 } else {
-                    debug!("Resync Failed, Throwing Error..");
+                    debug!("Re-sync failed, aborting.");
                     bail!(rusb::Error::Other);
-                };
+                }
             }
 
             debug_assert!(response.len() == response_length as usize);
@@ -247,12 +240,6 @@ impl GoXLRUSB {
             timeout,
             command_count: 0,
         }))
-    }
-
-    /// Called to run and handle device related tasks, including the first initialisation, status
-    /// polling, and event management.
-    async fn spawn_event_handler(&mut self) {
-        debug!("Spinning up Linux event handler..");
     }
 
     pub(crate) async fn write_class_control(

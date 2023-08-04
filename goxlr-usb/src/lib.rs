@@ -1,16 +1,18 @@
 use goxlr_shared::interaction::{InteractiveButtons, InteractiveEncoders, InteractiveFaders};
 
-mod channels;
-mod colours;
-mod commands;
-mod dcp;
+pub mod commands;
 pub mod platform;
 pub mod pnp_base;
 
-mod buttonstate;
-mod encoders;
-mod routing;
 pub(crate) mod state_tracker;
+
+mod button_state;
+mod channels;
+mod colours;
+mod dcp;
+mod encoders;
+mod goxlr_commands;
+mod routing;
 
 // Definitions for the GoXLR PID / VID
 pub const VID_GOXLR: u16 = 0x1220;

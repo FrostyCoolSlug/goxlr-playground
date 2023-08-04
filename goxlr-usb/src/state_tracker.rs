@@ -7,7 +7,7 @@
 // Nor do we need to care about what fader is assigned to what, nor it's volume. All we care about
 // here is whether something has physically changed on the GoXLR.
 
-use crate::buttonstate::{CurrentButtonStates, StatusButton};
+use crate::button_state::{CurrentButtonStates, StatusButton};
 use crate::ChangeEvent;
 use enum_map::EnumMap;
 use enumset::EnumSet;

@@ -8,8 +8,6 @@ use goxlr_shared::channels::OutputChannels;
 use goxlr_shared::colours::Colour;
 use goxlr_shared::faders::{Fader, FaderSources};
 
-mod types;
-
 #[derive(Serialize, Deserialize)]
 pub struct Profile {
     // Channel First Approach!

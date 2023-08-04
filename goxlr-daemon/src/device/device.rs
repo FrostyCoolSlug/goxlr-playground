@@ -2,15 +2,15 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use log::debug;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::{mpsc, oneshot, Mutex};
-use tokio::time::sleep;
 use tokio::{task, time};
 
 use goxlr_shared::interaction::InteractiveButtons;
 use goxlr_usb::platform::unix::device_handler::spawn_device_handler;
+use goxlr_usb::pnp_base::DeviceEvents;
 use goxlr_usb::{ChangeEvent, GoXLRDevice};
 
 #[derive(Clone)]
@@ -19,11 +19,11 @@ pub struct Device {
 }
 
 impl Device {
-    pub async fn new(device: GoXLRDevice) -> Result<Self> {
+    pub async fn new(device: GoXLRDevice, device_sender: Sender<DeviceEvents>) -> Result<Self> {
         // Create the event receiver..
         let (event_sender, event_receiver) = mpsc::channel(32);
 
-        let inner = DeviceInner::new(device, event_sender).await?;
+        let inner = DeviceInner::new(device, event_sender, device_sender).await?;
         let stop = inner.should_stop.clone();
         let wrapped = Arc::new(Mutex::new(inner));
 
@@ -44,39 +44,62 @@ impl Device {
 }
 
 pub struct DeviceInner {
+    /// This is simply the USB identification of a device, to save a lot of hassle, it's the primary
+    /// lookup method for attack / detach events.
     device: GoXLRDevice,
+
+    /// Everything that runs as it's own task should include a clone of this, when a GoXLR is
+    /// disconnected, this is set to true, and everything below should be stopped.
     should_stop: Arc<AtomicBool>,
-    //event_sender: Sender<ChangeEvent>,
+
+    /// A sender which allows us to message the primary worker in the event something goes
+    /// tragically wrong, this will force a destruction of the existing state, and attempt to
+    /// create a new clean one.
+    device_sender: Sender<DeviceEvents>,
 }
 
 impl DeviceInner {
-    pub async fn new(device: GoXLRDevice, event_sender: Sender<ChangeEvent>) -> Result<Self> {
+    pub async fn new(
+        device: GoXLRDevice,
+        event_sender: Sender<ChangeEvent>,
+        device_sender: Sender<DeviceEvents>,
+    ) -> Result<Self> {
         let device_inner = Self {
             device: device.clone(),
             should_stop: Arc::new(AtomicBool::new(false)),
+            device_sender: device_sender.clone(),
             //event_sender,
         };
 
         let (ready_send, ready_recv) = oneshot::channel();
-        task::spawn(spawn_device_handler(device, ready_send, event_sender));
+        task::spawn(spawn_device_handler(
+            device,
+            ready_send,
+            event_sender,
+            device_sender,
+        ));
 
-        let result = ready_recv.await;
-        match result {
-            Ok(result) => match result {
-                Ok(_) => {
-                    debug!("Started!");
-                }
-                Err(error) => {
-                    bail!(error);
-                }
-            },
-            Err(error) => {
-                // Should never occur O_o
-                bail!(error);
+        // Wait for the handler to give us an 'OK' before proceeding..
+        ready_recv.await??;
+
+        Ok(device_inner)
+    }
+
+    pub async fn handle_change_event(&mut self, event: ChangeEvent) {
+        match event {
+            ChangeEvent::VolumeChange(fader, volume) => {
+                debug!("Volume Changed for Fader {:?} to {}", fader, volume);
+            }
+            ChangeEvent::ButtonDown(button) => {
+                debug!("Button {:?} Pressed", button);
+            }
+            ChangeEvent::ButtonUp(button) => {
+                debug!("Button {:?} Released", button);
+            }
+            ChangeEvent::EncoderChange(encoder, value) => {
+                debug!("Encoder {:?} changed to {}", encoder, value);
             }
         }
-
-        return Ok(device_inner);
     }
 
     pub async fn monitor_inputs(&mut self) -> Result<()> {
@@ -277,26 +300,14 @@ async fn spawn_event_handler(
     loop {
         tokio::select! {
             _ = ticker.tick() => {
-                if device.lock().await.should_stop.load(Ordering::Relaxed) {
+                if stop_signal.load(Ordering::Relaxed) {
                     debug!("Asked to Stop!");
                     break;
                 }
             }
             Some(event) = event_receiver.recv() => {
-                match event {
-                    ChangeEvent::VolumeChange(fader, volume) => {
-                        debug!("Volume Changed for Fader {:?} to {}", fader, volume);
-                    }
-                    ChangeEvent::ButtonDown(button) => {
-                        debug!("Button {:?} Pressed", button);
-                    }
-                    ChangeEvent::ButtonUp(button) => {
-                        debug!("Button {:?} Released", button);
-                    }
-                    ChangeEvent::EncoderChange(encoder, value) => {
-                        debug!("Encoder {:?} changed to {}", encoder, value);
-                    }
-                }
+                // Simply pass this event to our inner handler.
+                device.lock().await.handle_change_event(event).await;
             }
         }
     }

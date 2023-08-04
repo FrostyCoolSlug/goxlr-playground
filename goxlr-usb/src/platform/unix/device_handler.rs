@@ -1,7 +1,9 @@
 use crate::platform::unix::device::GoXLRUSB;
+use crate::pnp_base::DeviceEvents;
 use crate::state_tracker::GoXLRStateTracker;
 use crate::{ChangeEvent, GoXLRDevice};
-use anyhow::Result;
+use anyhow::{bail, Result};
+use std::fmt::Error;
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
@@ -11,6 +13,7 @@ pub async fn spawn_device_handler(
     goxlr: GoXLRDevice,
     ready: oneshot::Sender<Result<()>>,
     event_sender: Sender<ChangeEvent>,
+    device_sender: Sender<DeviceEvents>,
 ) {
     let device = GoXLRUSB::from_device(goxlr).await;
     let mut state = GoXLRStateTracker::new(event_sender);

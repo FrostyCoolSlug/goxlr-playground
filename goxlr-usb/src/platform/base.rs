@@ -1,16 +1,16 @@
 use crate::channels::{AssignableChannel, ChannelState};
-use crate::commands::Command::ExecuteFirmwareUpdateAction;
-use crate::commands::SystemInfoCommand::SupportsDCPCategory;
-use crate::commands::{
-    Command, FirmwareAction, FirmwareCommand, HardwareInfoCommand, SystemInfoCommand,
-};
 use crate::dcp::DCPCategory;
 use crate::encoders::Encoder;
+use crate::goxlr_commands::Command::ExecuteFirmwareUpdateAction;
+use crate::goxlr_commands::SystemInfoCommand::SupportsDCPCategory;
+use crate::goxlr_commands::{
+    Command, FirmwareAction, FirmwareCommand, HardwareInfoCommand, SystemInfoCommand,
+};
 use anyhow::{bail, Result};
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
 use goxlr_shared::faders::Fader;
 
-use crate::buttonstate::{CurrentButtonStates, StatusButton};
+use crate::button_state::{CurrentButtonStates, StatusButton};
 use crate::routing::RoutingInputDevice;
 use async_trait::async_trait;
 use enumset::EnumSet;
@@ -34,7 +34,7 @@ pub(crate) trait ExecutableGoXLR {
         &mut self,
         command: Command,
         body: &[u8],
-        retry: bool,
+        is_retry_attempt: bool,
     ) -> Result<Vec<u8>>;
     async fn get_descriptor(&self) -> Result<UsbData>;
 
@@ -329,10 +329,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     // DO NOT EXECUTE ANY OF THESE, SERIOUSLY!
     async fn begin_firmware_upload(&mut self) -> Result<()> {
         let result = self
-            .request_data(
-                Command::ExecuteFirmwareUpdateCommand(FirmwareCommand::START),
-                &[],
-            )
+            .request_data(Command::ExecuteFirmwareUpdate(FirmwareCommand::START), &[])
             .await?;
         let code = LittleEndian::read_u32(&result[0..4]);
         if code != 0 {
@@ -413,10 +410,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
 
     async fn verify_firmware_status(&mut self) -> Result<()> {
         let result = self
-            .request_data(
-                Command::ExecuteFirmwareUpdateCommand(FirmwareCommand::VERIFY),
-                &[],
-            )
+            .request_data(Command::ExecuteFirmwareUpdate(FirmwareCommand::VERIFY), &[])
             .await?;
 
         let output = LittleEndian::read_u32(&result);
@@ -428,10 +422,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
 
     async fn poll_verify_firmware_status(&mut self) -> Result<(bool, u32, u32)> {
         let result = self
-            .request_data(
-                Command::ExecuteFirmwareUpdateCommand(FirmwareCommand::POLL),
-                &[],
-            )
+            .request_data(Command::ExecuteFirmwareUpdate(FirmwareCommand::POLL), &[])
             .await?;
 
         let mut cursor = Cursor::new(result);
@@ -490,7 +481,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     async fn finalise_firmware_upload(&mut self) -> Result<()> {
         let result = self
             .request_data(
-                Command::ExecuteFirmwareUpdateCommand(FirmwareCommand::FINALISE),
+                Command::ExecuteFirmwareUpdate(FirmwareCommand::FINALISE),
                 &[],
             )
             .await?;
@@ -504,10 +495,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
 
     async fn poll_finalise_firmware_upload(&mut self) -> Result<(bool, u32, u32)> {
         let result = self
-            .request_data(
-                Command::ExecuteFirmwareUpdateCommand(FirmwareCommand::POLL),
-                &[],
-            )
+            .request_data(Command::ExecuteFirmwareUpdate(FirmwareCommand::POLL), &[])
             .await?;
 
         let mut cursor = Cursor::new(result);
@@ -556,10 +544,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
 
     async fn abort_firmware_update(&mut self) -> Result<u32> {
         let result = self
-            .request_data(
-                Command::ExecuteFirmwareUpdateCommand(FirmwareCommand::ABORT),
-                &[],
-            )
+            .request_data(Command::ExecuteFirmwareUpdate(FirmwareCommand::ABORT), &[])
             .await?;
         let value = LittleEndian::read_u32(&result);
         Ok(value)
@@ -567,10 +552,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
 
     async fn reboot_after_firmware_upload(&mut self) -> Result<()> {
         let result = self
-            .request_data(
-                Command::ExecuteFirmwareUpdateCommand(FirmwareCommand::REBOOT),
-                &[],
-            )
+            .request_data(Command::ExecuteFirmwareUpdate(FirmwareCommand::REBOOT), &[])
             .await?;
 
         let output = LittleEndian::read_u32(&result);
