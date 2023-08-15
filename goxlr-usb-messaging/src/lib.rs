@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 
+mod common;
 mod platform;
 pub mod runners;
 
