@@ -95,7 +95,7 @@ pub async fn start_pnp_runner(config: PnPConfiguration) {
 }
 
 pub struct PnPConfiguration {
-    pub stop_signal: oneshot::Receiver<bool>,
+    pub stop_signal: oneshot::Receiver<()>,
     pub device_sender: mpsc::Sender<PnPDeviceMessage>,
 }
 

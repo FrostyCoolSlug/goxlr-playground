@@ -3,8 +3,6 @@
 */
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use std::time::Duration;
 
 use log::{debug, error, info};
@@ -83,9 +81,7 @@ impl DeviceManager {
                     }
                 },
                 _ = self.shutdown.recv() => {
-                    let _ = pnp_send.send(true);
-
-                    // TODO: We shouldn't break the loop until all devices have reported 'STOPPED'
+                    let _ = pnp_send.send(());
                     break;
                 }
                 _ = ticker.tick() => {

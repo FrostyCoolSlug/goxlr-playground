@@ -73,7 +73,7 @@ impl GoXLR {
         }
 
         // Our loop has been broken, let the device know we're done..
-        let _ = stop_send.send(true);
+        let _ = stop_send.send(());
         debug!("[GoXLR]{} Event Loop Ended", self.config.device);
 
         debug!(

@@ -78,5 +78,5 @@ pub async fn start_usb_device_runner(config: GoXLRUSBConfiguration, ready: Ready
 pub struct GoXLRUSBConfiguration {
     pub device: USBLocation,
     pub events: mpsc::Sender<bool>,
-    pub stop: oneshot::Receiver<bool>,
+    pub stop: oneshot::Receiver<()>,
 }
