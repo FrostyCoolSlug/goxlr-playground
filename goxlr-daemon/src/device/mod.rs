@@ -1,3 +1,2 @@
-pub mod device;
 pub mod device_manager;
 pub(crate) mod goxlr;

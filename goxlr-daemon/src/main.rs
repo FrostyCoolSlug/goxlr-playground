@@ -1,15 +1,12 @@
 use anyhow::{Context, Result};
 use log::{debug, LevelFilter};
 use simplelog::{ColorChoice, CombinedLogger, ConfigBuilder, TermLogger, TerminalMode};
-use std::time::Duration;
-use tokio::time::sleep;
 use tokio::{join, task};
 
 use crate::device::device_manager::start_device_manager;
 use crate::stop::Stop;
 
 mod device;
-mod primary_worker;
 mod stop;
 
 #[tokio::main]
