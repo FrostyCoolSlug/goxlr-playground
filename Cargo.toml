@@ -5,4 +5,5 @@ members = [
 	"goxlr-usb",
 	"goxlr-daemon",
 	"goxlr-shared",
+	"goxlr-usb-messaging",
 ]

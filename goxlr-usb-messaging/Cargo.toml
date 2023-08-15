@@ -1,0 +1,16 @@
+[package]
+name = "goxlr-usb-messaging"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Logging
+log = "0.4.19"
+
+# Runtime Dependencies
+tokio = { version = "1.29.1", features = ["full"] }
+
+# USB Related Dependencies
+rusb = "0.9.2"

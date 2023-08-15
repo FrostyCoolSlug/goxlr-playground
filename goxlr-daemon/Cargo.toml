@@ -11,6 +11,8 @@ goxlr-scribbles = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", r
 goxlr-shared = { path="../goxlr-shared" }
 goxlr-usb = { path="../goxlr-usb" }
 
+goxlr-usb-messaging = { path="../goxlr-usb-messaging" }
+
 # For handling the Enum Maps and sets inside the profile..
 strum = { version = "0.25", features = ["derive"] }
 enum-map = { version = "2.5.0", features = ["serde"] }

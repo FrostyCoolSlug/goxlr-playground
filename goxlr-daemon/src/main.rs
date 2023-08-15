@@ -1,12 +1,16 @@
+use anyhow::{Context, Result};
+use log::{debug, LevelFilter};
+use simplelog::{ColorChoice, CombinedLogger, ConfigBuilder, TermLogger, TerminalMode};
+use std::time::Duration;
+use tokio::time::sleep;
+use tokio::{join, task};
+
+use crate::device::device_manager::start_device_manager;
+use crate::stop::Stop;
+
 mod device;
 mod primary_worker;
-
-use crate::primary_worker::run_worker;
-use anyhow::{Context, Result};
-use goxlr_profile::Profile;
-use log::LevelFilter;
-use simplelog::{ColorChoice, CombinedLogger, ConfigBuilder, TermLogger, TerminalMode};
-use tokio::{join, task};
+mod stop;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -18,10 +22,23 @@ async fn main() -> Result<()> {
     )])
     .context("Could not configure the logger")?;
 
-    let task = task::spawn(run_worker());
-    join!(task);
+    // Spawn the Shutdown Handler..
+    let shutdown = Stop::new();
 
-    let profile = Profile::default();
+    let task = task::spawn(start_device_manager(shutdown.clone()));
+
+    // We're going to go to sleep, then trigger the shutdown..
+    // sleep(Duration::from_secs(5)).await;
+    // shutdown.trigger();
+
+    let _ = join!(task);
+
+    debug!("Should be done!");
+
+    // let task = task::spawn(run_worker());
+    // join!(task);
+    //
+    // let profile = Profile::default();
 
     // Grab the Devices..
     // let devices = find_devices();
