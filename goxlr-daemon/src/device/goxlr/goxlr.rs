@@ -1,10 +1,9 @@
 use anyhow::{bail, Result};
-use log::{debug, error};
-use std::sync::atomic::Ordering;
-use std::time::Duration;
+use log::{debug, error, warn};
 use tokio::sync::{mpsc, oneshot};
-use tokio::{join, select, task, time};
+use tokio::{join, select, task};
 
+use goxlr_usb_messaging::runners::device::DeviceMessage;
 use goxlr_usb_messaging::runners::device::{start_usb_device_runner, GoXLRUSBConfiguration};
 
 use crate::device::device_manager::{RunnerMessage, RunnerState};
@@ -49,7 +48,9 @@ impl GoXLR {
         let runner = task::spawn(start_usb_device_runner(configuration, ready_send));
 
         // We need to wait for the Device Runner to flag as ready..
-        let _ = ready_recv.await;
+        if let Err(error) = ready_recv.await {
+            bail!("Error on Startup Receiver, aborting: {}", error);
+        }
 
         // Let the device runner know we're up and running (TODO: REQUEST SERIAL!)
         let serial = String::from("000000000000");
@@ -58,8 +59,19 @@ impl GoXLR {
 
         loop {
             select! {
-                _ = event_recv.recv() => {
-                    debug!("[GoXLR]{} Event!", self.config.device)
+                Some(event) = event_recv.recv() => {
+                    debug!("[GoXLR]{} Event: {:?}", self.config.device, event);
+                    match event {
+                        DeviceMessage::Error => {
+                            warn!("[GoXLR]{} Error Sent back from Handler, bail!", self.config.device);
+                            break;
+                        }
+                        DeviceMessage::Event => {
+                            debug!("[GoXLR]{} Event!", self.config.device);
+                        }
+                    }
+
+
                 }
                 _ = self.shutdown.recv() => {
                     debug!("[GoXLR]{} Shutdown Triggered!", self.config.device);

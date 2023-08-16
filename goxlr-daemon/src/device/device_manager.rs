@@ -134,9 +134,23 @@ impl DeviceManager {
     }
 
     async fn remove_device(&mut self, device: USBLocation) {
-        if let Some(device) = self.states.get(&device) {
-            device.stop.trigger();
+        if let Some(status) = &mut self.states.get_mut(&device) {
+            if let RunnerState::Running(_) = &status.state {
+                // We're running, trigger a stop and set us to stopping..
+                status.stop.trigger();
+                status.state = RunnerState::Stopping;
+
+                // Remove our Serial Tracking for this device..
+                self.serials.retain(|_, dev| *dev != device);
+
+                // Return here, and wait for the Stopper to handle the stop.
+                return;
+            }
         }
+
+        // If we're not already running, we should just nuke knowledge of the device..
+        self.serials.retain(|_, dev| *dev != device);
+        self.states.retain(|dev, _| *dev != device);
     }
 
     async fn check_devices(&mut self) {
@@ -218,10 +232,11 @@ pub enum RunnerMessage {
     Error(USBLocation),
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum RunnerState {
     Starting,
     Running(String),
+    Stopping,
     Stopped,
     Error,
 }

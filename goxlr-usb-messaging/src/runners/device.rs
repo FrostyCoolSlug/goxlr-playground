@@ -5,7 +5,8 @@
 
 use crate::platform::rusb::device::{GoXLRConfiguration, GoXLRDevice};
 use crate::USBLocation;
-use log::debug;
+use anyhow::Result;
+use log::{debug, error};
 use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 
@@ -21,7 +22,7 @@ impl GoXLRUSBDevice {
         Self { config }
     }
 
-    pub async fn run(&mut self, ready: Ready) {
+    pub async fn run(&mut self, ready: Ready) -> Result<()> {
         debug!("[RUNNER]{} Starting Device Runner..", self.config.device);
 
         // Create an event receiver for the device..
@@ -35,10 +36,10 @@ impl GoXLRUSBDevice {
         };
 
         // Ok, firstly, we need to create a GoXLR device from our Location..
-
         debug!("[RUNNER]{} Initialising Device..", self.config.device);
-        let mut device = GoXLRDevice::new(config).await;
-        device.initialise().await;
+        let mut device = GoXLRDevice::from(config).await?;
+        device.initialise().await?;
+
         debug!(
             "[RUNNER]{} Device Initialised, starting event loop",
             self.config.device
@@ -59,24 +60,37 @@ impl GoXLRUSBDevice {
                     debug!("[RUNNER]{} Received Command: {:?}", command, self.config.device);
                 }
                 _ = &mut self.config.stop => {
-                    debug!("[RUNNER]{} Asked to Stop, stopping device..", self.config.device);
-                    device.stop().await;
+                    debug!("[RUNNER]{} Told to Stop, breaking Loop..", self.config.device);
                     break;
                 }
             }
         }
 
+        debug!("[RUNNER]{} Stopping device..", self.config.device);
+        device.stop().await;
+
         debug!("[RUNNER]{} Event loop terminated.", self.config.device);
+        Ok(())
     }
 }
 
 pub async fn start_usb_device_runner(config: GoXLRUSBConfiguration, ready: Ready) {
+    let sender = config.events.clone();
+
     let mut device = GoXLRUSBDevice::new(config);
-    device.run(ready).await;
+    if device.run(ready).await.is_err() {
+        let _ = sender.send(DeviceMessage::Error).await;
+    }
 }
 
 pub struct GoXLRUSBConfiguration {
     pub device: USBLocation,
-    pub events: mpsc::Sender<bool>,
+    pub events: mpsc::Sender<DeviceMessage>,
     pub stop: oneshot::Receiver<()>,
+}
+
+#[derive(Debug)]
+pub enum DeviceMessage {
+    Error,
+    Event,
 }
