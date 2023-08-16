@@ -47,10 +47,12 @@ impl GoXLR {
         };
         let runner = task::spawn(start_usb_device_runner(configuration, ready_send));
 
-        // We need to wait for the Device Runner to flag as ready..
-        if let Err(error) = ready_recv.await {
-            bail!("Error on Startup Receiver, aborting: {}", error);
-        }
+        let messenger = match ready_recv.await {
+            Ok(recv) => recv,
+            Err(e) => {
+                bail!("Error on Starting Receiver, aborting: {}", e);
+            }
+        };
 
         // Let the device runner know we're up and running (TODO: REQUEST SERIAL!)
         let serial = String::from("000000000000");
@@ -66,12 +68,10 @@ impl GoXLR {
                             warn!("[GoXLR]{} Error Sent back from Handler, bail!", self.config.device);
                             break;
                         }
-                        DeviceMessage::Event => {
-                            debug!("[GoXLR]{} Event!", self.config.device);
+                        DeviceMessage::Event(event) => {
+                            debug!("[GoXLR]{} Event: {:?}", self.config.device, event);
                         }
                     }
-
-
                 }
                 _ = self.shutdown.recv() => {
                     debug!("[GoXLR]{} Shutdown Triggered!", self.config.device);

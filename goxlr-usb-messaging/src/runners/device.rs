@@ -3,15 +3,17 @@
    using messaging to get things backwards and forwards
 */
 
-use crate::platform::rusb::device::{GoXLRConfiguration, GoXLRDevice};
-use crate::USBLocation;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use log::{debug, error};
 use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 
+use crate::platform::rusb::device::{GoXLRConfiguration, GoXLRDevice};
+use crate::requests::{GoXLRMessage, GoXLRStatus};
+use crate::USBLocation;
+
 // This is an obnoxiously long type, shorten it!
-type Ready = oneshot::Sender<mpsc::Sender<bool>>;
+type Ready = oneshot::Sender<mpsc::Sender<GoXLRMessage>>;
 
 struct GoXLRUSBDevice {
     config: GoXLRUSBConfiguration,
@@ -53,11 +55,26 @@ impl GoXLRUSBDevice {
                 Some(event) = event_recv.recv() => {
                     debug!("[RUNNER]{} Event From Device!", self.config.device);
 
-                    // We've received an event from the device, simply propagate it straight up.
-                    let _ = self.config.events.send(event).await;
+                    match event {
+                        DeviceMessage::Error => {
+                            bail!("Error in Message Handler, aborting");
+                        },
+                        DeviceMessage::Event(event) => {
+                            match event {
+                                EventType::Status(status) => {
+                                    debug!("Received Status, do work: {:?}", status);
+                                },
+                            }
+                        },
+                    }
                 }
                 Some(command) = msg_recv.recv() => {
-                    debug!("[RUNNER]{} Received Command: {:?}", command, self.config.device);
+                    debug!("[RUNNER]{} Received Command: {:?}", self.config.device, command);
+                    match command {
+                        GoXLRMessage::GetStatus(response) => {
+                            let _ = response.send(GoXLRStatus {});
+                        },
+                    }
                 }
                 _ = &mut self.config.stop => {
                     debug!("[RUNNER]{} Told to Stop, breaking Loop..", self.config.device);
@@ -92,5 +109,10 @@ pub struct GoXLRUSBConfiguration {
 #[derive(Debug)]
 pub enum DeviceMessage {
     Error,
-    Event,
+    Event(EventType),
+}
+
+#[derive(Debug)]
+pub enum EventType {
+    Status(GoXLRStatus),
 }

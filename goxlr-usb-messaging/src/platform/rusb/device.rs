@@ -1,21 +1,21 @@
-use anyhow::{anyhow, bail, Result};
-
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::runners::device::DeviceMessage;
-use log::{debug, info, warn};
+use anyhow::{anyhow, bail, Result};
+use log::{debug, error, info};
 use rusb::Error::Pipe;
 use rusb::{
     Device, DeviceDescriptor, DeviceHandle, Direction, GlobalContext, Language, Recipient,
     RequestType,
 };
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, oneshot};
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 use tokio::{select, task, time};
 
+use crate::requests::GoXLRMessage;
+use crate::runners::device::{DeviceMessage, EventType};
 use crate::USBLocation;
 
 pub(crate) struct GoXLRDevice {
@@ -84,6 +84,7 @@ impl GoXLRDevice {
 
         self.inner_init().await?;
 
+        let messenger = self.config.messenger.clone();
         let device = self.config.device;
         let stop = self.stop.clone();
         let events = self.config.events.clone();
@@ -99,8 +100,22 @@ impl GoXLRDevice {
                             break;
                         }
                         debug!("[DEVICE]{} Event Loop Tick..", device);
-                        let res = events.send(DeviceMessage::Event).await;
-                        debug!("[DEVICE]{} - {:?}", device, res);
+                        let (sender, receiver) = oneshot::channel();
+
+                        let _ = messenger.send(GoXLRMessage::GetStatus(sender)).await;
+                        match receiver.await {
+                            Ok(response) => {
+                                // Send the response upstream..
+                                let response = DeviceMessage::Event(EventType::Status(response));
+                                let _ = events.send(response).await;
+                            }
+                            Err(error) => {
+                                // Something's gone wrong polling, bail.
+                                error!("Error in Command Receiver: {}", error);
+                                let _ = events.send(DeviceMessage::Error).await;
+                                break;
+                            },
+                        }
                     }
                 }
             }
@@ -240,6 +255,6 @@ struct ReadControl {
 
 pub struct GoXLRConfiguration {
     pub(crate) device: USBLocation,
-    pub(crate) messenger: mpsc::Sender<bool>,
+    pub(crate) messenger: mpsc::Sender<GoXLRMessage>,
     pub(crate) events: mpsc::Sender<DeviceMessage>,
 }

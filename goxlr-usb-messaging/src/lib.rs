@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter};
 
 mod common;
 mod platform;
+pub mod requests;
 pub mod runners;
 
 /// GoXLR USB Vendor ID

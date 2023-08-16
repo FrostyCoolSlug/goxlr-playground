@@ -25,6 +25,7 @@ struct DeviceManager {
     serials: HashMap<String, USBLocation>,
 
     shutdown: Stop,
+    stopping: bool,
 }
 
 impl DeviceManager {
@@ -37,6 +38,7 @@ impl DeviceManager {
             states: HashMap::default(),
             serials: HashMap::default(),
             shutdown,
+            stopping: false,
         }
     }
 
@@ -82,6 +84,7 @@ impl DeviceManager {
                 },
                 _ = self.shutdown.recv() => {
                     let _ = pnp_send.send(());
+                    self.stopping = true;
                     break;
                 }
                 _ = ticker.tick() => {
@@ -178,7 +181,14 @@ impl DeviceManager {
                 debug!("[DeviceManager]{} Device Terminated", device);
                 // If we get here, the device has stopped, we should clear it..
                 self.serials.retain(|_, dev| *dev != device);
-                self.states.remove(&device);
+
+                // If we're in a 'Stopping' state, we're prepping for removal..
+                if current.state == RunnerState::Stopping && self.stopping {
+                    self.states.remove(&device);
+                } else {
+                    // We've stopped, but we're not supposed to, that's an error.
+                    current.state = RunnerState::Error;
+                }
                 return;
             }
 
