@@ -3,4 +3,5 @@
     crate, including status changes, events, etc.
 */
 
+pub mod commands;
 pub mod interaction;

@@ -6,7 +6,7 @@
 use std::cmp::Ordering;
 
 use anyhow::{bail, Result};
-use log::{debug, trace};
+use log::{debug, info, trace};
 use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 
@@ -14,6 +14,7 @@ use goxlr_shared::device::{DeviceInfo, DeviceType, GoXLRFeature};
 use goxlr_shared::version::VersionNumber;
 
 use crate::common::command_handler::GoXLRCommands;
+use crate::events::commands::{BasicResultCommand, CommandSender};
 use crate::events::interaction::InteractionEvent;
 use crate::handlers::state_tracker::StateTracker;
 use crate::platform::rusb::device::{GoXLRConfiguration, GoXLRDevice};
@@ -90,6 +91,9 @@ impl GoXLRUSBDevice {
                         },
                     }
                 }
+                Some(command) = self.config.command_receiver.recv() => {
+                    self.handle_command(command, &mut device).await;
+                }
                 _ = &mut self.config.stop => {
                     debug!("[RUNNER]{} Told to Stop, breaking Loop..", self.config.device);
                     break;
@@ -102,6 +106,16 @@ impl GoXLRUSBDevice {
 
         debug!("[RUNNER]{} Event loop terminated.", self.config.device);
         Ok(())
+    }
+
+    async fn handle_command(&self, sender: CommandSender, device: &mut GoXLRDevice) {
+        match sender {
+            CommandSender::BasicResultCommand(command, responder) => match command {
+                BasicResultCommand::SetColour(scheme) => {
+                    let _ = responder.send(device.apply_colour_scheme(scheme).await);
+                }
+            },
+        }
     }
 
     pub async fn get_device_info(&self, device: &mut GoXLRDevice) -> Result<DeviceInfo> {
@@ -164,6 +178,7 @@ pub struct GoXLRUSBConfiguration {
     pub device: USBLocation,
     pub interaction_event: mpsc::Sender<InteractionEvent>,
     pub device_event: mpsc::Sender<DeviceMessage>,
+    pub command_receiver: mpsc::Receiver<CommandSender>,
     pub stop: oneshot::Receiver<()>,
 }
 

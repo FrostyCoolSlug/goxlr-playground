@@ -36,7 +36,7 @@ Functionally, visually, and interactively, the enum is identical, and that chang
 expected to cause any problems. However, in the utils USB crate, code exists which turns the enum
 into an u32 based on the order:
 ```rust
-// From goxlr-utility/usb/commands.rs
+// From goxlr-utility/usb/messages
 impl Command {
     pub fn command_id(&self) {
         match self {

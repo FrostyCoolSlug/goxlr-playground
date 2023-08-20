@@ -4,11 +4,13 @@ use std::io::Cursor;
 use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
 use enumset::EnumSet;
+use goxlr_shared::colours::ColourScheme;
 use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 
 use crate::common::executor::ExecutableGoXLR;
 use crate::goxlr::commands::{Command, HardwareInfoCommand};
 use crate::types::buttons::{CurrentButtonStates, PhysicalButton};
+use crate::types::colours::ColourStruct;
 
 #[async_trait]
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
@@ -104,5 +106,11 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
             volumes: mixers,
             encoders,
         })
+    }
+
+    async fn apply_colour_scheme(&mut self, scheme: ColourScheme) -> Result<()> {
+        let data = scheme.build_colour_map();
+        self.request_data(Command::SetColourMap(), &data).await?;
+        Ok(())
     }
 }
