@@ -3,34 +3,33 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{anyhow, bail, Result};
-use log::{debug, error, info};
-use rusb::Error::Pipe;
+use goxlr_shared::device::DeviceType;
+use log::{debug, info, trace};
 use rusb::{
     Device, DeviceDescriptor, DeviceHandle, Direction, GlobalContext, Language, Recipient,
     RequestType,
 };
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
-use tokio::time::sleep;
 use tokio::{select, task, time};
 
-use crate::requests::GoXLRMessage;
+use crate::common::executor::InitialisableGoXLR;
 use crate::runners::device::{DeviceMessage, EventType};
-use crate::USBLocation;
+use crate::{USBLocation, PID_GOXLR_MINI};
 
 pub(crate) struct GoXLRDevice {
     config: GoXLRConfiguration,
     stop: Arc<AtomicBool>,
     task: Option<JoinHandle<()>>,
 
-    handle: DeviceHandle<GlobalContext>,
+    pub(crate) handle: DeviceHandle<GlobalContext>,
 
     device: Device<GlobalContext>,
     descriptor: DeviceDescriptor,
 
     language: Language,
     timeout: Duration,
-    command_count: u16,
+    pub(crate) command_count: u16,
 }
 
 impl GoXLRDevice {
@@ -78,44 +77,35 @@ impl GoXLRDevice {
         bail!("Specified Device not Found!")
     }
 
-    pub async fn initialise(&mut self) -> Result<()> {
+    pub async fn run(&mut self) -> Result<()> {
+        let poll_millis = 20;
+
         // We need to load our GoXLR stuff, init the device, then return..
         debug!("[DEVICE]{} Initialising", self.config.device);
 
-        self.inner_init().await?;
+        self.initialise().await?;
 
-        let messenger = self.config.messenger.clone();
         let device = self.config.device;
         let stop = self.stop.clone();
         let events = self.config.events.clone();
         // Once we're done with that, spawn an event handler..
         self.task = Some(task::spawn(async move {
             debug!("[DEVICE]{} Spawning Event Loop..", device);
-            let mut ticker = time::interval(Duration::from_millis(2000));
+            let mut ticker = time::interval(Duration::from_millis(poll_millis));
             loop {
                 select! {
                     _ = ticker.tick() => {
+                        // Under Linux we're not able to listen to INTERRUPTs from the USB Device
+                        // which would normally indicate the device 'state' has changed.
+
+                        // So we simply use this ticker and tell the parent to do the check.
                         if stop.load(Ordering::Relaxed) {
                             debug!("[DEVICE]{} Stopping Event Loop..", device);
                             break;
                         }
-                        debug!("[DEVICE]{} Event Loop Tick..", device);
-                        let (sender, receiver) = oneshot::channel();
 
-                        let _ = messenger.send(GoXLRMessage::GetStatus(sender)).await;
-                        match receiver.await {
-                            Ok(response) => {
-                                // Send the response upstream..
-                                let response = DeviceMessage::Event(EventType::Status(response));
-                                let _ = events.send(response).await;
-                            }
-                            Err(error) => {
-                                // Something's gone wrong polling, bail.
-                                error!("Error in Command Receiver: {}", error);
-                                let _ = events.send(DeviceMessage::Error).await;
-                                break;
-                            },
-                        }
+                        trace!("[DEVICE]{} Event Loop Tick..", device);
+                        let _ = events.send(DeviceMessage::Event(EventType::StatusChange)).await;
                     }
                 }
             }
@@ -125,74 +115,19 @@ impl GoXLRDevice {
         Ok(())
     }
 
-    async fn inner_init(&mut self) -> Result<()> {
-        // This command 'resets' the GoXLR to a clean state..
-        let reset_control = WriteControl {
-            request: 1,
-            value: 0,
-            index: 0,
-            data: &[],
-        };
-
-        // Attempt to execute it..
-        let result = self.write_vendor_control(reset_control);
-        if result == Err(Pipe) {
-            // The GoXLR is not initialised, we need to fix that..
-            info!("Found uninitialised GoXLR, attempting initialisation..");
-            self.handle.set_auto_detach_kernel_driver(true)?;
-
-            if self.handle.claim_interface(0).is_err() {
-                bail!("Unable to Claim Device");
-            }
-
-            debug!("Activating Vendor Interface...");
-            self.read_control(ReadControl {
-                request: 0,
-                value: 0,
-                index: 0,
-                length: 24,
-            })?;
-
-            // Now activate audio..
-            debug!("Activating Audio...");
-            self.write_class_control(WriteControl {
-                request: 1,
-                value: 0x0100,
-                index: 0x2900,
-                data: &[0x80, 0xbb, 0x00, 0x00],
-            })?;
-
-            self.handle.release_interface(0)?;
-
-            // Reset the device, so ALSA can pick it up again..
-            self.handle.reset()?;
-
-            // Reattempt the reset..
-            self.write_vendor_control(reset_control)?;
-
-            // Pause for a second, as we can grab devices a little too quickly!
-            sleep(Duration::from_secs(2)).await;
-        }
-
-        // Force command pipe activation in all cases.
-        debug!("Handling initial request");
-        let init = ReadControl {
-            request: 3,
-            value: 0,
-            index: 0,
-            length: 1040,
-        };
-        self.read_control(init)?;
-        Ok(())
-    }
-
     // No point making any of these async, as they're limited by libusb
-    fn write_vendor_control(&mut self, control: WriteControl<'_>) -> Result<(), rusb::Error> {
+    pub(crate) fn write_vendor_control(
+        &mut self,
+        control: WriteControl<'_>,
+    ) -> Result<(), rusb::Error> {
         self.write_control(RequestType::Vendor, control)?;
         Ok(())
     }
 
-    fn write_class_control(&mut self, control: WriteControl<'_>) -> Result<(), rusb::Error> {
+    pub(crate) fn write_class_control(
+        &mut self,
+        control: WriteControl<'_>,
+    ) -> Result<(), rusb::Error> {
         self.write_control(RequestType::Class, control)?;
         Ok(())
     }
@@ -214,7 +149,7 @@ impl GoXLRDevice {
         Ok(())
     }
 
-    fn read_control(&mut self, control: ReadControl) -> Result<Vec<u8>, rusb::Error> {
+    pub(crate) fn read_control(&mut self, control: ReadControl) -> Result<Vec<u8>, rusb::Error> {
         let mut buf = vec![0; control.length];
         let response_length = self.handle.read_control(
             rusb::request_type(Direction::In, RequestType::Vendor, Recipient::Interface),
@@ -228,6 +163,13 @@ impl GoXLRDevice {
         Ok(buf)
     }
 
+    pub(crate) fn get_device_type(&self) -> DeviceType {
+        if self.descriptor.product_id() == PID_GOXLR_MINI {
+            return DeviceType::Mini;
+        }
+        DeviceType::Full
+    }
+
     pub async fn stop(&mut self) {
         self.stop.store(true, Ordering::Relaxed);
 
@@ -239,22 +181,22 @@ impl GoXLRDevice {
 }
 
 #[derive(Clone, Copy)]
-struct WriteControl<'a> {
-    request: u8,
-    value: u16,
-    index: u16,
-    data: &'a [u8],
+pub(crate) struct WriteControl<'a> {
+    pub(crate) request: u8,
+    pub(crate) value: u16,
+    pub(crate) index: u16,
+    pub(crate) data: &'a [u8],
 }
 
-struct ReadControl {
-    request: u8,
-    value: u16,
-    index: u16,
-    length: usize,
+#[derive(Clone, Copy)]
+pub(crate) struct ReadControl {
+    pub(crate) request: u8,
+    pub(crate) value: u16,
+    pub(crate) index: u16,
+    pub(crate) length: usize,
 }
 
 pub struct GoXLRConfiguration {
     pub(crate) device: USBLocation,
-    pub(crate) messenger: mpsc::Sender<GoXLRMessage>,
     pub(crate) events: mpsc::Sender<DeviceMessage>,
 }

@@ -3,15 +3,15 @@ use std::fmt::Formatter;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct FirmwareVersions {
     pub firmware: VersionNumber,
-    pub fpga_count: u32,
     pub dice: VersionNumber,
+    pub fpga_count: u32,
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct VersionNumber(pub u32, pub u32, pub u32, pub u32);
 

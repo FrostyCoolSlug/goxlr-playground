@@ -6,12 +6,24 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# Shared GoXLR Data
+goxlr-shared = { path = "../goxlr-shared" }
+
 # Logging
 log = "0.4.19"
+
+# Async Trait handling
+async-trait = "0.1.72"
 
 # Runtime Dependencies
 tokio = { version = "1.29.1", features = ["full"] }
 
+# For handling internal enums
+enum-map = "2.6.0"
+enumset = "1.1.2"
+strum = "0.25.0"
+
 # USB Related Dependencies
 rusb = "0.9.2"
 anyhow = "1.0.72"
+byteorder = "1.4.3"

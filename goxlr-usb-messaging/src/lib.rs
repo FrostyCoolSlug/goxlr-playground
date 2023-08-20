@@ -1,7 +1,13 @@
 use std::fmt::{Display, Formatter};
 
 mod common;
+mod goxlr;
 mod platform;
+
+pub(crate) mod types;
+
+pub mod events;
+pub mod handlers;
 pub mod requests;
 pub mod runners;
 

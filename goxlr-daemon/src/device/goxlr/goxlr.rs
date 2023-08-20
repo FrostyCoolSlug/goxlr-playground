@@ -1,4 +1,5 @@
 use anyhow::{bail, Result};
+use goxlr_shared::device::DeviceInfo;
 use log::{debug, error, warn};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task};
@@ -11,13 +12,19 @@ use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
 use crate::stop::Stop;
 
 struct GoXLR {
+    device: Option<DeviceInfo>,
+
     config: GoXLRDeviceConfiguration,
     shutdown: Stop,
 }
 
 impl GoXLR {
     pub fn new(config: GoXLRDeviceConfiguration, shutdown: Stop) -> Self {
-        Self { config, shutdown }
+        Self {
+            device: None,
+            config,
+            shutdown,
+        }
     }
 
     pub async fn initialise(&mut self) -> Result<()> {
@@ -36,26 +43,29 @@ impl GoXLR {
         debug!("[GoXLR]{} Starting Event Loop", self.config.device);
 
         // Prepare all the messaging queues that are needed..
-        let (event_send, mut event_recv) = mpsc::channel(128);
+        let (event_send, mut event_recv) = mpsc::channel(16);
+        let (interaction_send, mut interaction_recv) = mpsc::channel(128);
         let (stop_send, stop_recv) = oneshot::channel();
         let (ready_send, ready_recv) = oneshot::channel();
 
         let configuration = GoXLRUSBConfiguration {
             device: self.config.device,
-            events: event_send,
+            interaction_event: interaction_send,
+            device_event: event_send,
             stop: stop_recv,
         };
         let runner = task::spawn(start_usb_device_runner(configuration, ready_send));
 
-        let messenger = match ready_recv.await {
+        let device = match ready_recv.await {
             Ok(recv) => recv,
             Err(e) => {
                 bail!("Error on Starting Receiver, aborting: {}", e);
             }
         };
+        let serial = device.serial.clone();
+        self.device = Some(device);
 
-        // Let the device runner know we're up and running (TODO: REQUEST SERIAL!)
-        let serial = String::from("000000000000");
+        // Let the device runner know we're up and running
         let run_msg = RunnerMessage::UpdateState(self.config.device, RunnerState::Running(serial));
         let _ = self.config.manager_sender.send(run_msg).await;
 
@@ -72,6 +82,9 @@ impl GoXLR {
                             debug!("[GoXLR]{} Event: {:?}", self.config.device, event);
                         }
                     }
+                }
+                Some(event) = interaction_recv.recv() => {
+                    debug!("Something Chnaged! {:?}", event);
                 }
                 _ = self.shutdown.recv() => {
                     debug!("[GoXLR]{} Shutdown Triggered!", self.config.device);
