@@ -6,17 +6,17 @@ use goxlr_shared::faders::FaderSources;
 /// event something messages with the ordering of any things that map here, this will remain safe!
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub(crate) enum AssignableChannel {
-    Microphone,
-    LineIn,
-    Console,
-    System,
-    Game,
-    Chat,
-    Sample,
-    Music,
-    Headphones,
-    MicrophoneMonitor,
-    LineOut,
+    Microphone = 0x00,
+    LineIn = 0x01,
+    Console = 0x02,
+    System = 0x03,
+    Game = 0x04,
+    Chat = 0x05,
+    Sample = 0x06,
+    Music = 0x07,
+    Headphones = 0x08,
+    MicrophoneMonitor = 0x09,
+    LineOut = 0x0A,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

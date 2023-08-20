@@ -10,7 +10,9 @@ use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 use crate::common::executor::ExecutableGoXLR;
 use crate::goxlr::commands::{Command, HardwareInfoCommand};
 use crate::types::buttons::{CurrentButtonStates, PhysicalButton};
+use crate::types::channels::AssignableChannel;
 use crate::types::colours::ColourStruct;
+use crate::types::faders::DeviceFader;
 
 #[async_trait]
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
@@ -106,6 +108,17 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
             volumes: mixers,
             encoders,
         })
+    }
+
+    async fn assign_fader(&mut self, fader: DeviceFader, source: AssignableChannel) -> Result<()> {
+        // This could be simpler by doing: data = [source as u8, 0x00, 0x00, 0x00]
+        // But I'm trying to make it clearer how data is handled.
+
+        let mut data = [0; 4];
+        LittleEndian::write_u32(&mut data, source as u32);
+
+        self.request_data(Command::SetFader(fader), &data).await?;
+        Ok(())
     }
 
     async fn apply_colour_scheme(&mut self, scheme: ColourScheme) -> Result<()> {

@@ -2,8 +2,10 @@ use anyhow::{bail, Context, Result};
 use goxlr_profile::Profile;
 use goxlr_shared::colours::ColourScheme;
 use goxlr_shared::device::DeviceInfo;
-use goxlr_usb_messaging::events::commands::{BasicResultCommand, CommandSender};
+use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource, CommandSender};
 use log::{debug, error, warn};
+use strum::IntoEnumIterator;
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task};
 
@@ -39,12 +41,29 @@ impl GoXLR {
     }
 
     pub async fn load_profile(&mut self) -> Result<()> {
+        self.assign_faders().await?;
         self.load_colours().await?;
+        Ok(())
+    }
+
+    pub async fn assign_faders(&self) -> Result<()> {
+        let page = self.profile.pages.current;
+        let faders = self.profile.pages.page_list[page].faders;
+        for fader in Fader::iter() {
+            let source = ChannelSource::FromFaderSource(faders[fader]);
+            let message = BasicResultCommand::AssignFader(fader, source);
+            self.send_no_result(message).await?;
+        }
 
         Ok(())
     }
 
     pub async fn load_colours(&self) -> Result<()> {
+        // Pull the colour scheme from the profile..
+        let page = self.profile.pages.current;
+        let faders = self.profile.pages.page_list[page].faders;
+        for fader in Fader::iter() {}
+
         let command = BasicResultCommand::SetColour(self.colour_scheme);
         self.send_no_result(command).await
     }

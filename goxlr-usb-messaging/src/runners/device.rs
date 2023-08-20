@@ -14,10 +14,11 @@ use goxlr_shared::device::{DeviceInfo, DeviceType, GoXLRFeature};
 use goxlr_shared::version::VersionNumber;
 
 use crate::common::command_handler::GoXLRCommands;
-use crate::events::commands::{BasicResultCommand, CommandSender};
+use crate::events::commands::{BasicResultCommand, ChannelSource, CommandSender};
 use crate::events::interaction::InteractionEvent;
 use crate::handlers::state_tracker::StateTracker;
 use crate::platform::rusb::device::{GoXLRConfiguration, GoXLRDevice};
+use crate::types::channels::AssignableChannel;
 use crate::USBLocation;
 
 // This is an obnoxiously long type, shorten it!
@@ -114,7 +115,20 @@ impl GoXLRUSBDevice {
                 BasicResultCommand::SetColour(scheme) => {
                     let _ = responder.send(device.apply_colour_scheme(scheme).await);
                 }
+                BasicResultCommand::AssignFader(fader, source) => {
+                    let channel = self.source_to_channel(source);
+                    let _ = responder.send(device.assign_fader(fader.into(), channel).await);
+                }
             },
+        }
+    }
+
+    fn source_to_channel(&self, source: ChannelSource) -> AssignableChannel {
+        match source {
+            ChannelSource::FromInputChannel(source) => source.into(),
+            ChannelSource::FromOutputChannel(source) => source.into(),
+            ChannelSource::FromFaderSource(source) => source.into(),
+            ChannelSource::FromVolumeChannel(source) => source.into(),
         }
     }
 

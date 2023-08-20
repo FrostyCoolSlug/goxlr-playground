@@ -28,6 +28,7 @@ pub struct ColourScheme {
     pub is_legacy: bool,
 
     // All the Structs for all the colours..
+    // TODO: Change these to EnumMaps to prevent `as usize`
     pub scribbles: [TwoColour; FADER_COUNT],
     pub mood: [TwoColour; MOOD_COUNT],
     pub mutes: [TwoColour; FADER_COUNT],
