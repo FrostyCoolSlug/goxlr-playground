@@ -1,7 +1,8 @@
 use crate::types::channels::AssignableChannel;
-use crate::types::encoders::Encoder;
-use crate::types::routing::RoutingInputDevice;
-use goxlr_shared::faders::Fader;
+use crate::types::encoders::DeviceEncoder;
+use crate::types::faders::DeviceFader;
+use crate::types::routing::RoutingInputChannel;
+use crate::types::submix::SubMixChannelName;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Command {
@@ -9,23 +10,23 @@ pub(crate) enum Command {
     SystemInfo(SystemInfoCommand),
     SetChannelState(AssignableChannel),
     SetChannelVolume(AssignableChannel),
-    SetEncoderValue(Encoder),
-    SetEncoderMode(Encoder),
-    SetFader(Fader),
-    SetRouting(RoutingInputDevice),
+    SetEncoderValue(DeviceEncoder),
+    SetEncoderMode(DeviceEncoder),
+    SetFader(DeviceFader),
+    SetRouting(RoutingInputChannel),
     SetButtonStates(),
     SetEffectParameters,
     SetMicrophoneParameters,
     GetMicrophoneLevel,
     SetColourMap(),
-    SetFaderDisplayMode(Fader),
-    SetScribble(Fader),
+    SetFaderDisplayMode(DeviceFader),
+    SetScribble(DeviceFader),
     GetButtonStates,
     GetHardwareInfo(HardwareInfoCommand),
 
     SetAnimationMode,
 
-    //SetSubChannelVolume(SubMixChannelName),
+    SetSubChannelVolume(SubMixChannelName),
     SetChannelMixes,
     SetMonitoredMix,
 
@@ -44,7 +45,7 @@ impl Command {
             Command::SetEncoderValue(encoder) => (0x80a << 12) | *encoder as u32,
             Command::SetEncoderMode(encoder) => (0x811 << 12) | *encoder as u32,
             Command::SetFader(fader) => (0x805 << 12) | *fader as u32,
-            Command::SetRouting(input_device) => (0x804 << 12) | input_device.id() as u32,
+            Command::SetRouting(channel) => (0x804 << 12) | channel.id() as u32,
             Command::SetColourMap() => 0x803 << 12,
             Command::SetButtonStates() => 0x808 << 12,
             Command::SetFaderDisplayMode(fader) => (0x814 << 12) | *fader as u32,
@@ -59,7 +60,7 @@ impl Command {
             Command::SetAnimationMode => 0x816 << 12,
 
             // I'm doing a +16 here, because there appears to be a bit reset going on..
-            //Command::SetSubChannelVolume(channel) => (0x806 << 12) | (*channel as u32 + 16),
+            Command::SetSubChannelVolume(channel) => (0x806 << 12) | *channel as u32,
             Command::SetChannelMixes => 0x817 << 12,
             Command::SetMonitoredMix => 0x818 << 12,
 

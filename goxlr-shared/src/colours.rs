@@ -12,6 +12,8 @@ use crate::faders::Fader;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+// These should not be changed, immediately consult a physician (or Frosty) if your
+// GoXLR has suddenly sprouted extra colour targets!
 const FADER_COUNT: usize = 4;
 const MOOD_COUNT: usize = 2;
 const PRESET_COUNT: usize = 6;

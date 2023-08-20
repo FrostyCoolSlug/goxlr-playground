@@ -5,6 +5,7 @@ pub mod device;
 pub mod encoders;
 pub mod faders;
 pub mod interaction;
+pub mod submix;
 pub mod version;
 
 pub fn add(left: usize, right: usize) -> usize {

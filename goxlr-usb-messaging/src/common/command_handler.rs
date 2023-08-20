@@ -1,5 +1,5 @@
-use std::io::Cursor;
 use anyhow::Result;
+use std::io::Cursor;
 
 use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
@@ -8,17 +8,19 @@ use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 
 use crate::common::executor::ExecutableGoXLR;
 use crate::goxlr::commands::{Command, HardwareInfoCommand};
-use crate::types::buttons::{CurrentButtonStates, StatusButton};
+use crate::types::buttons::{CurrentButtonStates, PhysicalButton};
 
 #[async_trait]
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
 /// all the specific command executors.
 pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     async fn get_serial_data(&mut self) -> Result<(String, String)> {
-        let result = self.request_data(
-            Command::GetHardwareInfo(HardwareInfoCommand::SerialNumber),
-            &[],
-        ).await?;
+        let result = self
+            .request_data(
+                Command::GetHardwareInfo(HardwareInfoCommand::SerialNumber),
+                &[],
+            )
+            .await?;
 
         let serial_slice = &result[..24];
         let serial_len = serial_slice
@@ -38,10 +40,12 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     }
 
     async fn get_firmware_version(&mut self) -> Result<FirmwareVersions> {
-        let result = self.request_data(
-            Command::GetHardwareInfo(HardwareInfoCommand::FirmwareVersion),
-            &[],
-        ).await?;
+        let result = self
+            .request_data(
+                Command::GetHardwareInfo(HardwareInfoCommand::FirmwareVersion),
+                &[],
+            )
+            .await?;
         let mut cursor = Cursor::new(result);
         let firmware_packed = cursor.read_u32::<LittleEndian>()?;
         let firmware_build = cursor.read_u32::<LittleEndian>()?;
@@ -89,7 +93,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         encoders[2] = result[6] as i8; // Reverb
         encoders[3] = result[7] as i8; // Echo
 
-        for button in EnumSet::<StatusButton>::all() {
+        for button in EnumSet::<PhysicalButton>::all() {
             if button_states & (1 << button as u8) != 0 {
                 pressed.insert(button);
             }

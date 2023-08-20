@@ -18,7 +18,7 @@ use goxlr_shared::interaction::{
 };
 
 use crate::events::interaction::InteractionEvent;
-use crate::types::buttons::{CurrentButtonStates, StatusButton};
+use crate::types::buttons::{CurrentButtonStates, PhysicalButton};
 
 #[derive(Debug)]
 pub(crate) struct StateTracker {
@@ -78,10 +78,10 @@ impl StateTracker {
         }
     }
 
-    async fn update_buttons(&mut self, buttons: EnumSet<StatusButton>) {
+    async fn update_buttons(&mut self, buttons: EnumSet<PhysicalButton>) {
         for button in InteractiveButtons::iter() {
             let current_state = self.button_states[button];
-            let status_button = StatusButton::from(button);
+            let status_button = PhysicalButton::from(button);
 
             if buttons.contains(status_button) && current_state == ButtonState::NotPressed {
                 let _ = self.sender.send(InteractionEvent::ButtonDown(button)).await;

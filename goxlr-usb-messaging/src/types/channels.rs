@@ -21,13 +21,13 @@ pub(crate) enum AssignableChannel {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub(crate) enum ChannelState {
-    Unmuted,
-    Muted,
+    Unmuted = 0x00,
+    Muted = 0x01,
 }
 
-impl Into<AssignableChannel> for InputChannels {
-    fn into(self) -> AssignableChannel {
-        match self {
+impl From<InputChannels> for AssignableChannel {
+    fn from(value: InputChannels) -> Self {
+        match value {
             InputChannels::Microphone => AssignableChannel::Microphone,
             InputChannels::Chat => AssignableChannel::Chat,
             InputChannels::Music => AssignableChannel::Music,
@@ -40,9 +40,9 @@ impl Into<AssignableChannel> for InputChannels {
     }
 }
 
-impl Into<AssignableChannel> for OutputChannels {
-    fn into(self) -> AssignableChannel {
-        match self {
+impl From<OutputChannels> for AssignableChannel {
+    fn from(value: OutputChannels) -> Self {
+        match value {
             OutputChannels::Headphones => AssignableChannel::Headphones,
             OutputChannels::ChatMic => AssignableChannel::Chat,
             OutputChannels::LineOut => AssignableChannel::LineOut,
@@ -54,9 +54,9 @@ impl Into<AssignableChannel> for OutputChannels {
     }
 }
 
-impl Into<AssignableChannel> for FaderSources {
-    fn into(self) -> AssignableChannel {
-        match self {
+impl From<FaderSources> for AssignableChannel {
+    fn from(value: FaderSources) -> Self {
+        match value {
             FaderSources::Microphone => AssignableChannel::Microphone,
             FaderSources::Chat => AssignableChannel::Chat,
             FaderSources::Music => AssignableChannel::Music,
@@ -72,9 +72,9 @@ impl Into<AssignableChannel> for FaderSources {
     }
 }
 
-impl Into<AssignableChannel> for VolumeChannels {
-    fn into(self) -> AssignableChannel {
-        match self {
+impl From<VolumeChannels> for AssignableChannel {
+    fn from(value: VolumeChannels) -> AssignableChannel {
+        match value {
             VolumeChannels::MicrophoneMonitor => AssignableChannel::MicrophoneMonitor,
         }
     }
