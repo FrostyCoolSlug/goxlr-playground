@@ -1,27 +1,26 @@
 use anyhow::{bail, Context, Result};
-use goxlr_profile::Profile;
-use goxlr_shared::colours::ColourScheme;
-use goxlr_shared::device::DeviceInfo;
-use goxlr_shared::faders::{Fader, FaderSources};
-use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource, CommandSender};
 use log::{debug, error, warn};
-use strum::IntoEnumIterator;
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task};
 
+use goxlr_profile::Profile;
+use goxlr_shared::colours::ColourScheme;
+use goxlr_shared::device::DeviceInfo;
+use goxlr_usb_messaging::events::commands::{BasicResultCommand, CommandSender};
 use goxlr_usb_messaging::runners::device::DeviceMessage;
 use goxlr_usb_messaging::runners::device::{start_usb_device_runner, GoXLRUSBConfiguration};
 
 use crate::device::device_manager::{RunnerMessage, RunnerState};
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
+use crate::device::goxlr::parts::load_profile::LoadProfile;
 use crate::stop::Stop;
 
-struct GoXLR {
+pub(crate) struct GoXLR {
     device: Option<DeviceInfo>,
     command_sender: Option<mpsc::Sender<CommandSender>>,
 
-    profile: Profile,
-    colour_scheme: ColourScheme,
+    pub profile: Profile,
+    pub colour_scheme: ColourScheme,
 
     config: GoXLRDeviceConfiguration,
     shutdown: Stop,
@@ -40,38 +39,10 @@ impl GoXLR {
         }
     }
 
-    pub async fn load_profile(&mut self) -> Result<()> {
-        self.assign_faders().await?;
-        self.load_colours().await?;
-        Ok(())
-    }
-
-    pub async fn assign_faders(&self) -> Result<()> {
-        let page = self.profile.pages.current;
-        let faders = self.profile.pages.page_list[page].faders;
-        for fader in Fader::iter() {
-            let source = ChannelSource::FromFaderSource(faders[fader]);
-            let message = BasicResultCommand::AssignFader(fader, source);
-            self.send_no_result(message).await?;
-        }
-
-        Ok(())
-    }
-
-    pub async fn load_colours(&self) -> Result<()> {
-        // Pull the colour scheme from the profile..
-        let page = self.profile.pages.current;
-        let faders = self.profile.pages.page_list[page].faders;
-        for fader in Fader::iter() {}
-
-        let command = BasicResultCommand::SetColour(self.colour_scheme);
-        self.send_no_result(command).await
-    }
-
     /// This function is simply for command which only have a simple Success / Failed result,
     /// there's ultimately no need to have loads of set up / tear down code for the messaging
     /// system all over the place if we're not expecting to handle anything.
-    async fn send_no_result(&self, command: BasicResultCommand) -> Result<()> {
+    pub(crate) async fn send_no_result(&self, command: BasicResultCommand) -> Result<()> {
         let (msg_send, msg_receive) = oneshot::channel();
 
         let command_sender = self.command_sender.clone();

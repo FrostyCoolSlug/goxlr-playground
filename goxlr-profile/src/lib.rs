@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
 use goxlr_shared::channels::OutputChannels;
-use goxlr_shared::colours::Colour;
+use goxlr_shared::colours::{Colour, FaderColour, TwoColour};
 use goxlr_shared::faders::{Fader, FaderSources};
 
 #[derive(Serialize, Deserialize)]
@@ -128,6 +128,15 @@ pub struct FaderColourSet {
 
     /// The colour displayed below the fader
     pub bottom_colour: Colour,
+}
+
+impl From<FaderColourSet> for FaderColour {
+    fn from(value: FaderColourSet) -> Self {
+        FaderColour {
+            colour1: value.top_colour,
+            colour2: value.bottom_colour,
+        }
+    }
 }
 
 /// How the colours on the fader are displayed

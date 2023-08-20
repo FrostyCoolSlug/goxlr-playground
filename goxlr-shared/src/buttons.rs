@@ -37,9 +37,9 @@ pub enum Buttons {
     SamplerClear,
 }
 
-impl Into<Buttons> for InteractiveButtons {
-    fn into(self) -> Buttons {
-        match self {
+impl From<InteractiveButtons> for Buttons {
+    fn from(value: InteractiveButtons) -> Self {
+        match value {
             InteractiveButtons::Fader1Mute => Buttons::Fader1Mute,
             InteractiveButtons::Fader2Mute => Buttons::Fader2Mute,
             InteractiveButtons::Fader3Mute => Buttons::Fader3Mute,
@@ -68,9 +68,9 @@ impl Into<Buttons> for InteractiveButtons {
     }
 }
 
-impl Into<Buttons> for TwoColourTargets {
-    fn into(self) -> Buttons {
-        match self {
+impl From<TwoColourTargets> for Buttons {
+    fn from(value: TwoColourTargets) -> Self {
+        match value {
             TwoColourTargets::Fader1Mute => Buttons::Fader1Mute,
             TwoColourTargets::Fader2Mute => Buttons::Fader2Mute,
             TwoColourTargets::Fader3Mute => Buttons::Fader3Mute,
@@ -95,7 +95,6 @@ impl Into<Buttons> for TwoColourTargets {
             TwoColourTargets::EffectFx => Buttons::EffectFx,
             TwoColourTargets::Swear => Buttons::Swear,
             TwoColourTargets::CoughButton => Buttons::CoughButton,
-
             _ => panic!("Attempted to Lookup Two Colour on a non-button!"),
         }
     }

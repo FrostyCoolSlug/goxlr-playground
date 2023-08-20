@@ -6,7 +6,7 @@
 use std::cmp::Ordering;
 
 use anyhow::{bail, Result};
-use log::{debug, info, trace};
+use log::{debug, trace};
 use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 

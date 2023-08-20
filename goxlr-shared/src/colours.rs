@@ -91,6 +91,10 @@ impl ColourScheme {
         &mut self.faders[target as usize]
     }
 
+    pub fn set_fader_target(&mut self, target: Fader, value: FaderColour) {
+        self.faders[target as usize] = value;
+    }
+
     pub fn get_encoder_target(&mut self, target: Encoders) -> &mut ThreeColour {
         &mut self.encoders[target as usize]
     }
@@ -184,9 +188,9 @@ pub enum TwoColourTargets {
     CoughButton,
 }
 
-impl Into<TwoColourTargets> for Buttons {
-    fn into(self) -> TwoColourTargets {
-        match self {
+impl From<Buttons> for TwoColourTargets {
+    fn from(value: Buttons) -> Self {
+        match value {
             Buttons::Fader1Mute => TwoColourTargets::Fader1Mute,
             Buttons::Fader2Mute => TwoColourTargets::Fader2Mute,
             Buttons::Fader3Mute => TwoColourTargets::Fader3Mute,

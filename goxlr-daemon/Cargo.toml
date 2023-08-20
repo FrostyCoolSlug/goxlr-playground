@@ -33,3 +33,6 @@ anyhow = "1.0.70"
 # Logging..
 simplelog = "0.12.1"
 log = "0.4.19"
+
+# Async Trait Support
+async-trait = "0.1.72"
