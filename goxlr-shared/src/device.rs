@@ -1,5 +1,6 @@
 use crate::version::FirmwareVersions;
 
+#[derive(Debug, Clone)]
 pub struct DeviceInfo {
     pub serial: String,
     pub manufacture_date: String,
@@ -10,6 +11,7 @@ pub struct DeviceInfo {
     pub features: Vec<GoXLRFeature>,
 }
 
+#[derive(Debug, Clone)]
 pub enum GoXLRFeature {
     Animation,
     Submix,

@@ -1,8 +1,11 @@
 use goxlr_shared::states::State;
 
+#[derive(Default)]
 pub(crate) enum ButtonDisplay {
     Colour1 = 0x01,
     Colour2 = 0x00,
+
+    #[default]
     DimmedColour1 = 0x02,
     DimmedColour2 = 0x04,
     Blinking = 0x03,

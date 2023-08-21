@@ -6,6 +6,7 @@ pub mod encoders;
 pub mod faders;
 pub mod interaction;
 pub mod routing;
+pub mod scribbles;
 pub mod states;
 pub mod submix;
 pub mod version;

@@ -18,7 +18,7 @@ use crate::device::goxlr::parts::load_profile::LoadProfile;
 use crate::stop::Stop;
 
 pub(crate) struct GoXLR {
-    device: Option<DeviceInfo>,
+    pub device: Option<DeviceInfo>,
     command_sender: Option<mpsc::Sender<CommandSender>>,
 
     pub profile: Profile,

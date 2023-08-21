@@ -4,7 +4,11 @@ use crate::device::goxlr::goxlr::GoXLR;
 use async_trait::async_trait;
 use goxlr_profile::MuteState;
 use goxlr_shared::buttons::{Buttons, InactiveButtonBehaviour};
+use goxlr_shared::colours::TwoColourTargets;
+use goxlr_shared::colours::TwoColourTargets::Scribble1;
+use goxlr_shared::device::DeviceType;
 use goxlr_shared::faders::Fader;
+use goxlr_shared::scribbles::Scribble;
 use goxlr_shared::states::State;
 use goxlr_usb_messaging::events::commands::BasicResultCommand::SetFaderStyle;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
@@ -20,6 +24,7 @@ pub(crate) trait LoadProfile {
     // Colour Related Commands
     async fn load_colours(&mut self) -> Result<()>;
     async fn load_button_states(&mut self) -> Result<()>;
+    async fn load_display(&mut self) -> Result<()>;
 }
 
 #[async_trait]
@@ -68,14 +73,33 @@ impl LoadProfile for GoXLR {
             let mute_colours = self.colour_scheme.get_two_colour_target(target);
             mute_colours.replace(channel.display.mute_colours.into());
 
+            // Get the Screen colours for the fader..
+            let scribble: Scribble = fader.into();
+            let scribble = self.colour_scheme.get_two_colour_target(scribble.into());
+            scribble.colour1 = channel.display.screen_display.colour;
+        }
+
+        let command = BasicResultCommand::SetColour(self.colour_scheme);
+        self.send_no_result(command).await
+    }
+
+    async fn load_button_states(&mut self) -> Result<()> {
+        // Get the Mute states from the faders..
+        let fader_page = self.profile.pages.current;
+        let faders = self.profile.pages.page_list[fader_page].faders;
+        for fader in Fader::iter() {
+            // Get the button..
+            let button = Buttons::from_fader(fader);
+
+            let channel = self.profile.channels[faders[fader]].clone();
             // Is this channel muted? If so, update the button..
             let mute_state = channel.mute_state;
             let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
 
             // Get the Inactive behaviour..
-
             match mute_state {
                 MuteState::Unmuted => {
+                    // Apply 'Inactive' State..
                     self.button_states.set_state(
                         button,
                         match mute_behaviour {
@@ -85,6 +109,8 @@ impl LoadProfile for GoXLR {
                         },
                     );
                 }
+
+                // This might need some more work..
                 MuteState::MutedToTargets => self.button_states.set_state(button, State::Colour2),
                 MuteState::MutedToAll => self.button_states.set_state(button, State::Blinking),
             }
@@ -93,11 +119,15 @@ impl LoadProfile for GoXLR {
         let command = BasicResultCommand::SetButtonStates(self.button_states);
         self.send_no_result(command).await?;
 
-        let command = BasicResultCommand::SetColour(self.colour_scheme);
-        self.send_no_result(command).await
+        Ok(())
     }
 
-    async fn load_button_states(&mut self) -> Result<()> {
+    async fn load_display(&mut self) -> Result<()> {
+        // If we're a Mini, nothing to do.
+        if self.device.clone().unwrap().device_type == DeviceType::Mini {
+            return Ok(());
+        }
+
         Ok(())
     }
 }

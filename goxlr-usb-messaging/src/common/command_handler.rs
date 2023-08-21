@@ -193,7 +193,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
 
     async fn set_button_states(&mut self, states: ButtonDisplayStates) -> Result<()> {
         // Create the base set with all buttons 'Dimmed'
-        let mut state = [ButtonDisplay::DimmedColour1 as u8; 24];
+        let mut state = [ButtonDisplay::default() as u8; 24];
 
         let buttons = states.get_list();
         for button in Buttons::iter() {

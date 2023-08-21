@@ -8,6 +8,7 @@ use strum::EnumIter;
 use crate::buttons::Buttons;
 use crate::encoders::Encoders;
 use crate::faders::Fader;
+use crate::scribbles::Scribble;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -97,6 +98,17 @@ impl ColourScheme {
 
     pub fn get_encoder_target(&mut self, target: Encoders) -> &mut ThreeColour {
         &mut self.encoders[target as usize]
+    }
+}
+
+impl From<Scribble> for TwoColourTargets {
+    fn from(value: Scribble) -> Self {
+        match value {
+            Scribble::A => TwoColourTargets::Scribble1,
+            Scribble::B => TwoColourTargets::Scribble2,
+            Scribble::C => TwoColourTargets::Scribble3,
+            Scribble::D => TwoColourTargets::Scribble4,
+        }
     }
 }
 

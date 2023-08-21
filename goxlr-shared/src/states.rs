@@ -18,9 +18,9 @@ impl ButtonDisplayStates {
 
 #[derive(Debug, Default, Copy, Clone)]
 pub enum State {
-    #[default]
     Colour1,
     Colour2,
+    #[default]
     DimmedColour1,
     DimmedColour2,
     Blinking,
