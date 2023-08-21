@@ -37,8 +37,8 @@ impl Default for FaderPage {
         Self {
             faders: enum_map! {
                 Fader::A => FaderSources::Microphone,
-                Fader::B => FaderSources::Music,
-                Fader::C => FaderSources::Chat,
+                Fader::B => FaderSources::Chat,
+                Fader::C => FaderSources::Music,
                 Fader::D => FaderSources::System
             },
         }
