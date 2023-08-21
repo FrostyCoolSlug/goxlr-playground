@@ -1,7 +1,7 @@
-use goxlr_shared::channels::{InputChannels, OutputChannels};
+use goxlr_shared::channels::{InputChannels, RoutingOutput};
 
 #[derive(Copy, Clone, Debug)]
-pub enum RoutingOutputDevice {
+pub(crate) enum RoutingOutputDevice {
     HeadphonesRight,
     HeadphonesLeft,
     StreamMixRight,
@@ -13,6 +13,39 @@ pub enum RoutingOutputDevice {
     LineOutRight,
     LineOutLeft,
     HardTune,
+}
+
+pub(crate) enum RoutingChannel {
+    Left,
+    Right,
+}
+
+impl RoutingOutputDevice {
+    pub fn from(device: RoutingOutput, channel: RoutingChannel) -> RoutingOutputDevice {
+        match device {
+            RoutingOutput::Headphones => match channel {
+                RoutingChannel::Left => RoutingOutputDevice::HeadphonesLeft,
+                RoutingChannel::Right => RoutingOutputDevice::HeadphonesRight,
+            },
+            RoutingOutput::StreamMix => match channel {
+                RoutingChannel::Left => RoutingOutputDevice::StreamMixLeft,
+                RoutingChannel::Right => RoutingOutputDevice::StreamMixRight,
+            },
+            RoutingOutput::LineOut => match channel {
+                RoutingChannel::Left => RoutingOutputDevice::LineOutLeft,
+                RoutingChannel::Right => RoutingOutputDevice::LineOutRight,
+            },
+            RoutingOutput::ChatMic => match channel {
+                RoutingChannel::Left => RoutingOutputDevice::ChatMicLeft,
+                RoutingChannel::Right => RoutingOutputDevice::ChatMicRight,
+            },
+            RoutingOutput::Sampler => match channel {
+                RoutingChannel::Left => RoutingOutputDevice::SamplerLeft,
+                RoutingChannel::Right => RoutingOutputDevice::SamplerRight,
+            },
+            RoutingOutput::HardTune => RoutingOutputDevice::HardTune,
+        }
+    }
 }
 
 impl RoutingOutputDevice {
@@ -31,35 +64,10 @@ impl RoutingOutputDevice {
             RoutingOutputDevice::HardTune => 21,
         }
     }
-
-    pub fn from_basic(basic: &OutputChannels) -> (RoutingOutputDevice, RoutingOutputDevice) {
-        match basic {
-            OutputChannels::Headphones => (
-                RoutingOutputDevice::HeadphonesLeft,
-                RoutingOutputDevice::HeadphonesRight,
-            ),
-            OutputChannels::StreamMix => (
-                RoutingOutputDevice::StreamMixLeft,
-                RoutingOutputDevice::StreamMixRight,
-            ),
-            OutputChannels::ChatMic => (
-                RoutingOutputDevice::ChatMicLeft,
-                RoutingOutputDevice::ChatMicRight,
-            ),
-            OutputChannels::Sampler => (
-                RoutingOutputDevice::SamplerLeft,
-                RoutingOutputDevice::SamplerRight,
-            ),
-            OutputChannels::LineOut => (
-                RoutingOutputDevice::LineOutLeft,
-                RoutingOutputDevice::LineOutRight,
-            ),
-        }
-    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum RoutingInputChannel {
+pub(crate) enum RoutingInputChannel {
     MicrophoneRight,
     MicrophoneLeft,
     MusicRight,
@@ -74,11 +82,48 @@ pub enum RoutingInputChannel {
     LineInLeft,
     SystemRight,
     SystemLeft,
-    SamplesRight,
-    SamplesLeft,
+    SampleRight,
+    SampleLeft,
 }
 
 impl RoutingInputChannel {
+    pub fn from(input: InputChannels, channel: RoutingChannel) -> Self {
+        match input {
+            InputChannels::Microphone => match channel {
+                RoutingChannel::Left => RoutingInputChannel::MicrophoneLeft,
+                RoutingChannel::Right => RoutingInputChannel::MicrophoneRight,
+            },
+            InputChannels::Chat => match channel {
+                RoutingChannel::Left => RoutingInputChannel::ChatLeft,
+                RoutingChannel::Right => RoutingInputChannel::ChatRight,
+            },
+            InputChannels::Music => match channel {
+                RoutingChannel::Left => RoutingInputChannel::MusicLeft,
+                RoutingChannel::Right => RoutingInputChannel::MusicRight,
+            },
+            InputChannels::Game => match channel {
+                RoutingChannel::Left => RoutingInputChannel::GameLeft,
+                RoutingChannel::Right => RoutingInputChannel::GameRight,
+            },
+            InputChannels::Console => match channel {
+                RoutingChannel::Left => RoutingInputChannel::ConsoleLeft,
+                RoutingChannel::Right => RoutingInputChannel::ConsoleRight,
+            },
+            InputChannels::LineIn => match channel {
+                RoutingChannel::Left => RoutingInputChannel::LineInLeft,
+                RoutingChannel::Right => RoutingInputChannel::LineInRight,
+            },
+            InputChannels::System => match channel {
+                RoutingChannel::Left => RoutingInputChannel::SystemLeft,
+                RoutingChannel::Right => RoutingInputChannel::SystemRight,
+            },
+            InputChannels::Sample => match channel {
+                RoutingChannel::Left => RoutingInputChannel::SampleLeft,
+                RoutingChannel::Right => RoutingInputChannel::SampleRight,
+            },
+        }
+    }
+
     pub fn id(&self) -> u8 {
         match self {
             RoutingInputChannel::MicrophoneLeft => 0x02,
@@ -95,45 +140,8 @@ impl RoutingInputChannel {
             RoutingInputChannel::LineInRight => 0x05,
             RoutingInputChannel::SystemLeft => 0x08,
             RoutingInputChannel::SystemRight => 0x09,
-            RoutingInputChannel::SamplesLeft => 0x10,
-            RoutingInputChannel::SamplesRight => 0x11,
-        }
-    }
-
-    pub fn from_basic(basic: &InputChannels) -> (RoutingInputChannel, RoutingInputChannel) {
-        match basic {
-            InputChannels::Microphone => (
-                RoutingInputChannel::MicrophoneLeft,
-                RoutingInputChannel::MicrophoneRight,
-            ),
-            InputChannels::Chat => (
-                RoutingInputChannel::ChatLeft,
-                RoutingInputChannel::ChatRight,
-            ),
-            InputChannels::Music => (
-                RoutingInputChannel::MusicLeft,
-                RoutingInputChannel::MusicRight,
-            ),
-            InputChannels::Game => (
-                RoutingInputChannel::GameLeft,
-                RoutingInputChannel::GameRight,
-            ),
-            InputChannels::Console => (
-                RoutingInputChannel::ConsoleLeft,
-                RoutingInputChannel::ConsoleRight,
-            ),
-            InputChannels::LineIn => (
-                RoutingInputChannel::LineInLeft,
-                RoutingInputChannel::LineInRight,
-            ),
-            InputChannels::System => (
-                RoutingInputChannel::SystemLeft,
-                RoutingInputChannel::SystemRight,
-            ),
-            InputChannels::Sample => (
-                RoutingInputChannel::SamplesLeft,
-                RoutingInputChannel::SamplesRight,
-            ),
+            RoutingInputChannel::SampleLeft => 0x10,
+            RoutingInputChannel::SampleRight => 0x11,
         }
     }
 }

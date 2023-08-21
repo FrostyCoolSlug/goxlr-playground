@@ -1,10 +1,15 @@
-use anyhow::Result;
 use std::io::Cursor;
 
+use anyhow::Result;
 use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
+use enum_map::EnumMap;
 use enumset::EnumSet;
+use strum::IntoEnumIterator;
+
+use goxlr_shared::channels::{InputChannels, RoutingOutput};
 use goxlr_shared::colours::ColourScheme;
+use goxlr_shared::routing::RouteValue;
 use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 
 use crate::common::executor::ExecutableGoXLR;
@@ -13,6 +18,10 @@ use crate::types::buttons::{CurrentButtonStates, PhysicalButton};
 use crate::types::channels::AssignableChannel;
 use crate::types::colours::ColourStruct;
 use crate::types::faders::DeviceFader;
+use crate::types::routing::RoutingChannel::{Left, Right};
+use crate::types::routing::{RoutingInputChannel, RoutingOutputDevice};
+
+type RoutingValues = EnumMap<RoutingOutput, RouteValue>;
 
 #[async_trait]
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
@@ -118,6 +127,42 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         LittleEndian::write_u32(&mut data, source as u32);
 
         self.request_data(Command::SetFader(fader), &data).await?;
+        Ok(())
+    }
+
+    async fn apply_routing(&mut self, input: InputChannels, values: RoutingValues) -> Result<()> {
+        // We need to take the values map, iterate it, and create the routing structure..
+        let mut l_data = [0; 22];
+        let mut r_data = [0; 22];
+
+        for output in RoutingOutput::iter() {
+            // We need to check the mapping of this value, and apply it..
+            let left = RoutingOutputDevice::from(output, Left).position();
+            let right = RoutingOutputDevice::from(output, Right).position();
+
+            let value = values[output];
+
+            l_data[left] = match value {
+                RouteValue::On => 0x20,
+                RouteValue::Off => 0x00,
+                RouteValue::Value(value) => value,
+            };
+
+            r_data[right] = match value {
+                RouteValue::On => 0x20,
+                RouteValue::Off => 0x00,
+                RouteValue::Value(value) => value,
+            };
+        }
+
+        let left = RoutingInputChannel::from(input, Left);
+        let right = RoutingInputChannel::from(input, Right);
+
+        self.request_data(Command::SetRouting(left), &l_data)
+            .await?;
+        self.request_data(Command::SetRouting(right), &r_data)
+            .await?;
+
         Ok(())
     }
 

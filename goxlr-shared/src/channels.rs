@@ -1,8 +1,10 @@
+use enum_map::Enum;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use strum::EnumIter;
 
 /// A list of channels classified as 'Inputs'
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Enum, EnumIter)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum InputChannels {
     Microphone,
@@ -16,7 +18,7 @@ pub enum InputChannels {
 }
 
 /// A list of channels classified as 'Outputs'
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Enum, EnumIter)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum OutputChannels {
     Headphones,
@@ -31,4 +33,15 @@ pub enum OutputChannels {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum VolumeChannels {
     MicrophoneMonitor,
+}
+
+#[derive(Debug, Copy, Clone, Enum, EnumIter)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum RoutingOutput {
+    Headphones,
+    StreamMix,
+    LineOut,
+    ChatMic,
+    Sampler,
+    HardTune,
 }

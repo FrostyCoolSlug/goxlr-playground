@@ -5,6 +5,7 @@ pub mod device;
 pub mod encoders;
 pub mod faders;
 pub mod interaction;
+pub mod routing;
 pub mod submix;
 pub mod version;
 

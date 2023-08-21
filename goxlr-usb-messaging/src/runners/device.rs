@@ -119,6 +119,9 @@ impl GoXLRUSBDevice {
                     let channel = self.source_to_channel(source);
                     let _ = responder.send(device.assign_fader(fader.into(), channel).await);
                 }
+                BasicResultCommand::ApplyRouting(input, table) => {
+                    let _ = responder.send(device.apply_routing(input, table).await);
+                }
             },
         }
     }
