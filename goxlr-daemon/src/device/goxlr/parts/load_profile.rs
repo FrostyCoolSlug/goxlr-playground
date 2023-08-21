@@ -1,18 +1,17 @@
 use anyhow::Result;
-
-use crate::device::goxlr::goxlr::GoXLR;
 use async_trait::async_trait;
+use strum::IntoEnumIterator;
+
 use goxlr_profile::MuteState;
 use goxlr_shared::buttons::{Buttons, InactiveButtonBehaviour};
-use goxlr_shared::colours::TwoColourTargets;
-use goxlr_shared::colours::TwoColourTargets::Scribble1;
 use goxlr_shared::device::DeviceType;
 use goxlr_shared::faders::Fader;
 use goxlr_shared::scribbles::Scribble;
 use goxlr_shared::states::State;
 use goxlr_usb_messaging::events::commands::BasicResultCommand::SetFaderStyle;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
-use strum::IntoEnumIterator;
+
+use crate::device::goxlr::goxlr::GoXLR;
 
 /// This trait contains all methods needed to successfully load a profile, and are implemented
 /// for the GoXLR type immediately after. This code assumes that self.profile is accurate.
