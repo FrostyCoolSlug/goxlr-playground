@@ -220,7 +220,7 @@ impl From<Buttons> for TwoColourTargets {
 }
 
 /// How the colours on the fader are displayed
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum FaderDisplayMode {
     /// This will produce a meter, that matches the current audio volume
     Meter,
