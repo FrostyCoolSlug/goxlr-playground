@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
 /// A list of channels classified as 'Inputs'
-#[derive(Debug, Copy, Clone, Enum, EnumIter)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Enum, EnumIter)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum InputChannels {
     Microphone,
@@ -18,7 +18,7 @@ pub enum InputChannels {
 }
 
 /// A list of channels classified as 'Outputs'
-#[derive(Debug, Copy, Clone, Enum, EnumIter)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Enum, EnumIter)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum OutputChannels {
     Headphones,
@@ -35,7 +35,7 @@ pub enum VolumeChannels {
     MicrophoneMonitor,
 }
 
-#[derive(Debug, Copy, Clone, Enum, EnumIter)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Enum, EnumIter)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum RoutingOutput {
     Headphones,

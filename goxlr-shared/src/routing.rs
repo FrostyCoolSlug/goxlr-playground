@@ -14,6 +14,11 @@ impl RoutingTable {
     }
 
     pub fn set_routing(&mut self, output: RoutingOutput, input: InputChannels, value: RouteValue) {
+        // This format isn't supported, so do nothing.
+        if output == RoutingOutput::ChatMic && input == InputChannels::Chat {
+            return;
+        }
+
         self.table[input][output] = value;
     }
 }
