@@ -12,14 +12,14 @@ use crate::ChangeEvent;
 use enum_map::EnumMap;
 use enumset::EnumSet;
 use goxlr_shared::interaction::{
-    ButtonState, InteractiveButtons, InteractiveEncoders, InteractiveFaders,
+    ButtonStates, InteractiveButtons, InteractiveEncoders, InteractiveFaders,
 };
 use strum::IntoEnumIterator;
 use tokio::sync::mpsc;
 
 #[derive(Debug)]
 pub(crate) struct GoXLRStateTracker {
-    button_states: EnumMap<InteractiveButtons, ButtonState>,
+    button_states: EnumMap<InteractiveButtons, ButtonStates>,
     volume_map: EnumMap<InteractiveFaders, u8>,
     encoder_map: EnumMap<InteractiveEncoders, i8>,
 
@@ -82,13 +82,13 @@ impl GoXLRStateTracker {
             let current_state = self.button_states[button];
             let status_button = StatusButton::from(button);
 
-            if buttons.contains(status_button) && current_state == ButtonState::NotPressed {
+            if buttons.contains(status_button) && current_state == ButtonStates::NotPressed {
                 let _ = self.sender.send(ChangeEvent::ButtonDown(button)).await;
-                self.button_states[button] = ButtonState::Pressed;
+                self.button_states[button] = ButtonStates::Pressed;
             }
-            if !buttons.contains(status_button) && current_state == ButtonState::Pressed {
+            if !buttons.contains(status_button) && current_state == ButtonStates::Pressed {
                 let _ = self.sender.send(ChangeEvent::ButtonUp(button)).await;
-                self.button_states[button] = ButtonState::NotPressed;
+                self.button_states[button] = ButtonStates::NotPressed;
             }
         }
     }

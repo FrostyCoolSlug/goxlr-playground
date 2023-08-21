@@ -1,15 +1,17 @@
+use enum_map::{enum_map, EnumMap};
+use strum::IntoEnumIterator;
+
+use goxlr_shared::channels::{InputChannels, OutputChannels};
+use goxlr_shared::colours::Colour;
+use goxlr_shared::faders::FaderSources;
+
 use crate::Fader;
 use crate::MuteAction;
 use crate::MuteBehaviour;
 use crate::{
-    ButtonColourSet, FaderChannel, FaderColourSet, FaderDisplay, FaderDisplayMode, FaderPage,
-    FaderPages, InactiveButtonBehaviour, MuteState, Profile, Screen,
+    ButtonColourSet, FaderChannel, FaderColourSet, FaderDisplay, FaderPage, FaderPages,
+    InactiveButtonBehaviour, MuteState, Profile, Screen,
 };
-use enum_map::{enum_map, EnumMap};
-use goxlr_shared::channels::{InputChannels, OutputChannels};
-use goxlr_shared::colours::Colour;
-use goxlr_shared::faders::FaderSources;
-use strum::IntoEnumIterator;
 
 /// The default profile if one isn't found..
 /// TODO: This should be more basic, but using advanced stuff for testing..
@@ -21,7 +23,7 @@ impl Default for Profile {
             MuteAction::Press => MuteBehaviour::MuteToTargets,
         };
 
-        let display_mode = vec![FaderDisplayMode::Gradient];
+        let display_mode = vec![];
 
         let green = Colour {
             red: 0,

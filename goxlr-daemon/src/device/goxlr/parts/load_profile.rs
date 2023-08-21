@@ -2,7 +2,10 @@ use anyhow::Result;
 
 use crate::device::goxlr::goxlr::GoXLR;
 use async_trait::async_trait;
+use goxlr_profile::MuteState;
+use goxlr_shared::buttons::{Buttons, InactiveButtonBehaviour};
 use goxlr_shared::faders::Fader;
+use goxlr_shared::states::State;
 use goxlr_usb_messaging::events::commands::BasicResultCommand::SetFaderStyle;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
 use strum::IntoEnumIterator;
@@ -16,6 +19,7 @@ pub(crate) trait LoadProfile {
 
     // Colour Related Commands
     async fn load_colours(&mut self) -> Result<()>;
+    async fn load_button_states(&mut self) -> Result<()>;
 }
 
 #[async_trait]
@@ -49,14 +53,51 @@ impl LoadProfile for GoXLR {
             let channel = self.profile.channels[faders[fader]].clone();
 
             let colours = channel.display.fader_colours;
-            self.colour_scheme.set_fader_target(fader, colours.into());
+            let scheme = self.colour_scheme.get_fader_target(fader);
+            scheme.replace(colours.into());
 
             // Set the Style for the fader..
             let display = channel.display.fader_display_mode.clone();
             self.send_no_result(SetFaderStyle(fader, display)).await?;
+
+            // Get the button..
+            let button = Buttons::from_fader(fader);
+
+            // Get the Colour target for the button
+            let target = button.into();
+            let mute_colours = self.colour_scheme.get_two_colour_target(target);
+            mute_colours.replace(channel.display.mute_colours.into());
+
+            // Is this channel muted? If so, update the button..
+            let mute_state = channel.mute_state;
+            let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
+
+            // Get the Inactive behaviour..
+
+            match mute_state {
+                MuteState::Unmuted => {
+                    self.button_states.set_state(
+                        button,
+                        match mute_behaviour {
+                            InactiveButtonBehaviour::DimActive => State::DimmedColour1,
+                            InactiveButtonBehaviour::DimInactive => State::DimmedColour2,
+                            InactiveButtonBehaviour::InactiveColour => State::Colour2,
+                        },
+                    );
+                }
+                MuteState::MutedToTargets => self.button_states.set_state(button, State::Colour2),
+                MuteState::MutedToAll => self.button_states.set_state(button, State::Blinking),
+            }
         }
+
+        let command = BasicResultCommand::SetButtonStates(self.button_states);
+        self.send_no_result(command).await?;
 
         let command = BasicResultCommand::SetColour(self.colour_scheme);
         self.send_no_result(command).await
+    }
+
+    async fn load_button_states(&mut self) -> Result<()> {
+        Ok(())
     }
 }

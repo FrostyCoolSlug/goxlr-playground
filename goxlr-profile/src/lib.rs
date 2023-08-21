@@ -1,10 +1,11 @@
 use std::path::PathBuf;
 
 use enum_map::{enum_map, Enum, EnumMap};
+use goxlr_shared::buttons::InactiveButtonBehaviour;
 use serde::{Deserialize, Serialize};
 
 use goxlr_shared::channels::{InputChannels, OutputChannels};
-use goxlr_shared::colours::{Colour, FaderColour, FaderDisplayMode};
+use goxlr_shared::colours::{Colour, FaderColour, FaderDisplayMode, TwoColour};
 use goxlr_shared::faders::{Fader, FaderSources};
 
 mod default;
@@ -113,17 +114,13 @@ pub struct ButtonColourSet {
     pub inactive_behaviour: InactiveButtonBehaviour,
 }
 
-/// Defines potential inactive button behaviours
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum InactiveButtonBehaviour {
-    /// This Dimms the Active Colour.
-    DimActive,
-
-    /// This Dimms the inactive Colour.
-    DimInactive,
-
-    /// This brightly displays the inactive colour.
-    InactiveColour,
+impl From<ButtonColourSet> for TwoColour {
+    fn from(value: ButtonColourSet) -> Self {
+        TwoColour {
+            colour1: value.active_colour,
+            colour2: value.inactive_colour,
+        }
+    }
 }
 
 /// Colour's related to the Fader Slider

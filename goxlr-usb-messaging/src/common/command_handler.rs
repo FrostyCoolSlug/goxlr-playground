@@ -5,12 +5,15 @@ use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
 use enum_map::EnumMap;
 use enumset::EnumSet;
+use goxlr_shared::buttons::Buttons;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::channels::{InputChannels, RoutingOutput};
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
 use goxlr_shared::faders::Fader;
+use goxlr_shared::interaction::{ButtonStates, InteractiveButtons};
 use goxlr_shared::routing::RouteValue;
+use goxlr_shared::states::ButtonDisplayStates;
 use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 
 use crate::common::executor::ExecutableGoXLR;
@@ -21,6 +24,7 @@ use crate::types::colours::ColourStruct;
 use crate::types::faders::DeviceFader;
 use crate::types::routing::RoutingChannel::{Left, Right};
 use crate::types::routing::{RoutingInputChannel, RoutingOutputDevice};
+use crate::types::states::ButtonDisplay;
 
 type RoutingValues = EnumMap<RoutingOutput, RouteValue>;
 
@@ -183,6 +187,23 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
 
         // Send it!
         self.request_data(command, &data).await?;
+
+        Ok(())
+    }
+
+    async fn set_button_states(&mut self, states: ButtonDisplayStates) -> Result<()> {
+        // Create the base set with all buttons 'Dimmed'
+        let mut state = [ButtonDisplay::DimmedColour1 as u8; 24];
+
+        let buttons = states.get_list();
+        for button in Buttons::iter() {
+            let button_state: ButtonDisplay = buttons[button].into();
+            let button_index: PhysicalButton = button.into();
+            state[button_index as usize] = button_state as u8;
+        }
+
+        let command = Command::SetButtonStates();
+        self.request_data(command, &state).await?;
 
         Ok(())
     }

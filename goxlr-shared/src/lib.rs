@@ -1,4 +1,4 @@
-mod buttons;
+pub mod buttons;
 pub mod channels;
 pub mod colours;
 pub mod device;
@@ -6,6 +6,7 @@ pub mod encoders;
 pub mod faders;
 pub mod interaction;
 pub mod routing;
+pub mod states;
 pub mod submix;
 pub mod version;
 

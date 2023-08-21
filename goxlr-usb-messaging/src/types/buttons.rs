@@ -1,5 +1,6 @@
 use enum_map::Enum;
 use enumset::{EnumSet, EnumSetType};
+use goxlr_shared::buttons::Buttons;
 use goxlr_shared::interaction::InteractiveButtons;
 use strum::EnumIter;
 
@@ -71,6 +72,37 @@ impl From<InteractiveButtons> for PhysicalButton {
             InteractiveButtons::SamplerBottomLeft => PhysicalButton::SamplerBottomLeft,
             InteractiveButtons::SamplerBottomRight => PhysicalButton::SamplerBottomRight,
             InteractiveButtons::SamplerClear => PhysicalButton::SamplerClear,
+        }
+    }
+}
+
+impl From<Buttons> for PhysicalButton {
+    fn from(value: Buttons) -> Self {
+        match value {
+            Buttons::FaderA => PhysicalButton::Fader1Mute,
+            Buttons::FaderB => PhysicalButton::Fader2Mute,
+            Buttons::FaderC => PhysicalButton::Fader3Mute,
+            Buttons::FaderD => PhysicalButton::Fader4Mute,
+            Buttons::Swear => PhysicalButton::Swear,
+            Buttons::CoughButton => PhysicalButton::CoughButton,
+            Buttons::EffectSelect1 => PhysicalButton::EffectSelect1,
+            Buttons::EffectSelect2 => PhysicalButton::EffectSelect2,
+            Buttons::EffectSelect3 => PhysicalButton::EffectSelect3,
+            Buttons::EffectSelect4 => PhysicalButton::EffectSelect4,
+            Buttons::EffectSelect5 => PhysicalButton::EffectSelect5,
+            Buttons::EffectSelect6 => PhysicalButton::EffectSelect6,
+            Buttons::EffectFx => PhysicalButton::EffectFx,
+            Buttons::EffectMegaphone => PhysicalButton::EffectMegaphone,
+            Buttons::EffectRobot => PhysicalButton::EffectRobot,
+            Buttons::EffectHardTune => PhysicalButton::EffectHardTune,
+            Buttons::SamplerSelectA => PhysicalButton::SamplerSelectA,
+            Buttons::SamplerSelectB => PhysicalButton::SamplerSelectB,
+            Buttons::SamplerSelectC => PhysicalButton::SamplerSelectC,
+            Buttons::SamplerTopLeft => PhysicalButton::SamplerTopLeft,
+            Buttons::SamplerTopRight => PhysicalButton::SamplerTopRight,
+            Buttons::SamplerBottomLeft => PhysicalButton::SamplerBottomLeft,
+            Buttons::SamplerBottomRight => PhysicalButton::SamplerBottomRight,
+            Buttons::SamplerClear => PhysicalButton::SamplerClear,
         }
     }
 }

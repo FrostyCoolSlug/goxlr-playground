@@ -6,6 +6,8 @@ use tokio::{join, select, task};
 use goxlr_profile::Profile;
 use goxlr_shared::colours::ColourScheme;
 use goxlr_shared::device::DeviceInfo;
+use goxlr_shared::interaction::ButtonStates;
+use goxlr_shared::states::ButtonDisplayStates;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, CommandSender};
 use goxlr_usb_messaging::runners::device::DeviceMessage;
 use goxlr_usb_messaging::runners::device::{start_usb_device_runner, GoXLRUSBConfiguration};
@@ -21,6 +23,7 @@ pub(crate) struct GoXLR {
 
     pub profile: Profile,
     pub colour_scheme: ColourScheme,
+    pub button_states: ButtonDisplayStates,
 
     config: GoXLRDeviceConfiguration,
     shutdown: Stop,
@@ -31,8 +34,10 @@ impl GoXLR {
         Self {
             device: None,
             command_sender: None,
+
             colour_scheme: Default::default(),
             profile: Default::default(),
+            button_states: Default::default(),
 
             config,
             shutdown,

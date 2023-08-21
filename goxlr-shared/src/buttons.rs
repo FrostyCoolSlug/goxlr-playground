@@ -1,12 +1,17 @@
 use crate::colours::TwoColourTargets;
+use crate::faders::Fader;
 use crate::interaction::InteractiveButtons;
+use enum_map::Enum;
+use serde::{Deserialize, Serialize};
+use strum::EnumIter;
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Enum, EnumIter)]
 pub enum Buttons {
-    // Fader Buttons
-    Fader1Mute,
-    Fader2Mute,
-    Fader3Mute,
-    Fader4Mute,
+    // Fader Mute Buttons
+    FaderA,
+    FaderB,
+    FaderC,
+    FaderD,
 
     // Cough / Bleep Buttons
     Swear,
@@ -37,13 +42,24 @@ pub enum Buttons {
     SamplerClear,
 }
 
+impl Buttons {
+    pub fn from_fader(fader: Fader) -> Buttons {
+        match fader {
+            Fader::A => Buttons::FaderA,
+            Fader::B => Buttons::FaderB,
+            Fader::C => Buttons::FaderC,
+            Fader::D => Buttons::FaderD,
+        }
+    }
+}
+
 impl From<InteractiveButtons> for Buttons {
     fn from(value: InteractiveButtons) -> Self {
         match value {
-            InteractiveButtons::Fader1Mute => Buttons::Fader1Mute,
-            InteractiveButtons::Fader2Mute => Buttons::Fader2Mute,
-            InteractiveButtons::Fader3Mute => Buttons::Fader3Mute,
-            InteractiveButtons::Fader4Mute => Buttons::Fader4Mute,
+            InteractiveButtons::Fader1Mute => Buttons::FaderA,
+            InteractiveButtons::Fader2Mute => Buttons::FaderB,
+            InteractiveButtons::Fader3Mute => Buttons::FaderC,
+            InteractiveButtons::Fader4Mute => Buttons::FaderD,
             InteractiveButtons::Swear => Buttons::Swear,
             InteractiveButtons::CoughButton => Buttons::CoughButton,
             InteractiveButtons::EffectSelect1 => Buttons::EffectSelect1,
@@ -71,10 +87,10 @@ impl From<InteractiveButtons> for Buttons {
 impl From<TwoColourTargets> for Buttons {
     fn from(value: TwoColourTargets) -> Self {
         match value {
-            TwoColourTargets::Fader1Mute => Buttons::Fader1Mute,
-            TwoColourTargets::Fader2Mute => Buttons::Fader2Mute,
-            TwoColourTargets::Fader3Mute => Buttons::Fader3Mute,
-            TwoColourTargets::Fader4Mute => Buttons::Fader4Mute,
+            TwoColourTargets::Fader1Mute => Buttons::FaderA,
+            TwoColourTargets::Fader2Mute => Buttons::FaderB,
+            TwoColourTargets::Fader3Mute => Buttons::FaderC,
+            TwoColourTargets::Fader4Mute => Buttons::FaderD,
             TwoColourTargets::EffectSelect1 => Buttons::EffectSelect1,
             TwoColourTargets::EffectSelect2 => Buttons::EffectSelect2,
             TwoColourTargets::EffectSelect3 => Buttons::EffectSelect3,
@@ -98,4 +114,17 @@ impl From<TwoColourTargets> for Buttons {
             _ => panic!("Attempted to Lookup Two Colour on a non-button!"),
         }
     }
+}
+
+/// Defines potential inactive button behaviours
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum InactiveButtonBehaviour {
+    /// This Dimms the Active Colour.
+    DimActive,
+
+    /// This Dimms the inactive Colour.
+    DimInactive,
+
+    /// This brightly displays the inactive colour.
+    InactiveColour,
 }

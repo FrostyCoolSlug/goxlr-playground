@@ -125,6 +125,9 @@ impl GoXLRUSBDevice {
                 BasicResultCommand::SetFaderStyle(fader, style) => {
                     let _ = responder.send(device.set_fader_style(fader, style).await);
                 }
+                BasicResultCommand::SetButtonStates(states) => {
+                    let _ = responder.send(device.set_button_states(states).await);
+                }
             },
         }
     }

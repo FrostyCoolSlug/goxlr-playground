@@ -60,7 +60,7 @@ pub enum InteractiveEncoders {
 }
 
 #[derive(Debug, Default, Enum, Copy, Clone, Eq, PartialEq)]
-pub enum ButtonState {
+pub enum ButtonStates {
     #[default]
     NotPressed,
     Pressed,

@@ -121,6 +121,13 @@ pub struct TwoColour {
     pub colour2: Colour,
 }
 
+impl TwoColour {
+    pub fn replace(&mut self, replace: TwoColour) {
+        self.colour1 = replace.colour1;
+        self.colour2 = replace.colour2;
+    }
+}
+
 #[derive(Default, Debug, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThreeColour {
@@ -136,6 +143,13 @@ pub struct ThreeColour {
 pub struct FaderColour {
     pub colour1: Colour,
     pub colour2: Colour,
+}
+
+impl FaderColour {
+    pub fn replace(&mut self, replace: FaderColour) {
+        self.colour1 = replace.colour1;
+        self.colour2 = replace.colour2;
+    }
 }
 
 #[derive(Debug, Copy, Clone, EnumIter)]
@@ -191,10 +205,10 @@ pub enum TwoColourTargets {
 impl From<Buttons> for TwoColourTargets {
     fn from(value: Buttons) -> Self {
         match value {
-            Buttons::Fader1Mute => TwoColourTargets::Fader1Mute,
-            Buttons::Fader2Mute => TwoColourTargets::Fader2Mute,
-            Buttons::Fader3Mute => TwoColourTargets::Fader3Mute,
-            Buttons::Fader4Mute => TwoColourTargets::Fader4Mute,
+            Buttons::FaderA => TwoColourTargets::Fader1Mute,
+            Buttons::FaderB => TwoColourTargets::Fader2Mute,
+            Buttons::FaderC => TwoColourTargets::Fader3Mute,
+            Buttons::FaderD => TwoColourTargets::Fader4Mute,
             Buttons::Swear => TwoColourTargets::Swear,
             Buttons::CoughButton => TwoColourTargets::CoughButton,
             Buttons::EffectSelect1 => TwoColourTargets::EffectSelect1,
