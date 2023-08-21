@@ -218,3 +218,13 @@ impl From<Buttons> for TwoColourTargets {
         }
     }
 }
+
+/// How the colours on the fader are displayed
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum FaderDisplayMode {
+    /// This will produce a meter, that matches the current audio volume
+    Meter,
+
+    /// This will display the colours as a Gradient from top_colour to bottom_colour
+    Gradient,
+}

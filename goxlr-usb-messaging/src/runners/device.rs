@@ -122,6 +122,9 @@ impl GoXLRUSBDevice {
                 BasicResultCommand::ApplyRouting(input, table) => {
                     let _ = responder.send(device.apply_routing(input, table).await);
                 }
+                BasicResultCommand::SetFaderStyle(fader, style) => {
+                    let _ = responder.send(device.set_fader_style(fader, style).await);
+                }
             },
         }
     }

@@ -8,7 +8,8 @@ use enumset::EnumSet;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::channels::{InputChannels, RoutingOutput};
-use goxlr_shared::colours::ColourScheme;
+use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
+use goxlr_shared::faders::Fader;
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 
@@ -169,6 +170,20 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     async fn apply_colour_scheme(&mut self, scheme: ColourScheme) -> Result<()> {
         let data = scheme.build_colour_map();
         self.request_data(Command::SetColourMap(), &data).await?;
+        Ok(())
+    }
+
+    async fn set_fader_style(&mut self, fader: Fader, style: Vec<FaderDisplayMode>) -> Result<()> {
+        // We can cast these straight from bools to u8s..
+        let gradient = style.contains(&FaderDisplayMode::Gradient) as u8;
+        let meter = style.contains(&FaderDisplayMode::Meter) as u8;
+
+        let command = Command::SetFaderDisplayMode(fader.into());
+        let data = [gradient, meter];
+
+        // Send it!
+        self.request_data(command, &data).await?;
+
         Ok(())
     }
 }

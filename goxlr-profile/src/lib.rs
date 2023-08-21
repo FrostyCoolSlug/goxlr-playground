@@ -4,7 +4,7 @@ use enum_map::{enum_map, Enum, EnumMap};
 use serde::{Deserialize, Serialize};
 
 use goxlr_shared::channels::{InputChannels, OutputChannels};
-use goxlr_shared::colours::{Colour, FaderColour};
+use goxlr_shared::colours::{Colour, FaderColour, FaderDisplayMode};
 use goxlr_shared::faders::{Fader, FaderSources};
 
 mod default;
@@ -143,16 +143,6 @@ impl From<FaderColourSet> for FaderColour {
             colour2: value.bottom_colour,
         }
     }
-}
-
-/// How the colours on the fader are displayed
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum FaderDisplayMode {
-    /// This will produce a meter, that matches the current audio volume
-    Meter,
-
-    /// This will display the colours as a Gradient from top_colour to bottom_colour
-    Gradient,
 }
 
 /// These are the different methods of interacting with Mute Keys

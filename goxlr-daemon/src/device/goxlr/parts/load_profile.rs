@@ -3,6 +3,7 @@ use anyhow::Result;
 use crate::device::goxlr::goxlr::GoXLR;
 use async_trait::async_trait;
 use goxlr_shared::faders::Fader;
+use goxlr_usb_messaging::events::commands::BasicResultCommand::SetFaderStyle;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
 use strum::IntoEnumIterator;
 
@@ -45,8 +46,14 @@ impl LoadProfile for GoXLR {
 
         // Iterate the faders, pull and set the colour..
         for fader in Fader::iter() {
-            let colours = self.profile.channels[faders[fader]].display.fader_colours;
+            let channel = self.profile.channels[faders[fader]].clone();
+
+            let colours = channel.display.fader_colours;
             self.colour_scheme.set_fader_target(fader, colours.into());
+
+            // Set the Style for the fader..
+            let display = channel.display.fader_display_mode.clone();
+            self.send_no_result(SetFaderStyle(fader, display)).await?;
         }
 
         let command = BasicResultCommand::SetColour(self.colour_scheme);
