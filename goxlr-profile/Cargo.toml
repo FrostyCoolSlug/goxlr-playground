@@ -13,3 +13,6 @@ strum = { version = "0.25", features = ["derive"] }
 
 # Used for Serialisation / Deserialisation
 serde = { version = "1.0.164", features = ["derive"] }
+
+# Dependency for 'classic' GoXLR Profile Formats
+goxlr-profile-loader = { git="https://github.com/goxlr-on-linux/goxlr-utility" }
