@@ -113,7 +113,8 @@ impl GoXLR {
         }
 
         // Only enter the loop if we were able to load the profile, otherwise immediately abort and
-        // shut down the runners.
+        // shut down the runners. We shouldn't just bail if there's an error above, as the USB
+        // runtime has already been started, the easiest way to stop it is to just jump to the end.
         if !load_fail {
             // Sit and wait for various signals to come, and process them as they do.
             loop {
