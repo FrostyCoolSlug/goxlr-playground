@@ -6,7 +6,6 @@ use tokio::{join, select, task};
 use goxlr_profile::Profile;
 use goxlr_shared::colours::ColourScheme;
 use goxlr_shared::device::DeviceInfo;
-use goxlr_shared::interaction::ButtonStates;
 use goxlr_shared::states::ButtonDisplayStates;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, CommandSender};
 use goxlr_usb_messaging::runners::device::DeviceMessage;
@@ -64,13 +63,22 @@ impl GoXLR {
     pub async fn run(&mut self) -> Result<()> {
         debug!("[GoXLR]{} Starting Event Loop", self.config.device);
 
-        // Prepare all the messaging queues that are needed..
+        // These are device specific messages sent to us by the handler..
         let (event_send, mut event_recv) = mpsc::channel(16);
+
+        // This is the command channel, for sending commands, and receiving responses from the device
         let (command_send, command_recv) = mpsc::channel(32);
+
+        // These are callbacks for physical interactions with the device (Buttons Pressed / Volumes Changed)
         let (interaction_send, mut interaction_recv) = mpsc::channel(128);
+
+        // A signalling channel to tell the device workers to stop
         let (stop_send, stop_recv) = oneshot::channel();
+
+        // A signal from the device runner to tell us it's ready to go.
         let (ready_send, ready_recv) = oneshot::channel();
 
+        // Build the configuration for the USB Runner, with the relevant messaging queues
         let configuration = GoXLRUSBConfiguration {
             device: self.config.device,
             interaction_event: interaction_send,
@@ -80,12 +88,15 @@ impl GoXLR {
         };
         let runner = task::spawn(start_usb_device_runner(configuration, ready_send));
 
+        // Use the ready signal to hold here, until the usb running is running, this will also
+        // provide us with the device info (such as serial, features, versions, etc).
         let device = match ready_recv.await {
             Ok(recv) => recv,
             Err(e) => {
                 bail!("Error on Starting Receiver, aborting: {}", e);
             }
         };
+
         let serial = device.serial.clone();
         self.device = Some(device);
         self.command_sender = Some(command_send);
@@ -94,44 +105,53 @@ impl GoXLR {
         let run_msg = RunnerMessage::UpdateState(self.config.device, RunnerState::Running(serial));
         let _ = self.config.manager_sender.send(run_msg).await;
 
-        self.load_profile().await?;
+        // Load the profile.
+        let mut load_fail = false;
+        if let Err(error) = self.load_profile().await {
+            warn!("Error While Loading Profile: {}", error);
+            load_fail = true;
+        }
 
-        loop {
-            select! {
-                Some(event) = event_recv.recv() => {
-                    debug!("[GoXLR]{} Event: {:?}", self.config.device, event);
-                    match event {
-                        DeviceMessage::Error => {
-                            warn!("[GoXLR]{} Error Sent back from Handler, bail!", self.config.device);
-                            break;
-                        }
-                        DeviceMessage::Event(event) => {
-                            debug!("[GoXLR]{} Event: {:?}", self.config.device, event);
+        // Only enter the loop if we were able to load the profile, otherwise immediately abort and
+        // shut down the runners.
+        if !load_fail {
+            // Sit and wait for various signals to come, and process them as they do.
+            loop {
+                select! {
+                    Some(event) = event_recv.recv() => {
+                        debug!("[GoXLR]{} Event: {:?}", self.config.device, event);
+                        match event {
+                            DeviceMessage::Error => {
+                                warn!("[GoXLR]{} Error Sent back from Handler, bail!", self.config.device);
+                                break;
+                            }
+                            DeviceMessage::Event(event) => {
+                                debug!("[GoXLR]{} Event: {:?}", self.config.device, event);
+                            }
                         }
                     }
-                }
-                Some(event) = interaction_recv.recv() => {
-                    debug!("Something Chnaged! {:?}", event);
-                }
-                _ = self.shutdown.recv() => {
-                    debug!("[GoXLR]{} Shutdown Triggered!", self.config.device);
-                    break;
-                }
-                _ = self.config.stop.recv() => {
-                    debug!("[GoXLR]{} Device Disconnected!", self.config.device);
-                    break;
+                    Some(event) = interaction_recv.recv() => {
+                        debug!("Something Chnaged! {:?}", event);
+                    }
+                    _ = self.shutdown.recv() => {
+                        debug!("[GoXLR]{} Shutdown Triggered!", self.config.device);
+                        break;
+                    }
+                    _ = self.config.stop.recv() => {
+                        debug!("[GoXLR]{} Device Disconnected!", self.config.device);
+                        break;
+                    }
                 }
             }
         }
 
-        // Our loop has been broken, let the device know we're done..
-        let _ = stop_send.send(());
-        debug!("[GoXLR]{} Event Loop Ended", self.config.device);
+        // Our loop has been broken (or never started), let the device know we're done..
+        let device = self.config.device;
 
-        debug!(
-            "[GoXLR]{} Waiting for Device Runner to stop..",
-            self.config.device
-        );
+        let _ = stop_send.send(());
+        debug!("[GoXLR]{} Event Loop Ended", device);
+
+        debug!("[GoXLR]{} Waiting for Device Runner to stop..", device);
         let _ = join!(runner);
 
         debug!("[GoXLR]{} Runner Stopped", self.config.device);

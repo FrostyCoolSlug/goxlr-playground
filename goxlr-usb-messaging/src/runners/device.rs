@@ -115,6 +115,10 @@ impl GoXLRUSBDevice {
                 BasicResultCommand::SetColour(scheme) => {
                     let _ = responder.send(device.apply_colour_scheme(scheme).await);
                 }
+                BasicResultCommand::SetVolume(source, volume) => {
+                    let channel = self.source_to_channel(source);
+                    let _ = responder.send(device.set_volume(channel, volume).await);
+                }
                 BasicResultCommand::AssignFader(fader, source) => {
                     let channel = self.source_to_channel(source);
                     let _ = responder.send(device.assign_fader(fader.into(), channel).await);

@@ -23,9 +23,8 @@ pub(crate) struct GoXLRDevice {
     task: Option<JoinHandle<()>>,
 
     pub(crate) handle: DeviceHandle<GlobalContext>,
-
-    device: Device<GlobalContext>,
-    descriptor: DeviceDescriptor,
+    pub(crate) device: Device<GlobalContext>,
+    pub(crate) descriptor: DeviceDescriptor,
 
     language: Language,
     timeout: Duration,

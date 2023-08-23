@@ -13,6 +13,7 @@ use goxlr_shared::states::ButtonDisplayStates;
 #[derive(Clone)]
 pub enum BasicResultCommand {
     SetColour(ColourScheme),
+    SetVolume(ChannelSource, u8),
     AssignFader(Fader, ChannelSource),
     ApplyRouting(InputChannels, EnumMap<RoutingOutput, RouteValue>),
     SetFaderStyle(Fader, Vec<FaderDisplayMode>),

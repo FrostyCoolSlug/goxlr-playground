@@ -1,11 +1,12 @@
 use anyhow::Result;
 use async_trait::async_trait;
+use log::debug;
 use strum::IntoEnumIterator;
 
 use goxlr_profile::MuteState;
 use goxlr_shared::buttons::{Buttons, InactiveButtonBehaviour};
 use goxlr_shared::device::DeviceType;
-use goxlr_shared::faders::Fader;
+use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::scribbles::Scribble;
 use goxlr_shared::states::State;
 use goxlr_usb_messaging::events::commands::BasicResultCommand::SetFaderStyle;
@@ -19,6 +20,7 @@ use crate::device::goxlr::goxlr::GoXLR;
 pub(crate) trait LoadProfile {
     async fn load_profile(&mut self) -> Result<()>;
     async fn load_faders(&mut self) -> Result<()>;
+    async fn load_volumes(&mut self) -> Result<()>;
 
     // Colour Related Commands
     async fn load_colours(&mut self) -> Result<()>;
@@ -36,12 +38,27 @@ impl LoadProfile for GoXLR {
     }
 
     async fn load_faders(&mut self) -> Result<()> {
+        debug!("Assigning Faders..");
         let page = self.profile.pages.current;
         let faders = self.profile.pages.page_list[page].faders;
         for fader in Fader::iter() {
             let source = ChannelSource::FromFaderSource(faders[fader]);
             let message = BasicResultCommand::AssignFader(fader, source);
             self.send_no_result(message).await?;
+        }
+
+        Ok(())
+    }
+
+    async fn load_volumes(&mut self) -> Result<()> {
+        debug!("Loading Volumes..");
+
+        for channel in FaderSources::iter() {
+            let volume = self.profile.channels[channel].volume;
+            let target = ChannelSource::FromFaderSource(channel);
+
+            let command = BasicResultCommand::SetVolume(target, volume);
+            self.send_no_result(command).await?;
         }
 
         Ok(())

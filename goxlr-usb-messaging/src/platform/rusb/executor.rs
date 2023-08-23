@@ -1,31 +1,37 @@
 use std::time::Duration;
 
 use anyhow::bail;
+use anyhow::Result;
 use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian};
-use log::{debug, error, warn};
+use log::debug;
 use rusb::Error::Pipe;
 use tokio::time::sleep;
 
 use crate::common::executor::ExecutableGoXLR;
 use crate::goxlr::commands::Command;
 use crate::platform::rusb::device::{GoXLRDevice, ReadControl, WriteControl};
+use crate::PID_GOXLR_MINI;
+
+/**
+    We're going to handle this slightly differently from the original GoXLR utility, the main
+    problem previously was that handling errors (such as index desyncs) was problematic as it
+    required an entire retry mechanism built into perform_request, given that we have a method
+    elsewhere who's entire purpose is to call perform_request(_,_, false), it figures we should
+    just handle attempts to recover from failure there!
+
+    This approach ultimately makes this code a lot simpler..
+*/
 
 #[async_trait]
 impl ExecutableGoXLR for GoXLRDevice {
-    async fn perform_request(
-        &mut self,
-        command: Command,
-        body: &[u8],
-        retry: bool,
-    ) -> anyhow::Result<Vec<u8>> {
+    async fn perform_request(&mut self, command: Command, body: &[u8]) -> Result<Vec<u8>> {
         if command == Command::ResetCommandIndex {
             self.command_count = 0;
         } else {
             if self.command_count == u16::MAX {
                 let result = self.request_data(Command::ResetCommandIndex, &[]).await;
                 if result.is_err() {
-                    self.stop().await;
                     return result;
                 }
             }
@@ -48,17 +54,15 @@ impl ExecutableGoXLR for GoXLRDevice {
 
         if let Err(error) = self.write_vendor_control(control) {
             debug!("Error when attempting to write control.");
-
-            self.stop().await;
             bail!(error);
         }
 
-        // The full fat GoXLR can handle requests incredibly quickly..
-        let mut sleep_time = Duration::from_millis(3);
-        // if self.descriptor.product_id() == PID_GOXLR_MINI {
-        //     // The mini, however, cannot.
-        //     sleep_time = Duration::from_millis(10);
-        // }
+        // The mini is a little slower than the full device, set poll times to reflect that.
+        let sleep_time = if self.descriptor.product_id() == PID_GOXLR_MINI {
+            Duration::from_millis(10)
+        } else {
+            Duration::from_millis(3)
+        };
         sleep(sleep_time).await;
 
         let read_control = ReadControl {
@@ -78,33 +82,18 @@ impl ExecutableGoXLR for GoXLRDevice {
                     continue;
                 } else {
                     // We can't read from this GoXLR, flag as disconnected.
-                    warn!("Failed to receive response (Attempt 20 of 20), possible Dead GoXLR?");
-
-                    self.stop().await;
-                    bail!("Error Reading GoXLR: {:?}", response_value.err());
+                    bail!("Error Reading GoXLR (Timeout): {:?}", response_value.err());
                 }
             }
             if response_value.is_err() {
                 let err = response_value.err().unwrap();
-                debug!("Error Occurred during packet read: {}", err);
-
-                self.stop().await;
                 bail!("Error Reading Response from GoXLR: {:?}", err);
             }
 
             let mut response_header = response_value.unwrap();
             if response_header.len() < 16 {
                 let len = response_header.len();
-                error!(
-                    "Invalid Response received from the GoXLR, Expected: 16, Received: {}",
-                    len
-                );
-
-                self.stop().await;
-                bail!(
-                    "Invalid Response from GoXLR, Expected len > 16, Received {}",
-                    len
-                );
+                bail!("Invalid Response Length from GoXLR, Count {}", len);
             }
 
             response = response_header.split_off(16);
@@ -121,26 +110,7 @@ impl ExecutableGoXLR for GoXLRDevice {
                 debug!("Response Header: {:?}", response_header);
                 debug!("Response Body: {:?}", response);
 
-                return if !retry {
-                    debug!("Attempting Resync and Retry");
-                    let result = self
-                        .perform_request(Command::ResetCommandIndex, &[], true)
-                        .await;
-
-                    if result.is_err() {
-                        self.stop().await;
-                        return result;
-                    }
-
-                    debug!("Resync complete, retrying Command..");
-                    let result = self.perform_request(command, body, true).await;
-                    return result;
-                } else {
-                    debug!("Resync Failed, Throwing Error..");
-
-                    self.stop().await;
-                    bail!("Critical Sync error with GoXLR");
-                };
+                bail!("Response doesn't match request");
             }
 
             debug_assert!(response.len() == response_length as usize);
@@ -148,5 +118,13 @@ impl ExecutableGoXLR for GoXLRDevice {
         }
 
         Ok(response)
+    }
+
+    async fn perform_recovery(&mut self) -> Result<()> {
+        todo!()
+    }
+
+    async fn perform_stop(&mut self) {
+        self.stop().await
     }
 }

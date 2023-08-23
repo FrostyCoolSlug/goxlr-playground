@@ -135,6 +135,12 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         Ok(())
     }
 
+    async fn set_volume(&mut self, target: AssignableChannel, volume: u8) -> Result<()> {
+        let command = Command::SetChannelVolume(target);
+        self.request_data(command, &[volume]).await?;
+        Ok(())
+    }
+
     async fn apply_routing(&mut self, input: InputChannels, values: RoutingValues) -> Result<()> {
         // We need to take the values map, iterate it, and create the routing structure..
         let mut l_data = [0; 22];
