@@ -1,18 +1,21 @@
 use anyhow::Result;
 use async_trait::async_trait;
+use enum_map::EnumMap;
 use log::debug;
 use strum::IntoEnumIterator;
 
 use goxlr_profile::MuteState;
 use goxlr_shared::buttons::{Buttons, InactiveButtonBehaviour};
+use goxlr_shared::channels::{InputChannels, RoutingOutput};
 use goxlr_shared::device::DeviceType;
 use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::routing::{RouteValue, RoutingTable};
 use goxlr_shared::scribbles::Scribble;
 use goxlr_shared::states::State;
 use goxlr_usb_messaging::events::commands::BasicResultCommand::SetFaderStyle;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
 
-use crate::device::goxlr::goxlr::GoXLR;
+use crate::device::goxlr::device::GoXLR;
 
 /// This trait contains all methods needed to successfully load a profile, and are implemented
 /// for the GoXLR type immediately after. This code assumes that self.profile is accurate.
@@ -26,13 +29,28 @@ pub(crate) trait LoadProfile {
     async fn load_colours(&mut self) -> Result<()>;
     async fn load_button_states(&mut self) -> Result<()>;
     async fn load_display(&mut self) -> Result<()>;
+
+    // Routing Commands
+    async fn setup_routing(&mut self) -> Result<()>;
+    async fn apply_routing(&mut self) -> Result<()>;
+
+    // Button States..
+    async fn setup_button_states(&mut self) -> Result<()>;
+    async fn apply_button_states(&mut self) -> Result<()>;
 }
 
 #[async_trait]
 impl LoadProfile for GoXLR {
     async fn load_profile(&mut self) -> Result<()> {
+        // Prepare the Routing Table
+        self.setup_routing().await?;
+        self.setup_button_states().await?;
+
         self.load_faders().await?;
         self.load_colours().await?;
+
+        self.apply_routing().await?;
+        self.apply_button_states().await?;
 
         Ok(())
     }
@@ -144,6 +162,24 @@ impl LoadProfile for GoXLR {
             return Ok(());
         }
 
+        Ok(())
+    }
+
+    async fn setup_routing(&mut self) -> Result<()> {
+        // Create our local routing table from the existing profile settings..
+        self.routing_state = RoutingTable::from(self.profile.routing);
+        Ok(())
+    }
+
+    async fn apply_routing(&mut self) -> Result<()> {
+        Ok(())
+    }
+
+    async fn setup_button_states(&mut self) -> Result<()> {
+        Ok(())
+    }
+
+    async fn apply_button_states(&mut self) -> Result<()> {
         Ok(())
     }
 }

@@ -45,3 +45,15 @@ pub enum RoutingOutput {
     Sampler,
     HardTune,
 }
+
+impl From<OutputChannels> for RoutingOutput {
+    fn from(value: OutputChannels) -> Self {
+        match value {
+            OutputChannels::Headphones => RoutingOutput::Headphones,
+            OutputChannels::StreamMix => RoutingOutput::StreamMix,
+            OutputChannels::LineOut => RoutingOutput::LineOut,
+            OutputChannels::ChatMic => RoutingOutput::ChatMic,
+            OutputChannels::Sampler => RoutingOutput::Sampler,
+        }
+    }
+}

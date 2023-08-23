@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use enum_map::{enum_map, Enum, EnumMap};
-use goxlr_shared::buttons::InactiveButtonBehaviour;
 use serde::{Deserialize, Serialize};
 
+use goxlr_shared::buttons::InactiveButtonBehaviour;
 use goxlr_shared::channels::{InputChannels, OutputChannels};
 use goxlr_shared::colours::{Colour, FaderColour, FaderDisplayMode, TwoColour};
 use goxlr_shared::faders::{Fader, FaderSources};
@@ -19,7 +19,10 @@ pub struct Profile {
     pub pages: FaderPages,
 
     /// The Routing Configuration
-    pub routing: EnumMap<OutputChannels, EnumMap<InputChannels, bool>>,
+    ///
+    /// Note, we don't use RoutingOutput here, as the HardTune setting is entirely transient thus
+    /// shouldn't be stored in the profile. You can use .into() to get it's RoutingOutput equivalent.
+    pub routing: EnumMap<InputChannels, EnumMap<OutputChannels, bool>>,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -11,6 +11,9 @@ impl ButtonDisplayStates {
     pub fn set_state(&mut self, button: Buttons, state: State) {
         self.states[button] = state;
     }
+    pub fn get_state(&self, button: Buttons) -> State {
+        self.states[button]
+    }
     pub fn get_list(&self) -> EnumMap<Buttons, State> {
         self.states
     }

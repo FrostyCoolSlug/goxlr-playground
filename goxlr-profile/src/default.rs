@@ -181,21 +181,21 @@ impl Default for Profile {
         };
 
         // Default Routing Table (based on old defaults..)
-        let mut routing: EnumMap<OutputChannels, EnumMap<InputChannels, bool>> = Default::default();
+        let mut routing: EnumMap<InputChannels, EnumMap<OutputChannels, bool>> = Default::default();
 
         // Headphones and Stream Mix go to all..
         for input in InputChannels::iter() {
-            routing[OutputChannels::Headphones][input] = true;
-            routing[OutputChannels::StreamMix][input] = true;
+            routing[input][OutputChannels::Headphones] = true;
+            routing[input][OutputChannels::StreamMix] = true;
         }
 
         // Mic goes to Lineout, Chat Mic and Sampler..
-        routing[OutputChannels::LineOut][InputChannels::Microphone] = true;
-        routing[OutputChannels::ChatMic][InputChannels::Microphone] = true;
-        routing[OutputChannels::Sampler][InputChannels::Microphone] = true;
+        routing[InputChannels::Microphone][OutputChannels::LineOut] = true;
+        routing[InputChannels::Microphone][OutputChannels::ChatMic] = true;
+        routing[InputChannels::Microphone][OutputChannels::Sampler] = true;
 
         // Samples go to Chat Mic..
-        routing[OutputChannels::ChatMic][InputChannels::Sample] = true;
+        routing[InputChannels::Sample][OutputChannels::ChatMic] = true;
 
         Profile {
             channels,
