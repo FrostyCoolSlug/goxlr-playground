@@ -13,8 +13,8 @@ use goxlr_usb_messaging::runners::pnp::PnPDeviceMessage;
 use goxlr_usb_messaging::runners::pnp::{start_pnp_runner, PnPConfiguration};
 use goxlr_usb_messaging::USBLocation;
 
+use crate::device::goxlr::device::start_goxlr;
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
-use crate::device::goxlr::goxlr::start_goxlr;
 use crate::stop::Stop;
 
 struct DeviceManager {

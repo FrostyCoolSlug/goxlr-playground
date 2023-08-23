@@ -1,3 +1,4 @@
+pub(crate) mod device;
 pub(crate) mod device_config;
-pub(crate) mod goxlr;
+mod mute_handle;
 mod parts;
