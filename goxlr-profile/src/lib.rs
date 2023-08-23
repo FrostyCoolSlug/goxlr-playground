@@ -69,6 +69,12 @@ pub struct FaderChannel {
     pub display: FaderDisplay,
 }
 
+/// A Struct that defines what happens in the various mute states
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MuteBehaviour {
+    mute_targets: Vec<OutputChannels>,
+}
+
 /// A struct that defines top to bottom how a fader is displayed on the Device
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FaderDisplay {
@@ -152,17 +158,10 @@ pub enum MuteAction {
     Hold,
 }
 
-/// This defines the two possible mute behaviours which can be assigned to keys
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum MuteBehaviour {
-    MuteToTargets,
-    MuteToAll,
-}
-
 /// This represents the current state of a Channel
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum MuteState {
     Unmuted,
-    MutedToTargets,
-    MutedToAll,
+    Pressed,
+    Held,
 }
