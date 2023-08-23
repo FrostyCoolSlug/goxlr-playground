@@ -158,6 +158,16 @@ pub enum MuteAction {
     Hold,
 }
 
+impl From<MuteState> for MuteAction {
+    fn from(value: MuteState) -> Self {
+        match value {
+            MuteState::Unmuted => panic!("Cannot Convert 'Unmuted' to MuteAction"),
+            MuteState::Pressed => MuteAction::Press,
+            MuteState::Held => MuteAction::Hold,
+        }
+    }
+}
+
 /// This represents the current state of a Channel
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum MuteState {
