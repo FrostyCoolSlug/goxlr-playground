@@ -19,7 +19,7 @@ use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 use crate::common::executor::ExecutableGoXLR;
 use crate::goxlr::commands::{Command, HardwareInfoCommand};
 use crate::types::buttons::{CurrentButtonStates, PhysicalButton};
-use crate::types::channels::AssignableChannel;
+use crate::types::channels::{AssignableChannel, ChannelState};
 use crate::types::colours::ColourStruct;
 use crate::types::faders::DeviceFader;
 use crate::types::routing::RoutingChannel::{Left, Right};
@@ -27,6 +27,7 @@ use crate::types::routing::{RoutingInputChannel, RoutingOutputDevice};
 use crate::types::states::ButtonDisplay;
 
 type RoutingValues = EnumMap<RoutingOutput, RouteValue>;
+type Channel = AssignableChannel;
 
 #[async_trait]
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
@@ -124,7 +125,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         })
     }
 
-    async fn assign_fader(&mut self, fader: DeviceFader, source: AssignableChannel) -> Result<()> {
+    async fn assign_fader(&mut self, fader: DeviceFader, source: Channel) -> Result<()> {
         // This could be simpler by doing: data = [source as u8, 0x00, 0x00, 0x00]
         // But I'm trying to make it clearer how data is handled.
 
@@ -135,9 +136,15 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         Ok(())
     }
 
-    async fn set_volume(&mut self, target: AssignableChannel, volume: u8) -> Result<()> {
+    async fn set_volume(&mut self, target: Channel, volume: u8) -> Result<()> {
         let command = Command::SetChannelVolume(target);
         self.request_data(command, &[volume]).await?;
+        Ok(())
+    }
+
+    async fn set_mute_state(&mut self, target: Channel, state: ChannelState) -> Result<()> {
+        let command = Command::SetChannelState(target);
+        self.request_data(command, &[state as u8]).await?;
         Ok(())
     }
 

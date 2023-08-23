@@ -2,7 +2,9 @@ use anyhow::Result;
 use enum_map::EnumMap;
 use tokio::sync::oneshot;
 
-use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput, VolumeChannels};
+use goxlr_shared::channels::{
+    ChannelMuteState, InputChannels, OutputChannels, RoutingOutput, VolumeChannels,
+};
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::routing::RouteValue;
@@ -14,6 +16,7 @@ use goxlr_shared::states::ButtonDisplayStates;
 pub enum BasicResultCommand {
     SetColour(ColourScheme),
     SetVolume(ChannelSource, u8),
+    SetMuteState(ChannelSource, ChannelMuteState),
     AssignFader(Fader, ChannelSource),
     ApplyRouting(InputChannels, EnumMap<RoutingOutput, RouteValue>),
     SetFaderStyle(Fader, Vec<FaderDisplayMode>),

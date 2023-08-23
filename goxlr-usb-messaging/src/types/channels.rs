@@ -1,4 +1,4 @@
-use goxlr_shared::channels::{InputChannels, OutputChannels, VolumeChannels};
+use goxlr_shared::channels::{ChannelMuteState, InputChannels, OutputChannels, VolumeChannels};
 use goxlr_shared::faders::FaderSources;
 
 /// While this technically matches FaderSources, it's imperative that this order is maintained, as
@@ -17,12 +17,6 @@ pub(crate) enum AssignableChannel {
     Headphones = 0x08,
     MicrophoneMonitor = 0x09,
     LineOut = 0x0A,
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub(crate) enum ChannelState {
-    Unmuted = 0x00,
-    Muted = 0x01,
 }
 
 impl From<InputChannels> for AssignableChannel {
@@ -76,6 +70,21 @@ impl From<VolumeChannels> for AssignableChannel {
     fn from(value: VolumeChannels) -> AssignableChannel {
         match value {
             VolumeChannels::MicrophoneMonitor => AssignableChannel::MicrophoneMonitor,
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub(crate) enum ChannelState {
+    Unmuted = 0x00,
+    Muted = 0x01,
+}
+
+impl From<ChannelMuteState> for ChannelState {
+    fn from(value: ChannelMuteState) -> Self {
+        match value {
+            ChannelMuteState::Muted => ChannelState::Muted,
+            ChannelMuteState::Unmuted => ChannelState::Unmuted,
         }
     }
 }

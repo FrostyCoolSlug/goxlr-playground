@@ -18,9 +18,15 @@ use crate::{
 impl Default for Profile {
     fn default() -> Self {
         // Lets build a profile, gotta start from the bottom up..
+
+        // Configure the Press and Hold behaviours to be 'Mute to All'
         let mute_action = enum_map! {
-            MuteAction::Hold => MuteBehaviour::MuteToAll,
-            MuteAction::Press => MuteBehaviour::MuteToTargets,
+            MuteAction::Hold => MuteBehaviour {
+                mute_targets: vec![]
+            },
+            MuteAction::Press => MuteBehaviour {
+                mute_targets: vec![]
+            },
         };
 
         let display_mode = vec![];
@@ -62,7 +68,6 @@ impl Default for Profile {
             volume: 0,
             mute_state: MuteState::Unmuted,
             mute_actions: mute_action,
-            mute_targets: Default::default(),
             display: fader_display,
         };
 

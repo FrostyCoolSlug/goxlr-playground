@@ -119,6 +119,10 @@ impl GoXLRUSBDevice {
                     let channel = self.source_to_channel(source);
                     let _ = responder.send(device.set_volume(channel, volume).await);
                 }
+                BasicResultCommand::SetMuteState(source, state) => {
+                    let channel = self.source_to_channel(source);
+                    let _ = responder.send(device.set_mute_state(channel, state.into()).await);
+                }
                 BasicResultCommand::AssignFader(fader, source) => {
                     let channel = self.source_to_channel(source);
                     let _ = responder.send(device.assign_fader(fader.into(), channel).await);

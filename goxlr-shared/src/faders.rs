@@ -1,6 +1,7 @@
 use enum_map::Enum;
 use strum::EnumIter;
 
+use crate::channels::InputChannels;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +16,7 @@ pub enum Fader {
 }
 
 /// A list of channels which can be assigned to a fader.
-#[derive(Debug, Copy, Clone, Enum, EnumIter)]
+#[derive(Debug, Copy, Clone, Enum, EnumIter, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum FaderSources {
     Microphone,
@@ -29,4 +30,19 @@ pub enum FaderSources {
     Headphones,
     LineOut,
     MicrophoneMonitor,
+}
+
+impl From<InputChannels> for FaderSources {
+    fn from(value: InputChannels) -> Self {
+        match value {
+            InputChannels::Microphone => FaderSources::Microphone,
+            InputChannels::Chat => FaderSources::Chat,
+            InputChannels::Music => FaderSources::Music,
+            InputChannels::Game => FaderSources::Game,
+            InputChannels::Console => FaderSources::Console,
+            InputChannels::LineIn => FaderSources::LineIn,
+            InputChannels::System => FaderSources::System,
+            InputChannels::Sample => FaderSources::Sample,
+        }
+    }
 }

@@ -3,6 +3,7 @@ use enum_map::EnumMap;
 
 use crate::device::goxlr::device::GoXLR;
 use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
+use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
 
 // These just help keep the function definitions slightly tidier..
@@ -19,6 +20,8 @@ pub(crate) trait RoutingHandler {
     fn set_route_value(&mut self, input: In, out: Out, value: u8) -> Result<bool>;
     fn set_route(&mut self, input: In, out: Out, value: Value) -> Result<bool>;
     fn get_input_row(&mut self, input: In) -> Row;
+
+    fn is_valid_routing_target(channel: FaderSources) -> bool;
 }
 
 impl RoutingHandler for GoXLR {
@@ -59,5 +62,23 @@ impl RoutingHandler for GoXLR {
 
     fn get_input_row(&mut self, input: In) -> Row {
         self.routing_state.get_input_routes(input)
+    }
+
+    /// Headphone, LineOut and MicrophoneMonitor *ARE* valid mute targets, but they're
+    /// not valid routing targets. This helper method allows code to check.
+    fn is_valid_routing_target(channel: FaderSources) -> bool {
+        if channel == FaderSources::Headphones {
+            return false;
+        }
+
+        if channel == FaderSources::LineOut {
+            return false;
+        }
+
+        if channel == FaderSources::MicrophoneMonitor {
+            return false;
+        }
+
+        return true;
     }
 }

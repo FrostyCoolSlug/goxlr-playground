@@ -1,3 +1,4 @@
+use crate::faders::FaderSources;
 use enum_map::Enum;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -44,6 +45,31 @@ pub enum RoutingOutput {
     ChatMic,
     Sampler,
     HardTune,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Enum, EnumIter)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum ChannelMuteState {
+    Muted,
+    Unmuted,
+}
+
+impl From<FaderSources> for InputChannels {
+    fn from(value: FaderSources) -> Self {
+        match value {
+            FaderSources::Microphone => InputChannels::Microphone,
+            FaderSources::Chat => InputChannels::Chat,
+            FaderSources::Music => InputChannels::Music,
+            FaderSources::Game => InputChannels::Game,
+            FaderSources::Console => InputChannels::Console,
+            FaderSources::LineIn => InputChannels::LineIn,
+            FaderSources::System => InputChannels::System,
+            FaderSources::Sample => InputChannels::Sample,
+            FaderSources::Headphones | FaderSources::LineOut | FaderSources::MicrophoneMonitor => {
+                panic!("Invalid Mapping from FaderSources -> InputChannel")
+            }
+        }
+    }
 }
 
 impl From<OutputChannels> for RoutingOutput {
