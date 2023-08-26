@@ -4,11 +4,13 @@ use log::debug;
 use strum::IntoEnumIterator;
 
 use goxlr_profile::MuteState;
-use goxlr_shared::buttons::Buttons;
-use goxlr_shared::channels::InputChannels;
+use goxlr_shared::buttons::{Buttons, InactiveButtonBehaviour};
+use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
 use goxlr_shared::device::DeviceType;
 use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::routing::RouteValue;
 use goxlr_shared::scribbles::Scribble;
+use goxlr_shared::states::State;
 use goxlr_usb_messaging::events::commands::BasicResultCommand::SetFaderStyle;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
 
@@ -177,44 +179,6 @@ impl LoadProfile for GoXLR {
         Ok(())
     }
 
-    // async fn load_button_states(&mut self) -> Result<()> {
-    //     // Get the Mute states from the faders..
-    //     let fader_page = self.profile.pages.current;
-    //     let faders = self.profile.pages.page_list[fader_page].faders;
-    //     for fader in Fader::iter() {
-    //         // Get the button..
-    //         let button = Buttons::from_fader(fader);
-    //
-    //         let channel = self.profile.channels[faders[fader]].clone();
-    //         // Is this channel muted? If so, update the button..
-    //         let mute_state = channel.mute_state;
-    //         let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
-    //
-    //         // Get the Inactive behaviour..
-    //         match mute_state {
-    //             MuteState::Unmuted => {
-    //                 // Apply 'Inactive' State..
-    //                 self.button_states.set_state(
-    //                     button,
-    //                     match mute_behaviour {
-    //                         InactiveButtonBehaviour::DimActive => State::DimmedColour1,
-    //                         InactiveButtonBehaviour::DimInactive => State::DimmedColour2,
-    //                         InactiveButtonBehaviour::InactiveColour => State::Colour2,
-    //                     },
-    //                 );
-    //             }
-    //
-    //             // This might need some more work..
-    //             MuteState::MutedToTargets => self.button_states.set_state(button, State::Colour2),
-    //             MuteState::MutedToAll => self.button_states.set_state(button, State::Blinking),
-    //         }
-    //     }
-    //
-    //
-    //
-    //     Ok(())
-    // }
-
     async fn load_display(&mut self) -> Result<()> {
         // If we're a Mini, nothing to do.
         if self.device.clone().unwrap().device_type == DeviceType::Mini {
@@ -245,6 +209,40 @@ impl LoadProfile for GoXLR {
         // By default, all states are 'inactive' (DimmedColour1)
         debug!("Resetting Button States");
         self.button_states = Default::default();
+
+        debug!("Building Initial States..");
+        // Get the Mute states from the faders..
+        let fader_page = self.profile.pages.current;
+        let faders = self.profile.pages.page_list[fader_page].faders;
+        for fader in Fader::iter() {
+            // Get the button..
+            let button = Buttons::from_fader(fader);
+
+            let channel = self.profile.channels[faders[fader]].clone();
+            // Is this channel muted? If so, update the button..
+            let mute_state = channel.mute_state;
+            let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
+
+            // Get the Inactive behaviour..
+            match mute_state {
+                MuteState::Unmuted => {
+                    // Apply 'Inactive' State..
+                    self.button_states.set_state(
+                        button,
+                        match mute_behaviour {
+                            InactiveButtonBehaviour::DimActive => State::DimmedColour1,
+                            InactiveButtonBehaviour::DimInactive => State::DimmedColour2,
+                            InactiveButtonBehaviour::InactiveColour => State::Colour2,
+                        },
+                    );
+                }
+
+                // This might need some more work..
+                MuteState::Pressed => self.button_states.set_state(button, State::Colour2),
+                MuteState::Held => self.button_states.set_state(button, State::Blinking),
+            }
+        }
+
         Ok(())
     }
 
