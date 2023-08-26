@@ -1,14 +1,13 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use goxlr_profile::MuteState;
 use log::debug;
 use strum::IntoEnumIterator;
 
+use goxlr_profile::MuteState;
 use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::InputChannels;
 use goxlr_shared::device::DeviceType;
 use goxlr_shared::faders::{Fader, FaderSources};
-use goxlr_shared::routing::RoutingTable;
 use goxlr_shared::scribbles::Scribble;
 use goxlr_usb_messaging::events::commands::BasicResultCommand::SetFaderStyle;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
@@ -27,6 +26,8 @@ pub(crate) trait LoadProfile {
 
     // Colour Related Commands
     async fn load_colours(&mut self) -> Result<()>;
+    async fn load_fader_display(&mut self) -> Result<()>;
+
     //async fn load_button_states(&mut self) -> Result<()>;
     async fn load_display(&mut self) -> Result<()>;
 
@@ -52,6 +53,7 @@ impl LoadProfile for GoXLR {
         self.load_volumes().await?;
 
         self.load_colours().await?;
+        self.load_fader_display().await?;
 
         // Finalise things setup earlier
         self.apply_routing().await?;
@@ -93,7 +95,10 @@ impl LoadProfile for GoXLR {
             let volume = self.profile.channels[channel].volume;
             let target = ChannelSource::FromFaderSource(channel);
 
-            debug!("Setting Volume for {:?} from profile to {:?}", channel, volume);
+            debug!(
+                "Setting Volume for {:?} from profile to {:?}",
+                channel, volume
+            );
 
             let command = BasicResultCommand::SetVolume(target, volume);
             self.send_no_result(command).await?;
@@ -104,7 +109,7 @@ impl LoadProfile for GoXLR {
 
     async fn load_mute_states(&mut self) -> Result<()> {
         debug!("Loading Mute States");
-        
+
         for source in FaderSources::iter() {
             let state = self.profile.channels[source].mute_state;
             let channel = self.profile.channels[source].clone();
@@ -124,6 +129,8 @@ impl LoadProfile for GoXLR {
     }
 
     async fn load_colours(&mut self) -> Result<()> {
+        debug!("Loading Colour Map..");
+
         // Pull the colour scheme from the profile..
         let fader_page = self.profile.pages.current;
         let faders = self.profile.pages.page_list[fader_page].faders;
@@ -135,10 +142,6 @@ impl LoadProfile for GoXLR {
             let colours = channel.display.fader_colours;
             let scheme = self.colour_scheme.get_fader_target(fader);
             scheme.replace(colours.into());
-
-            // Set the Style for the fader..
-            let display = channel.display.fader_display_mode.clone();
-            self.send_no_result(SetFaderStyle(fader, display)).await?;
 
             // Get the button..
             let button = Buttons::from_fader(fader);
@@ -156,6 +159,22 @@ impl LoadProfile for GoXLR {
 
         let command = BasicResultCommand::SetColour(self.colour_scheme);
         self.send_no_result(command).await
+    }
+
+    async fn load_fader_display(&mut self) -> Result<()> {
+        let fader_page = self.profile.pages.current;
+        let faders = self.profile.pages.page_list[fader_page].faders;
+
+        for fader in Fader::iter() {
+            let source = faders[fader];
+            let channel = self.profile.channels[source].clone();
+            let display = channel.display.fader_display_mode;
+
+            // Set the Style for the fader..
+            self.send_no_result(SetFaderStyle(fader, display)).await?;
+        }
+
+        Ok(())
     }
 
     // async fn load_button_states(&mut self) -> Result<()> {
