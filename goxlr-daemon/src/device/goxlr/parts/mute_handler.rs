@@ -29,6 +29,7 @@ impl MuteHandler for GoXLR {
     async fn mute_to_target(&mut self, source: Source, targets: Target) -> Result<MuteChanges> {
         // If our target list is empty, activate 'mute to all' behaviour..
         if targets.is_empty() {
+            debug!("Target List Empty for {:?}, Muting to All", source);
             return self.mute_to_all(source).await;
         }
 
