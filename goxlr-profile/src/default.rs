@@ -65,7 +65,7 @@ impl Default for Profile {
         };
 
         let channel = FaderChannel {
-            volume: 0,
+            volume: 128,
             mute_state: MuteState::Unmuted,
             mute_actions: mute_action,
             display: fader_display,
@@ -86,6 +86,9 @@ impl Default for Profile {
                 FaderSources::LineOut => channel.clone(),
                 FaderSources::MicrophoneMonitor => channel.clone(),
         };
+
+        // Bump headphones volume to 100%..
+        channels[FaderSources::Headphones].volume = 255;
 
         let base_colour: EnumMap<FaderSources, Colour> = enum_map! {
                 FaderSources::Microphone => Colour {
