@@ -5,9 +5,10 @@ use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task};
 
 use goxlr_profile::Profile;
+use goxlr_shared::channels::ChannelMuteState;
 use goxlr_shared::colours::ColourScheme;
 use goxlr_shared::device::DeviceInfo;
-use goxlr_shared::faders::FaderSources;
+use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::routing::RoutingTable;
 use goxlr_shared::states::ButtonDisplayStates;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, CommandSender};
@@ -29,7 +30,8 @@ pub(crate) struct GoXLR {
     pub colour_scheme: ColourScheme,
     pub button_states: ButtonDisplayStates,
     pub routing_state: RoutingTable,
-    pub mute_state: EnumMap<FaderSources, Option<bool>>,
+    pub mute_state: EnumMap<FaderSources, Option<ChannelMuteState>>,
+    pub fader_state: EnumMap<Fader, Option<FaderSources>>,
 
     config: GoXLRDeviceConfiguration,
     shutdown: Stop,
@@ -46,6 +48,7 @@ impl GoXLR {
             button_states: Default::default(),
             routing_state: Default::default(),
             mute_state: Default::default(),
+            fader_state: Default::default(),
 
             config,
             shutdown,

@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
 use async_trait::async_trait;
+use log::debug;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::channels::ChannelMuteState::{Muted, Unmuted};
@@ -36,6 +37,8 @@ impl MuteHandler for GoXLR {
             bail!("Cannot Apply Target Routing to this Channel!");
         }
 
+        debug!("Applying Target Routing for {:?}", source);
+        debug!("Targets: {:?}", targets);
         let mut routing_updated = false;
 
         // This is relatively straight forward, go through the targets for this source, and set
@@ -44,6 +47,7 @@ impl MuteHandler for GoXLR {
             let source = InputChannels::from(source);
             let target = RoutingOutput::from(target);
 
+            debug!("Transient disable route {:?} to {:?}", source, target);
             let change = self.set_route(source, target, RouteValue::Off)?;
             if !routing_updated && change {
                 routing_updated = true;
@@ -62,11 +66,14 @@ impl MuteHandler for GoXLR {
     }
 
     async fn mute_to_all(&mut self, source: Source) -> Result<MuteChanges> {
+        debug!("Muting Channel {:?} to All", source);
         self.send_mute_state(source, Muted).await?;
         Ok(Default::default())
     }
 
     async fn unmute(&mut self, source: Source) -> Result<MuteChanges> {
+        debug!("Unmuting Channel: {:?}", source);
+
         let mut updated_routes = vec![];
 
         // Outputs need to be unmuted, but they also can't be routed.
@@ -82,6 +89,7 @@ impl MuteHandler for GoXLR {
                 if profile_value {
                     match active {
                         RouteValue::Off => {
+                            debug!("Removing Transient Route {:?} to {:?}", source, route);
                             self.set_route(source, route, RouteValue::On)?;
                             updated_routes.push(source);
                         }
@@ -101,6 +109,8 @@ impl MuteHandler for GoXLR {
            state muted from there.
         */
 
+        // Don't unmute on a channel which isn't flagged as muted..
+        debug!("Unmuting channel {:?}", source);
         self.send_mute_state(source, Unmuted).await?;
 
         Ok(MuteChanges {
@@ -117,8 +127,11 @@ impl MuteHandler for GoXLR {
         if let Some(current_state) = self.mute_state[source] {
             // If the requested change is different from our current known state, send the
             // new state to the GoXLR.
-            if (current_state && state == Unmuted) || (!current_state && state == Muted) {
+            if current_state != state {
+                debug!("Setting {:?} to {:?}", source, state);
                 self.send_no_result(command).await?;
+            } else {
+                debug!("Channel {:?} already {:?}, doing nothing.", source, state);
             }
         } else {
             // We don't know the active mute state, so send unmute regardless.
@@ -126,10 +139,7 @@ impl MuteHandler for GoXLR {
         };
 
         // Either way, replace the mute state in the struct with our new state.
-        self.mute_state[source].replace(match state {
-            Muted => true,
-            Unmuted => false,
-        });
+        self.mute_state[source].replace(state);
 
         Ok(())
     }

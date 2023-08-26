@@ -5,6 +5,7 @@ use log::debug;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons;
+use goxlr_shared::channels::InputChannels;
 use goxlr_shared::device::DeviceType;
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::routing::RoutingTable;
@@ -41,16 +42,22 @@ pub(crate) trait LoadProfile {
 #[async_trait]
 impl LoadProfile for GoXLR {
     async fn load_profile(&mut self) -> Result<()> {
-        // Prepare the Routing Table
+        debug!("Beginning Profile Load");
+        // These are setup methods, to do any pre-profile handling and setup..
         self.setup_routing().await?;
         self.setup_button_states().await?;
 
+        // Go through the profile components and apply them to the GoXLR
         self.load_faders().await?;
+        self.load_volumes().await?;
+
         self.load_colours().await?;
 
+        // Finalise things setup earlier
         self.apply_routing().await?;
         self.apply_button_states().await?;
 
+        debug!("Completed Profile Load");
         Ok(())
     }
 
@@ -59,9 +66,21 @@ impl LoadProfile for GoXLR {
         let page = self.profile.pages.current;
         let faders = self.profile.pages.page_list[page].faders;
         for fader in Fader::iter() {
+            debug!("Assigning Fader {:?} to {:?}", fader, faders[fader]);
+
+            if let Some(channel) = self.fader_state[fader] {
+                if channel == faders[fader] {
+                    debug!("Fader {:?} already assigned to {:?}", fader, faders[fader]);
+                    continue;
+                }
+            }
+
             let source = ChannelSource::FromFaderSource(faders[fader]);
             let message = BasicResultCommand::AssignFader(fader, source);
             self.send_no_result(message).await?;
+
+            // Replace our Cached Version..
+            self.fader_state[fader].replace(faders[fader]);
         }
 
         Ok(())
@@ -74,6 +93,8 @@ impl LoadProfile for GoXLR {
             let volume = self.profile.channels[channel].volume;
             let target = ChannelSource::FromFaderSource(channel);
 
+            debug!("Setting Volume for {:?} from profile to {:?}", channel, volume);
+
             let command = BasicResultCommand::SetVolume(target, volume);
             self.send_no_result(command).await?;
         }
@@ -82,6 +103,8 @@ impl LoadProfile for GoXLR {
     }
 
     async fn load_mute_states(&mut self) -> Result<()> {
+        debug!("Loading Mute States");
+        
         for source in FaderSources::iter() {
             let state = self.profile.channels[source].mute_state;
             let channel = self.profile.channels[source].clone();
@@ -188,11 +211,20 @@ impl LoadProfile for GoXLR {
     }
 
     async fn apply_routing(&mut self) -> Result<()> {
+        // Once we reach here, all routing changes should have been setup, so we apply routing
+        // for all input channels.
+
+        for channel in InputChannels::iter() {
+            let routes = self.routing_state.get_input_routes(channel);
+            let command = BasicResultCommand::ApplyRouting(channel, routes);
+            self.send_no_result(command).await?;
+        }
         Ok(())
     }
 
     async fn setup_button_states(&mut self) -> Result<()> {
         // By default, all states are 'inactive' (DimmedColour1)
+        debug!("Resetting Button States");
         self.button_states = Default::default();
         Ok(())
     }
