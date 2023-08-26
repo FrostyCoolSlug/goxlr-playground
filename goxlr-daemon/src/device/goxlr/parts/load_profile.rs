@@ -189,6 +189,25 @@ impl LoadProfile for GoXLR {
     }
 
     async fn setup_routing(&mut self) -> Result<()> {
+        debug!("Loading Routing from Profile: ");
+        debug!("Routing Table: {:#?}", self.profile.routing);
+
+        for channel in InputChannels::iter() {
+            for output in OutputChannels::iter() {
+                let value = match self.profile.routing[channel][output] {
+                    true => RouteValue::On,
+                    false => RouteValue::Off,
+                };
+
+                let output = RoutingOutput::from(output);
+
+                // Set routing will return true / false if the route was actually changed, because
+                // we're loading this from a profile, we don't need to worry about that, as all
+                // routing will be updated at the end of the load.
+                self.routing_state.set_routing(channel, output, value);
+            }
+        }
+
         // Nothing to do here yet, we defer to the GoXLR struct to handle setup..
         Ok(())
     }
@@ -199,6 +218,9 @@ impl LoadProfile for GoXLR {
 
         for channel in InputChannels::iter() {
             let routes = self.routing_state.get_input_routes(channel);
+
+            debug!("Routing {:?} to {:?}", channel, routes);
+
             let command = BasicResultCommand::ApplyRouting(channel, routes);
             self.send_no_result(command).await?;
         }
