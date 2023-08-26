@@ -5,13 +5,13 @@ use goxlr_shared::channels::{InputChannels, OutputChannels};
 use goxlr_shared::colours::Colour;
 use goxlr_shared::faders::FaderSources;
 
-use crate::Fader;
 use crate::MuteAction;
 use crate::MuteBehaviour;
 use crate::{
     ButtonColourSet, FaderChannel, FaderColourSet, FaderDisplay, FaderPage, FaderPages,
     InactiveButtonBehaviour, MuteState, Profile, Screen,
 };
+use crate::{Configuration, Fader};
 
 /// The default profile if one isn't found..
 /// TODO: This should be more basic, but using advanced stuff for testing..
@@ -205,10 +205,16 @@ impl Default for Profile {
         // Samples go to Chat Mic..
         routing[InputChannels::Sample][OutputChannels::ChatMic] = true;
 
+        // General Configuration
+        let configuration = Configuration {
+            button_hold_time: 500,
+        };
+
         Profile {
             channels,
             pages,
             routing,
+            configuration,
         }
     }
 }

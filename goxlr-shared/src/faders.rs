@@ -2,6 +2,7 @@ use enum_map::Enum;
 use strum::EnumIter;
 
 use crate::channels::InputChannels;
+use crate::interaction::InteractiveFaders;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +14,17 @@ pub enum Fader {
     B,
     C,
     D,
+}
+
+impl From<InteractiveFaders> for Fader {
+    fn from(value: InteractiveFaders) -> Self {
+        match value {
+            InteractiveFaders::A => Fader::A,
+            InteractiveFaders::B => Fader::B,
+            InteractiveFaders::C => Fader::C,
+            InteractiveFaders::D => Fader::D,
+        }
+    }
 }
 
 /// A list of channels which can be assigned to a fader.

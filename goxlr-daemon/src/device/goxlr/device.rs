@@ -1,22 +1,29 @@
 use anyhow::{bail, Context, Result};
 use enum_map::EnumMap;
 use log::{debug, error, warn};
+use std::time::Duration;
 use tokio::sync::{mpsc, oneshot};
-use tokio::{join, select, task};
+use tokio::time::sleep;
+use tokio::{join, select, task, time};
 
 use goxlr_profile::Profile;
+use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::ChannelMuteState;
 use goxlr_shared::colours::ColourScheme;
 use goxlr_shared::device::DeviceInfo;
+use goxlr_shared::encoders::Encoders;
 use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::interaction::InteractiveButtons;
 use goxlr_shared::routing::RoutingTable;
 use goxlr_shared::states::ButtonDisplayStates;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, CommandSender};
+use goxlr_usb_messaging::events::interaction::InteractionEvent;
 use goxlr_usb_messaging::runners::device::DeviceMessage;
 use goxlr_usb_messaging::runners::device::{start_usb_device_runner, GoXLRUSBConfiguration};
 
 use crate::device::device_manager::{RunnerMessage, RunnerState};
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
+use crate::device::goxlr::parts::interactions::Interactions;
 use crate::device::goxlr::parts::load_profile::LoadProfile;
 use crate::stop::Stop;
 
@@ -32,6 +39,9 @@ pub(crate) struct GoXLR {
     pub routing_state: RoutingTable,
     pub mute_state: EnumMap<FaderSources, Option<ChannelMuteState>>,
     pub fader_state: EnumMap<Fader, Option<FaderSources>>,
+
+    // For tracking button 'held' state..
+    pub button_down_states: EnumMap<Buttons, Option<ButtonState>>,
 
     config: GoXLRDeviceConfiguration,
     shutdown: Stop,
@@ -49,6 +59,7 @@ impl GoXLR {
             routing_state: Default::default(),
             mute_state: Default::default(),
             fader_state: Default::default(),
+            button_down_states: Default::default(),
 
             config,
             shutdown,
@@ -89,6 +100,9 @@ impl GoXLR {
 
         // A signal from the device runner to tell us it's ready to go.
         let (ready_send, ready_recv) = oneshot::channel();
+
+        // A ticker to handle internal data handling periodically.
+        let mut ticker = time::interval(Duration::from_millis(20));
 
         // Build the configuration for the USB Runner, with the relevant messaging queues
         let configuration = GoXLRUSBConfiguration {
@@ -144,7 +158,28 @@ impl GoXLR {
                         }
                     }
                     Some(event) = interaction_recv.recv() => {
-                        debug!("Something Chnaged! {:?}", event);
+                        let result = match event {
+                            InteractionEvent::ButtonDown(button) => {
+                                self.on_button_down(button.into()).await
+                            },
+                            InteractionEvent::ButtonUp(button) => {
+                                self.on_button_up(button.into()).await
+                            },
+                            InteractionEvent::VolumeChange(fader, value) => {
+                                self.on_volume_change(fader.into(), value).await
+                            },
+                            InteractionEvent::EncoderChange(encoder, value) => {
+                                self.on_encoder_change(encoder.into(), value).await
+                            }
+                        };
+
+                        if let Err(error) = result {
+                            warn!("Error Handling Button Press: {:?}", error);
+                        }
+                    }
+                    _ = ticker.tick() => {
+                        // Things to do every 20ms..
+                        let _ = self.check_held().await;
                     }
                     _ = self.shutdown.recv() => {
                         debug!("[GoXLR]{} Shutdown Triggered!", self.config.device);
@@ -186,4 +221,11 @@ pub async fn start_goxlr(config: GoXLRDeviceConfiguration, shutdown: Stop) {
         error!("Error during device runtime: {}", error);
         let _ = sender.send(error_msg).await;
     }
+}
+
+/// This is a simple struct that tracks how long long a button has been pressed for..
+#[derive(Debug, Default, Copy, Clone)]
+pub(crate) struct ButtonState {
+    pub(crate) press_time: u128,
+    pub(crate) hold_handled: bool,
 }

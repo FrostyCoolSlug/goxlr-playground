@@ -23,6 +23,10 @@ pub struct Profile {
     /// Note, we don't use RoutingOutput here, as the HardTune setting is entirely transient thus
     /// shouldn't be stored in the profile. You can use .into() to get it's RoutingOutput equivalent.
     pub routing: EnumMap<InputChannels, EnumMap<OutputChannels, bool>>,
+
+    /// The General 'Configuration' of the device, this holds various settings such as (hold time)
+    /// and any other settings that don't really fit anywhere else.
+    pub configuration: Configuration,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -172,4 +176,9 @@ pub enum MuteState {
     Unmuted,
     Pressed,
     Held,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub struct Configuration {
+    pub button_hold_time: u16,
 }
