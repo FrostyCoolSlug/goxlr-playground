@@ -1,9 +1,9 @@
+use std::time::Duration;
+
 use anyhow::{bail, Context, Result};
 use enum_map::EnumMap;
 use log::{debug, error, warn};
-use std::time::Duration;
 use tokio::sync::{mpsc, oneshot};
-use tokio::time::sleep;
 use tokio::{join, select, task, time};
 
 use goxlr_profile::Profile;
@@ -11,9 +11,7 @@ use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::ChannelMuteState;
 use goxlr_shared::colours::ColourScheme;
 use goxlr_shared::device::DeviceInfo;
-use goxlr_shared::encoders::Encoders;
 use goxlr_shared::faders::{Fader, FaderSources};
-use goxlr_shared::interaction::InteractiveButtons;
 use goxlr_shared::routing::RoutingTable;
 use goxlr_shared::states::ButtonDisplayStates;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, CommandSender};
