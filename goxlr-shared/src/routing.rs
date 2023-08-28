@@ -22,11 +22,11 @@ impl RoutingTable {
         self.table[input][output] = value;
     }
 
-    pub fn get_routing(&mut self, input: InputChannels, output: RoutingOutput) -> RouteValue {
+    pub fn get_routing(&self, input: InputChannels, output: RoutingOutput) -> RouteValue {
         self.table[input][output]
     }
 
-    pub fn get_input_routes(&mut self, input: InputChannels) -> Row {
+    pub fn get_input_routes(&self, input: InputChannels) -> Row {
         self.table[input]
     }
 }

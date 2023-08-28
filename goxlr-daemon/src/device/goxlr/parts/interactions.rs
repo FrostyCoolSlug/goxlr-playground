@@ -12,6 +12,8 @@ use goxlr_shared::states::State;
 
 use crate::device::goxlr::device::{ButtonState, GoXLR};
 use crate::device::goxlr::parts::load_profile::LoadProfile;
+use crate::device::goxlr::parts::mute_handler::MuteHandler;
+use crate::device::goxlr::parts::profile::Profile;
 
 #[async_trait]
 pub(crate) trait Interactions {
@@ -22,6 +24,7 @@ pub(crate) trait Interactions {
     async fn on_volume_change(&mut self, fader: Fader, value: u8) -> Result<()>;
     async fn on_encoder_change(&mut self, encoder: Encoders, value: i8) -> Result<()>;
 
+    fn is_held_handled(&self, button: Buttons) -> bool;
     async fn check_held(&mut self) -> Result<()>;
 }
 
@@ -54,6 +57,12 @@ impl Interactions for GoXLR {
         debug!("Button Up: {:?}", button);
 
         match button {
+            Buttons::FaderA | Buttons::FaderB | Buttons::FaderC | Buttons::FaderD => {
+                if !self.is_held_handled(button) {
+                    self.handle_mute_press(self.get_channel_for_button(button)).await?;
+                }
+            }
+
             _ => {
                 // TODO: Remove this..
                 self.button_states.set_state(button, State::DimmedColour1);
@@ -72,6 +81,11 @@ impl Interactions for GoXLR {
     async fn on_button_held(&mut self, button: Buttons) -> Result<()> {
         debug!("Button Held: {:?}", button);
         match button {
+            Buttons::FaderA | Buttons::FaderB | Buttons::FaderC | Buttons::FaderD => {
+                // Get the source assigned to this fader..
+                self.handle_mute_hold(self.get_channel_for_button(button)).await?;
+            }
+
             _ => {
                 self.button_states.set_state(button, State::Blinking);
                 self.apply_button_states().await?;
@@ -101,6 +115,14 @@ impl Interactions for GoXLR {
         }
 
         Ok(())
+    }
+
+    fn is_held_handled(&self, button: Buttons) -> bool {
+        if let Some(state) = self.button_down_states[button] {
+            state.hold_handled
+        } else {
+            false
+        }
     }
 
     async fn check_held(&mut self) -> Result<()> {

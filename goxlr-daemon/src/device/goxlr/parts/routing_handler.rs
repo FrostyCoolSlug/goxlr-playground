@@ -1,10 +1,13 @@
 use anyhow::{bail, Result};
+use async_trait::async_trait;
 use enum_map::EnumMap;
+use log::debug;
 
 use crate::device::goxlr::device::GoXLR;
 use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
 use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
+use goxlr_usb_messaging::events::commands::BasicResultCommand;
 
 // These just help keep the function definitions slightly tidier..
 type In = InputChannels;
@@ -14,16 +17,21 @@ type Row = EnumMap<RoutingOutput, RouteValue>;
 
 /// Commands responsible for manipulating the Routing Table, these functions
 /// will return 'true' if a change has actually occurred.
+#[async_trait]
 pub(crate) trait RoutingHandler {
     fn enable_route(&mut self, input: In, out: Out) -> Result<bool>;
     fn disable_route(&mut self, input: In, out: Out) -> Result<bool>;
     fn set_route_value(&mut self, input: In, out: Out, value: u8) -> Result<bool>;
     fn set_route(&mut self, input: In, out: Out, value: Value) -> Result<bool>;
-    fn get_input_row(&mut self, input: In) -> Row;
+    fn get_input_row(&self, input: In) -> Row;
 
     fn is_valid_routing_target(channel: FaderSources) -> bool;
+
+    // Commands for actually sending routing information to the GoXLR..
+    async fn apply_route_for_channel(&self, source: In) -> Result<()>;
 }
 
+#[async_trait]
 impl RoutingHandler for GoXLR {
     fn enable_route(&mut self, input: In, out: Out) -> Result<bool> {
         self.set_route(input, out, Value::On)
@@ -60,7 +68,7 @@ impl RoutingHandler for GoXLR {
         Ok(true)
     }
 
-    fn get_input_row(&mut self, input: In) -> Row {
+    fn get_input_row(&self, input: In) -> Row {
         self.routing_state.get_input_routes(input)
     }
 
@@ -80,5 +88,14 @@ impl RoutingHandler for GoXLR {
         }
 
         return true;
+    }
+
+    async fn apply_route_for_channel(&self, source: In) -> Result<()> {
+        let routes = self.get_input_row(source);
+
+        debug!("Routing {:?} to {:?}", source, routes);
+
+        let command = BasicResultCommand::ApplyRouting(source, routes);
+        self.send_no_result(command).await
     }
 }

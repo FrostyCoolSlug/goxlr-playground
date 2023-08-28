@@ -1,5 +1,7 @@
 use anyhow::{bail, Result};
 use async_trait::async_trait;
+use goxlr_profile::{MuteAction, MuteState};
+use goxlr_shared::buttons::InactiveButtonBehaviour;
 use log::debug;
 use strum::IntoEnumIterator;
 
@@ -7,9 +9,12 @@ use goxlr_shared::channels::ChannelMuteState::{Muted, Unmuted};
 use goxlr_shared::channels::{ChannelMuteState, InputChannels, OutputChannels, RoutingOutput};
 use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
+use goxlr_shared::states::State;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::device::GoXLR;
+use crate::device::goxlr::parts::load_profile::LoadProfile;
+use crate::device::goxlr::parts::profile::Profile;
 use crate::device::goxlr::parts::routing_handler::RoutingHandler;
 
 type Source = FaderSources;
@@ -17,15 +22,105 @@ type Target = Vec<OutputChannels>;
 
 #[async_trait]
 pub(crate) trait MuteHandler {
+    async fn handle_mute_press(&mut self, source: FaderSources) -> Result<()>;
+    async fn handle_mute_hold(&mut self, source: FaderSources) -> Result<()>;
+
     async fn mute_to_target(&mut self, source: Source, targets: Target) -> Result<MuteChanges>;
     async fn mute_to_all(&mut self, source: Source) -> Result<MuteChanges>;
     async fn unmute(&mut self, source: Source) -> Result<MuteChanges>;
     async fn send_mute_state(&mut self, source: Source, state: ChannelMuteState) -> Result<()>;
-    async fn update_mute_button_state(&mut self, source: Source) -> Result<bool>;
+
+    async fn set_channel_state(&mut self, source: FaderSources, state: MuteState) -> Result<()>;
+    fn update_mute_button_state(&mut self, source: Source) -> bool;
+
+    async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()>;
 }
 
 #[async_trait]
 impl MuteHandler for GoXLR {
+    /// Code which triggers when a channel is changed to a 'Pressed' state, primarily it'll
+    /// either unmute the channel if it's muted, or will mute to targets in the base state.
+    async fn handle_mute_press(&mut self, source: FaderSources) -> Result<()> {
+        debug!("Handling Mute Press for {:?}", source);
+
+        let current = self.profile.channels[source].mute_state;
+        if current != MuteState::Unmuted {
+            debug!("{:?} currently muted, unmuting..", source);
+            // Simple, regardless of current state, we just unmute it.
+            let changes = self.unmute(source).await?;
+            self.set_channel_state(source, MuteState::Unmuted).await?;
+            return self.apply_mute_changes(changes).await;
+        }
+
+        debug!("Channel {:?} not muted, muting", source);
+        let targets = self.profile.channels[source].mute_actions[MuteAction::Press].clone();
+        let changes = self.mute_to_target(source, targets).await?;
+
+        self.set_channel_state(source, MuteState::Pressed).await?;
+        return self.apply_mute_changes(changes).await;
+    }
+
+    /// This one is a little more complicated, we could be going from Nothing -> Held,
+    /// Pressed -> Held, or even Held -> Held (do nothing).
+    async fn handle_mute_hold(&mut self, source: FaderSources) -> Result<()> {
+        debug!("Handling Mute Hold for {:?}", source);
+
+        match self.profile.channels[source].mute_state {
+            MuteState::Unmuted => {
+                debug!("{:?} currently unmuted, doing simple Mute", source);
+
+                // This one is simple, do the same as press except with Hold Targets..
+                let targets = self.profile.channels[source].mute_actions[MuteAction::Hold].clone();
+                let changes = self.mute_to_target(source, targets).await?;
+
+                self.set_channel_state(source, MuteState::Held).await?;
+                return self.apply_mute_changes(changes).await;
+            }
+            MuteState::Pressed => {
+                debug!("{:?} In pressed state, updating to Hold", source);
+
+                let current = self.profile.channels[source].mute_actions[MuteAction::Press].clone();
+                let targets = self.profile.channels[source].mute_actions[MuteAction::Hold].clone();
+
+                if current.is_empty() && targets.is_empty() {
+                    // Both are 'Mute to All', there's nothing to do here..
+                    debug!("Both Press and Hold are 'Mute to All', doing nothing");
+                    self.set_channel_state(source, MuteState::Held).await?;
+                    return Ok(());
+                }
+
+                // We can simply call 'Unmute' to reset the routing table to it's base state..
+                debug!("Reverting 'Press' State to profile");
+                let unmute_change = self.unmute(source).await?;
+
+                // Now call mute to apply the new settings..
+                debug!("Applying mute to new target list: {:#?}", targets);
+                let mute_change = self.mute_to_target(source, targets).await?;
+
+                debug!("Applying Routing Changes");
+                let mut channels_handled = vec![];
+                for channel in unmute_change.routing {
+                    channels_handled.push(channel);
+                    self.apply_route_for_channel(channel).await?;
+                }
+
+                for channel in mute_change.routing {
+                    if !channels_handled.contains(&channel) {
+                        self.apply_route_for_channel(channel).await?;
+                    }
+                }
+
+                self.set_channel_state(source, MuteState::Held).await?;
+            }
+            MuteState::Held => {
+                debug!("{:?} is already in held state, updating colour.", source);
+                self.set_channel_state(source, MuteState::Held).await?;
+                return Ok(());
+            }
+        }
+        Ok(())
+    }
+
     async fn mute_to_target(&mut self, source: Source, targets: Target) -> Result<MuteChanges> {
         // If our target list is empty, activate 'mute to all' behaviour..
         if targets.is_empty() {
@@ -145,8 +240,49 @@ impl MuteHandler for GoXLR {
         Ok(())
     }
 
-    async fn update_mute_button_state(&mut self, source: Source) -> Result<bool> {
-        Ok(false)
+    async fn set_channel_state(&mut self, source: FaderSources, state: MuteState) -> Result<()> {
+        self.profile.channels[source].mute_state = state;
+        if self.update_mute_button_state(source) {
+            self.apply_button_states().await?;
+        }
+        Ok(())
+    }
+
+    fn update_mute_button_state(&mut self, source: Source) -> bool {
+        // TODO: This should return true / false depending on if an actual change occurred
+        if let Some(button) = self.get_button_for_channel(source) {
+            let channel = self.profile.channels[source].clone();
+
+            match channel.mute_state {
+                MuteState::Unmuted => {
+                    let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
+
+                    // Apply 'Inactive' State..
+                    self.button_states.set_state(
+                        button,
+                        match mute_behaviour {
+                            InactiveButtonBehaviour::DimActive => State::DimmedColour1,
+                            InactiveButtonBehaviour::DimInactive => State::DimmedColour2,
+                            InactiveButtonBehaviour::InactiveColour => State::Colour2,
+                        },
+                    );
+                }
+
+                MuteState::Pressed => self.button_states.set_state(button, State::Colour1),
+                MuteState::Held => self.button_states.set_state(button, State::Blinking),
+            }
+
+            return true;
+        }
+
+        false
+    }
+
+    async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()> {
+        for channel in changes.routing {
+            self.apply_route_for_channel(channel).await?;
+        }
+        Ok(())
     }
 }
 

@@ -64,17 +64,10 @@ pub struct FaderChannel {
     pub mute_state: MuteState,
 
     /// Defines what action is performed on Press and Hold
-    pub mute_actions: EnumMap<MuteAction, MuteBehaviour>,
+    pub mute_actions: EnumMap<MuteAction, Vec<OutputChannels>>,
 
     /// A struct detailing how a fader is displayed on the GoXLR
     pub display: FaderDisplay,
-}
-
-/// A Struct that defines what happens in the various mute states
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MuteBehaviour {
-    /// A list of targets this behaviour should mute to (Empty for 'All')
-    pub mute_targets: Vec<OutputChannels>,
 }
 
 /// A struct that defines top to bottom how a fader is displayed on the Device
@@ -171,7 +164,7 @@ impl From<MuteState> for MuteAction {
 }
 
 /// This represents the current state of a Channel
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub enum MuteState {
     Unmuted,
     Pressed,

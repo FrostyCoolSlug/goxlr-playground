@@ -6,7 +6,6 @@ use goxlr_shared::colours::Colour;
 use goxlr_shared::faders::FaderSources;
 
 use crate::MuteAction;
-use crate::MuteBehaviour;
 use crate::{
     ButtonColourSet, FaderChannel, FaderColourSet, FaderDisplay, FaderPage, FaderPages,
     InactiveButtonBehaviour, MuteState, Profile, Screen,
@@ -21,12 +20,8 @@ impl Default for Profile {
 
         // Configure the Press and Hold behaviours to be 'Mute to All'
         let mute_action = enum_map! {
-            MuteAction::Hold => MuteBehaviour {
-                mute_targets: vec![]
-            },
-            MuteAction::Press => MuteBehaviour {
-                mute_targets: vec![]
-            },
+            MuteAction::Hold => vec![],
+            MuteAction::Press => vec![],
         };
 
         let display_mode = vec![];

@@ -16,6 +16,7 @@ use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::device::GoXLR;
 use crate::device::goxlr::parts::mute_handler::MuteHandler;
+use crate::device::goxlr::parts::routing_handler::RoutingHandler;
 
 /// This trait contains all methods needed to successfully load a profile, and are implemented
 /// for the GoXLR type immediately after. This code assumes that self.profile is accurate.
@@ -23,23 +24,23 @@ use crate::device::goxlr::parts::mute_handler::MuteHandler;
 pub(crate) trait LoadProfile {
     async fn load_profile(&mut self) -> Result<()>;
     async fn load_faders(&mut self) -> Result<()>;
-    async fn load_volumes(&mut self) -> Result<()>;
+    async fn load_volumes(&self) -> Result<()>;
     async fn load_mute_states(&mut self) -> Result<()>;
 
     // Colour Related Commands
     async fn load_colours(&mut self) -> Result<()>;
-    async fn load_fader_display(&mut self) -> Result<()>;
+    async fn load_fader_display(&self) -> Result<()>;
 
     //async fn load_button_states(&mut self) -> Result<()>;
-    async fn load_display(&mut self) -> Result<()>;
+    async fn load_display(&self) -> Result<()>;
 
     // Routing Commands
     async fn setup_routing(&mut self) -> Result<()>;
-    async fn apply_routing(&mut self) -> Result<()>;
+    async fn apply_routing(&self) -> Result<()>;
 
     // Button States..
     async fn setup_button_states(&mut self) -> Result<()>;
-    async fn apply_button_states(&mut self) -> Result<()>;
+    async fn apply_button_states(&self) -> Result<()>;
 }
 
 #[async_trait]
@@ -90,7 +91,7 @@ impl LoadProfile for GoXLR {
         Ok(())
     }
 
-    async fn load_volumes(&mut self) -> Result<()> {
+    async fn load_volumes(&self) -> Result<()> {
         debug!("Loading Volumes..");
 
         for channel in FaderSources::iter() {
@@ -119,11 +120,11 @@ impl LoadProfile for GoXLR {
             match state {
                 MuteState::Unmuted => self.unmute(source).await?,
                 MuteState::Pressed | MuteState::Held => {
-                    let actions = channel.mute_actions[state.into()].clone();
+                    let targets = channel.mute_actions[state.into()].clone();
 
                     // We can ignore the return value of this as we're loading a profile, we're
                     // going to forcefully apply the routing and states later.
-                    self.mute_to_target(source, actions.mute_targets).await?
+                    self.mute_to_target(source, targets).await?
                 }
             };
         }
@@ -163,7 +164,7 @@ impl LoadProfile for GoXLR {
         self.send_no_result(command).await
     }
 
-    async fn load_fader_display(&mut self) -> Result<()> {
+    async fn load_fader_display(&self) -> Result<()> {
         let fader_page = self.profile.pages.current;
         let faders = self.profile.pages.page_list[fader_page].faders;
 
@@ -179,7 +180,7 @@ impl LoadProfile for GoXLR {
         Ok(())
     }
 
-    async fn load_display(&mut self) -> Result<()> {
+    async fn load_display(&self) -> Result<()> {
         // If we're a Mini, nothing to do.
         if self.device.clone().unwrap().device_type == DeviceType::Mini {
             return Ok(());
@@ -212,17 +213,12 @@ impl LoadProfile for GoXLR {
         Ok(())
     }
 
-    async fn apply_routing(&mut self) -> Result<()> {
+    async fn apply_routing(&self) -> Result<()> {
         // Once we reach here, all routing changes should have been setup, so we apply routing
         // for all input channels.
 
         for channel in InputChannels::iter() {
-            let routes = self.routing_state.get_input_routes(channel);
-
-            debug!("Routing {:?} to {:?}", channel, routes);
-
-            let command = BasicResultCommand::ApplyRouting(channel, routes);
-            self.send_no_result(command).await?;
+            self.apply_route_for_channel(channel).await?;
         }
         Ok(())
     }
@@ -260,7 +256,7 @@ impl LoadProfile for GoXLR {
                 }
 
                 // This might need some more work..
-                MuteState::Pressed => self.button_states.set_state(button, State::Colour2),
+                MuteState::Pressed => self.button_states.set_state(button, State::Colour1),
                 MuteState::Held => self.button_states.set_state(button, State::Blinking),
             }
         }
@@ -268,7 +264,7 @@ impl LoadProfile for GoXLR {
         Ok(())
     }
 
-    async fn apply_button_states(&mut self) -> Result<()> {
+    async fn apply_button_states(&self) -> Result<()> {
         let command = BasicResultCommand::SetButtonStates(self.button_states);
         self.send_no_result(command).await?;
 

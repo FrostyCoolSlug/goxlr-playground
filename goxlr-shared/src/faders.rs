@@ -1,6 +1,7 @@
 use enum_map::Enum;
 use strum::EnumIter;
 
+use crate::buttons::Buttons;
 use crate::channels::InputChannels;
 use crate::interaction::InteractiveFaders;
 #[cfg(feature = "serde")]
@@ -23,6 +24,20 @@ impl From<InteractiveFaders> for Fader {
             InteractiveFaders::B => Fader::B,
             InteractiveFaders::C => Fader::C,
             InteractiveFaders::D => Fader::D,
+        }
+    }
+}
+
+impl From<Buttons> for Fader {
+    fn from(value: Buttons) -> Self {
+        match value {
+            Buttons::FaderA => Fader::A,
+            Buttons::FaderB => Fader::B,
+            Buttons::FaderC => Fader::C,
+            Buttons::FaderD => Fader::D,
+            _ => {
+                panic!("Button isn't attached to a fader!");
+            }
         }
     }
 }
