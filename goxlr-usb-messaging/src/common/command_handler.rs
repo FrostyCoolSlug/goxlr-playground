@@ -220,4 +220,11 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
 
         Ok(())
     }
+
+    async fn set_scribble(&mut self, fader: Fader, data: [u8; 1024]) -> Result<()> {
+        let command = Command::SetScribble(fader.into());
+        self.request_data(command, &data).await?;
+
+        Ok(())
+    }
 }

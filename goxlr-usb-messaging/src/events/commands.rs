@@ -21,6 +21,7 @@ pub enum BasicResultCommand {
     ApplyRouting(InputChannels, EnumMap<RoutingOutput, RouteValue>),
     SetFaderStyle(Fader, Vec<FaderDisplayMode>),
     SetButtonStates(ButtonDisplayStates),
+    SetScribble(Fader, [u8; 1024]),
 }
 
 #[derive(Copy, Clone)]

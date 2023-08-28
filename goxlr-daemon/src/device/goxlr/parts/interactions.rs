@@ -33,13 +33,8 @@ impl Interactions for GoXLR {
     async fn on_button_down(&mut self, button: Buttons) -> Result<()> {
         debug!("Button Down: {:?}", button);
         match button {
+            Buttons::Swear => {}
             _ => {
-                // TODO: Remove this..
-                // For initial testing, we'll just light up the button, make it flash if it's held
-                // then reset it when it's released.
-                self.button_states.set_state(button, State::Colour1);
-                self.apply_button_states().await?;
-
                 // By default, we simply store the current time that this was held, and handle
                 // buttons that are held later.
                 let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
@@ -59,7 +54,8 @@ impl Interactions for GoXLR {
         match button {
             Buttons::FaderA | Buttons::FaderB | Buttons::FaderC | Buttons::FaderD => {
                 if !self.is_held_handled(button) {
-                    self.handle_mute_press(self.get_channel_for_button(button)).await?;
+                    self.handle_mute_press(self.get_channel_for_button(button))
+                        .await?;
                 }
             }
 
@@ -83,7 +79,8 @@ impl Interactions for GoXLR {
         match button {
             Buttons::FaderA | Buttons::FaderB | Buttons::FaderC | Buttons::FaderD => {
                 // Get the source assigned to this fader..
-                self.handle_mute_hold(self.get_channel_for_button(button)).await?;
+                self.handle_mute_hold(self.get_channel_for_button(button))
+                    .await?;
             }
 
             _ => {

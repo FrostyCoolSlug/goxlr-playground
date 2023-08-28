@@ -7,11 +7,11 @@ edition = "2021"
 
 [dependencies]
 goxlr-profile = { path = "../goxlr-profile" }
-goxlr-scribbles = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", rev="d6a556396c56f756c4bf5c0acec11c554069351f" }
 goxlr-shared = { path="../goxlr-shared" }
-goxlr-usb = { path="../goxlr-usb" }
-
 goxlr-usb-messaging = { path="../goxlr-usb-messaging" }
+
+# We'll need our own scribble handler eventually, we can borrow from the util for now..
+goxlr-scribbles = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", rev="d6a556396c56f756c4bf5c0acec11c554069351f" }
 
 # For handling the Enum Maps and sets inside the profile..
 strum = { version = "0.25", features = ["derive"] }

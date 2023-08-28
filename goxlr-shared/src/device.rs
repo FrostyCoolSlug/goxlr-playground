@@ -11,7 +11,7 @@ pub struct DeviceInfo {
     pub features: Vec<GoXLRFeature>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum GoXLRFeature {
     Animation,
     Submix,

@@ -136,6 +136,9 @@ impl GoXLRUSBDevice {
                 BasicResultCommand::SetButtonStates(states) => {
                     let _ = responder.send(device.set_button_states(states).await);
                 }
+                BasicResultCommand::SetScribble(fader, data) => {
+                    let _ = responder.send(device.set_scribble(fader, data).await);
+                }
             },
         }
     }

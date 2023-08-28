@@ -16,6 +16,7 @@ use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::device::GoXLR;
 use crate::device::goxlr::parts::mute_handler::MuteHandler;
+use crate::device::goxlr::parts::pages::FaderPages;
 use crate::device::goxlr::parts::routing_handler::RoutingHandler;
 
 /// This trait contains all methods needed to successfully load a profile, and are implemented
@@ -23,23 +24,16 @@ use crate::device::goxlr::parts::routing_handler::RoutingHandler;
 #[async_trait]
 pub(crate) trait LoadProfile {
     async fn load_profile(&mut self) -> Result<()>;
-    async fn load_faders(&mut self) -> Result<()>;
     async fn load_volumes(&self) -> Result<()>;
     async fn load_mute_states(&mut self) -> Result<()>;
 
     // Colour Related Commands
     async fn load_colours(&mut self) -> Result<()>;
-    async fn load_fader_display(&self) -> Result<()>;
-
-    //async fn load_button_states(&mut self) -> Result<()>;
-    async fn load_display(&self) -> Result<()>;
 
     // Routing Commands
-    async fn setup_routing(&mut self) -> Result<()>;
     async fn apply_routing(&self) -> Result<()>;
 
     // Button States..
-    async fn setup_button_states(&mut self) -> Result<()>;
     async fn apply_button_states(&self) -> Result<()>;
 }
 
@@ -48,46 +42,20 @@ impl LoadProfile for GoXLR {
     async fn load_profile(&mut self) -> Result<()> {
         debug!("Beginning Profile Load");
         // These are setup methods, to do any pre-profile handling and setup..
-        self.setup_routing().await?;
-        self.setup_button_states().await?;
+        self.setup_routing();
+        self.setup_button_states();
+        self.setup_colours();
 
         // Go through the profile components and apply them to the GoXLR
-        self.load_faders().await?;
         self.load_volumes().await?;
-
-        self.load_colours().await?;
-        self.load_fader_display().await?;
+        self.load_current_page(false).await?;
 
         // Finalise things setup earlier
+        self.load_colours().await?;
         self.apply_routing().await?;
         self.apply_button_states().await?;
 
         debug!("Completed Profile Load");
-        Ok(())
-    }
-
-    async fn load_faders(&mut self) -> Result<()> {
-        debug!("Assigning Faders..");
-        let page = self.profile.pages.current;
-        let faders = self.profile.pages.page_list[page].faders;
-        for fader in Fader::iter() {
-            debug!("Assigning Fader {:?} to {:?}", fader, faders[fader]);
-
-            if let Some(channel) = self.fader_state[fader] {
-                if channel == faders[fader] {
-                    debug!("Fader {:?} already assigned to {:?}", fader, faders[fader]);
-                    continue;
-                }
-            }
-
-            let source = ChannelSource::FromFaderSource(faders[fader]);
-            let message = BasicResultCommand::AssignFader(fader, source);
-            self.send_no_result(message).await?;
-
-            // Replace our Cached Version..
-            self.fader_state[fader].replace(faders[fader]);
-        }
-
         Ok(())
     }
 
@@ -164,32 +132,38 @@ impl LoadProfile for GoXLR {
         self.send_no_result(command).await
     }
 
-    async fn load_fader_display(&self) -> Result<()> {
-        let fader_page = self.profile.pages.current;
-        let faders = self.profile.pages.page_list[fader_page].faders;
+    async fn apply_routing(&self) -> Result<()> {
+        // Once we reach here, all routing changes should have been setup, so we apply routing
+        // for all input channels.
 
-        for fader in Fader::iter() {
-            let source = faders[fader];
-            let channel = self.profile.channels[source].clone();
-            let display = channel.display.fader_display_mode;
-
-            // Set the Style for the fader..
-            self.send_no_result(SetFaderStyle(fader, display)).await?;
+        for channel in InputChannels::iter() {
+            self.apply_route_for_channel(channel).await?;
         }
-
         Ok(())
     }
 
-    async fn load_display(&self) -> Result<()> {
-        // If we're a Mini, nothing to do.
-        if self.device.clone().unwrap().device_type == DeviceType::Mini {
-            return Ok(());
-        }
+    async fn apply_button_states(&self) -> Result<()> {
+        let command = BasicResultCommand::SetButtonStates(self.button_states);
+        self.send_no_result(command).await?;
 
         Ok(())
     }
+}
 
-    async fn setup_routing(&mut self) -> Result<()> {
+/// This trait contains methods which are local to this mod. Traits require an attached scope to
+/// make functions available to other classes, but we should limit that level of communication only
+/// to things which should be exposed.
+#[async_trait]
+trait LoadProfileLocal {
+    /// These first three functions are for base setup, creating the scheme or the settings
+    /// prior to actually doing any of the loading.
+    fn setup_routing(&mut self);
+    fn setup_colours(&mut self);
+    fn setup_button_states(&mut self);
+}
+
+impl LoadProfileLocal for GoXLR {
+    fn setup_routing(&mut self) {
         debug!("Loading Routing from Profile: ");
         debug!("Routing Table: {:#?}", self.profile.routing);
 
@@ -208,66 +182,19 @@ impl LoadProfile for GoXLR {
                 self.routing_state.set_routing(channel, output, value);
             }
         }
-
-        // Nothing to do here yet, we defer to the GoXLR struct to handle setup..
-        Ok(())
     }
 
-    async fn apply_routing(&self) -> Result<()> {
-        // Once we reach here, all routing changes should have been setup, so we apply routing
-        // for all input channels.
-
-        for channel in InputChannels::iter() {
-            self.apply_route_for_channel(channel).await?;
-        }
-        Ok(())
+    fn setup_colours(&mut self) {
+        debug!("Initialising Colour Map..");
+        self.colour_scheme = Default::default();
     }
 
-    async fn setup_button_states(&mut self) -> Result<()> {
+    fn setup_button_states(&mut self) {
         // By default, all states are 'inactive' (DimmedColour1)
         debug!("Resetting Button States");
         self.button_states = Default::default();
 
         debug!("Building Initial States..");
-        // Get the Mute states from the faders..
-        let fader_page = self.profile.pages.current;
-        let faders = self.profile.pages.page_list[fader_page].faders;
-        for fader in Fader::iter() {
-            // Get the button..
-            let button = Buttons::from_fader(fader);
-
-            let channel = self.profile.channels[faders[fader]].clone();
-            // Is this channel muted? If so, update the button..
-            let mute_state = channel.mute_state;
-            let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
-
-            // Get the Inactive behaviour..
-            match mute_state {
-                MuteState::Unmuted => {
-                    // Apply 'Inactive' State..
-                    self.button_states.set_state(
-                        button,
-                        match mute_behaviour {
-                            InactiveButtonBehaviour::DimActive => State::DimmedColour1,
-                            InactiveButtonBehaviour::DimInactive => State::DimmedColour2,
-                            InactiveButtonBehaviour::InactiveColour => State::Colour2,
-                        },
-                    );
-                }
-
-                // This might need some more work..
-                MuteState::Pressed => self.button_states.set_state(button, State::Colour1),
-                MuteState::Held => self.button_states.set_state(button, State::Blinking),
-            }
-        }
-
-        Ok(())
-    }
-
-    async fn apply_button_states(&self) -> Result<()> {
-        let command = BasicResultCommand::SetButtonStates(self.button_states);
-        self.send_no_result(command).await?;
-
-        Ok(())
+        // Fader Mute buttons are handled by fader.rs
     }
 }

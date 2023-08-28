@@ -1,20 +1,20 @@
 use anyhow::{bail, Result};
 use async_trait::async_trait;
-use goxlr_profile::{MuteAction, MuteState};
-use goxlr_shared::buttons::InactiveButtonBehaviour;
 use log::debug;
 use strum::IntoEnumIterator;
 
+use goxlr_profile::{MuteAction, MuteState};
+use goxlr_shared::buttons::InactiveButtonBehaviour;
 use goxlr_shared::channels::ChannelMuteState::{Muted, Unmuted};
 use goxlr_shared::channels::{ChannelMuteState, InputChannels, OutputChannels, RoutingOutput};
 use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::State;
+use goxlr_shared::states::State::{Colour2, DimmedColour1, DimmedColour2};
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::device::GoXLR;
 use crate::device::goxlr::parts::load_profile::LoadProfile;
-use crate::device::goxlr::parts::profile::Profile;
 use crate::device::goxlr::parts::routing_handler::RoutingHandler;
 
 type Source = FaderSources;
@@ -31,7 +31,7 @@ pub(crate) trait MuteHandler {
     async fn send_mute_state(&mut self, source: Source, state: ChannelMuteState) -> Result<()>;
 
     async fn set_channel_state(&mut self, source: FaderSources, state: MuteState) -> Result<()>;
-    fn update_mute_button_state(&mut self, source: Source) -> bool;
+    fn get_mute_button_state(&mut self, source: Source) -> State;
 
     async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()>;
 }
@@ -242,40 +242,26 @@ impl MuteHandler for GoXLR {
 
     async fn set_channel_state(&mut self, source: FaderSources, state: MuteState) -> Result<()> {
         self.profile.channels[source].mute_state = state;
-        if self.update_mute_button_state(source) {
-            self.apply_button_states().await?;
-        }
         Ok(())
     }
 
-    fn update_mute_button_state(&mut self, source: Source) -> bool {
-        // TODO: This should return true / false depending on if an actual change occurred
-        if let Some(button) = self.get_button_for_channel(source) {
-            let channel = self.profile.channels[source].clone();
+    fn get_mute_button_state(&mut self, source: Source) -> State {
+        let channel = self.profile.channels[source].clone();
 
-            match channel.mute_state {
-                MuteState::Unmuted => {
-                    let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
+        match channel.mute_state {
+            MuteState::Unmuted => {
+                let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
 
-                    // Apply 'Inactive' State..
-                    self.button_states.set_state(
-                        button,
-                        match mute_behaviour {
-                            InactiveButtonBehaviour::DimActive => State::DimmedColour1,
-                            InactiveButtonBehaviour::DimInactive => State::DimmedColour2,
-                            InactiveButtonBehaviour::InactiveColour => State::Colour2,
-                        },
-                    );
+                // Apply 'Inactive' State..
+                match mute_behaviour {
+                    InactiveButtonBehaviour::DimActive => DimmedColour1,
+                    InactiveButtonBehaviour::DimInactive => DimmedColour2,
+                    InactiveButtonBehaviour::InactiveColour => Colour2,
                 }
-
-                MuteState::Pressed => self.button_states.set_state(button, State::Colour1),
-                MuteState::Held => self.button_states.set_state(button, State::Blinking),
             }
-
-            return true;
+            MuteState::Pressed => State::Colour1,
+            MuteState::Held => State::Blinking,
         }
-
-        false
     }
 
     async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()> {
