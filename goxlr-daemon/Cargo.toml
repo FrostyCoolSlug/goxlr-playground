@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 goxlr-profile = { path = "../goxlr-profile" }
 goxlr-shared = { path="../goxlr-shared" }
-goxlr-usb-messaging = { path="../goxlr-usb-messaging" }
+goxlr-usb-messaging = { path= "../goxlr-usb" }
 
 # We'll need our own scribble handler eventually, we can borrow from the util for now..
 goxlr-scribbles = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", rev="d6a556396c56f756c4bf5c0acec11c554069351f" }
