@@ -200,9 +200,15 @@ impl Default for Profile {
         // Samples go to Chat Mic..
         routing[InputChannels::Sample][OutputChannels::ChatMic] = true;
 
+        // Mute Behaviours..
+        channels[FaderSources::System].mute_actions[MuteAction::Press] =
+            vec![OutputChannels::Headphones];
+        channels[FaderSources::System].mute_actions[MuteAction::Hold] =
+            vec![OutputChannels::StreamMix];
+
         // General Configuration
         let configuration = Configuration {
-            button_hold_time: 500,
+            button_hold_time: 1000,
         };
 
         Profile {

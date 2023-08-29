@@ -225,5 +225,8 @@ pub async fn start_goxlr(config: GoXLRDeviceConfiguration, shutdown: Stop) {
 #[derive(Debug, Default, Copy, Clone)]
 pub(crate) struct ButtonState {
     pub(crate) press_time: u128,
+
+    pub(crate) skip_hold: bool,
+    pub(crate) skip_release: bool,
     pub(crate) hold_handled: bool,
 }
