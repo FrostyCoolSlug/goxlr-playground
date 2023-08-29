@@ -197,6 +197,21 @@ impl InteractionsLocal for GoXLR {
     /// The 'first' button here is the button that was pressed first (which already exists in the
     /// button map), and the 'second' is the most recent button pressed.
     async fn handle_page(&mut self, one: Buttons, two: Buttons, prev: bool) -> Result<()> {
+        if self.profile.pages.page_list.len() == 1 {
+            let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
+
+            // When there's only one page, don't activate the page behaviour. Simply put the button
+            // into a 'down' state and return.
+            self.button_down_states[two].replace(ButtonState {
+                press_time: now,
+                skip_hold: false,
+                skip_release: false,
+                hold_handled: false,
+            });
+
+            return Ok(());
+        }
+
         if let Some(mut state) = self.button_down_states[one] {
             if prev {
                 self.prev_page().await?;
