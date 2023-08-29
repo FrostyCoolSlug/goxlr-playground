@@ -174,4 +174,5 @@ pub enum MuteState {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Configuration {
     pub button_hold_time: u16,
+    pub change_page_with_buttons: bool,
 }

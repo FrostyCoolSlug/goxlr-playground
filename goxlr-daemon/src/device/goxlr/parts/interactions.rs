@@ -197,7 +197,10 @@ impl InteractionsLocal for GoXLR {
     /// The 'first' button here is the button that was pressed first (which already exists in the
     /// button map), and the 'second' is the most recent button pressed.
     async fn handle_page(&mut self, one: Buttons, two: Buttons, prev: bool) -> Result<()> {
-        if self.profile.pages.page_list.len() == 1 {
+        let pages = self.profile.pages.page_list.len();
+        let enabled = self.profile.configuration.change_page_with_buttons;
+
+        if pages == 1 || !enabled {
             let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
 
             // When there's only one page, don't activate the page behaviour. Simply put the button
