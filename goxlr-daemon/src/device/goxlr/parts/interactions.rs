@@ -11,7 +11,7 @@ use goxlr_shared::faders::Fader;
 use goxlr_shared::states::State;
 
 use crate::device::goxlr::device::{ButtonState, GoXLR};
-use crate::device::goxlr::parts::load_profile::LoadProfile;
+use crate::device::goxlr::parts::buttons::ButtonHandlers;
 use crate::device::goxlr::parts::mute_handler::MuteHandler;
 use crate::device::goxlr::parts::profile::Profile;
 
@@ -24,7 +24,6 @@ pub(crate) trait Interactions {
     async fn on_volume_change(&mut self, fader: Fader, value: u8) -> Result<()>;
     async fn on_encoder_change(&mut self, encoder: Encoders, value: i8) -> Result<()>;
 
-    fn is_held_handled(&self, button: Buttons) -> bool;
     async fn check_held(&mut self) -> Result<()>;
 }
 
@@ -54,8 +53,8 @@ impl Interactions for GoXLR {
         match button {
             Buttons::FaderA | Buttons::FaderB | Buttons::FaderC | Buttons::FaderD => {
                 if !self.is_held_handled(button) {
-                    self.handle_mute_press(self.get_channel_for_button(button))
-                        .await?;
+                    let channel = self.get_channel_for_button(button);
+                    self.handle_mute_press(channel).await?;
                 }
             }
 
@@ -79,8 +78,8 @@ impl Interactions for GoXLR {
         match button {
             Buttons::FaderA | Buttons::FaderB | Buttons::FaderC | Buttons::FaderD => {
                 // Get the source assigned to this fader..
-                self.handle_mute_hold(self.get_channel_for_button(button))
-                    .await?;
+                let channel = self.get_channel_for_button(button);
+                self.handle_mute_hold(channel).await?;
             }
 
             _ => {
@@ -114,14 +113,6 @@ impl Interactions for GoXLR {
         Ok(())
     }
 
-    fn is_held_handled(&self, button: Buttons) -> bool {
-        if let Some(state) = self.button_down_states[button] {
-            state.hold_handled
-        } else {
-            false
-        }
-    }
-
     async fn check_held(&mut self) -> Result<()> {
         let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
         let hold_time = self.profile.configuration.button_hold_time;
@@ -137,5 +128,19 @@ impl Interactions for GoXLR {
             }
         }
         Ok(())
+    }
+}
+
+trait InteractionsLocal {
+    fn is_held_handled(&self, button: Buttons) -> bool;
+}
+
+impl InteractionsLocal for GoXLR {
+    fn is_held_handled(&self, button: Buttons) -> bool {
+        if let Some(state) = self.button_down_states[button] {
+            state.hold_handled
+        } else {
+            false
+        }
     }
 }

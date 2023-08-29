@@ -14,7 +14,7 @@ use goxlr_shared::states::State::{Colour2, DimmedColour1, DimmedColour2};
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::device::GoXLR;
-use crate::device::goxlr::parts::load_profile::LoadProfile;
+use crate::device::goxlr::parts::fader::DeviceFader;
 use crate::device::goxlr::parts::routing_handler::RoutingHandler;
 
 type Source = FaderSources;
@@ -22,22 +22,44 @@ type Target = Vec<OutputChannels>;
 
 #[async_trait]
 pub(crate) trait MuteHandler {
+    /// Used when loading profiles to set the initial state
+    async fn handle_mute_initial(&mut self, source: FaderSources) -> Result<()>;
+
+    /// Used for button handling..
     async fn handle_mute_press(&mut self, source: FaderSources) -> Result<()>;
     async fn handle_mute_hold(&mut self, source: FaderSources) -> Result<()>;
+    async fn handle_unmute(&mut self, source: FaderSources) -> Result<()>;
 
-    async fn mute_to_target(&mut self, source: Source, targets: Target) -> Result<MuteChanges>;
-    async fn mute_to_all(&mut self, source: Source) -> Result<MuteChanges>;
-    async fn unmute(&mut self, source: Source) -> Result<MuteChanges>;
-    async fn send_mute_state(&mut self, source: Source, state: ChannelMuteState) -> Result<()>;
-
-    async fn set_channel_state(&mut self, source: FaderSources, state: MuteState) -> Result<()>;
+    /// Returns the Button state for a mute button..
     fn get_mute_button_state(&mut self, source: Source) -> State;
-
-    async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()>;
 }
 
 #[async_trait]
 impl MuteHandler for GoXLR {
+    /// For this method, we assume that all the mute settings are incorrect, and we go through and
+    /// update the routing table, and mute states to ensure they match the 'base' level.
+    async fn handle_mute_initial(&mut self, source: FaderSources) -> Result<()> {
+        let state = self.profile.channels[source].mute_state;
+        match state {
+            MuteState::Unmuted => {
+                // This one is pretty trivial, we can just call 'unmute', which should set the
+                // routing table, and mute state back to their defaults from the profile.
+                self.unmute(source).await?;
+            }
+            MuteState::Pressed | MuteState::Held => {
+                let action = MuteAction::from(state);
+
+                // We need the targets..
+                let targets = self.profile.channels[source].mute_actions[action].clone();
+
+                // We can assume that if this is an initial pass, the routing is currently clean.
+                self.mute_to_target(source, targets).await?;
+            }
+        }
+
+        Ok(())
+    }
+
     /// Code which triggers when a channel is changed to a 'Pressed' state, primarily it'll
     /// either unmute the channel if it's muted, or will mute to targets in the base state.
     async fn handle_mute_press(&mut self, source: FaderSources) -> Result<()> {
@@ -46,18 +68,17 @@ impl MuteHandler for GoXLR {
         let current = self.profile.channels[source].mute_state;
         if current != MuteState::Unmuted {
             debug!("{:?} currently muted, unmuting..", source);
-            // Simple, regardless of current state, we just unmute it.
             let changes = self.unmute(source).await?;
-            self.set_channel_state(source, MuteState::Unmuted).await?;
-            return self.apply_mute_changes(changes).await;
+            self.apply_mute_changes(changes).await?;
+            return self.update_mute_state(source, MuteState::Unmuted).await;
         }
 
         debug!("Channel {:?} not muted, muting", source);
         let targets = self.profile.channels[source].mute_actions[MuteAction::Press].clone();
         let changes = self.mute_to_target(source, targets).await?;
 
-        self.set_channel_state(source, MuteState::Pressed).await?;
-        return self.apply_mute_changes(changes).await;
+        self.apply_mute_changes(changes).await?;
+        return self.update_mute_state(source, MuteState::Pressed).await;
     }
 
     /// This one is a little more complicated, we could be going from Nothing -> Held,
@@ -73,8 +94,10 @@ impl MuteHandler for GoXLR {
                 let targets = self.profile.channels[source].mute_actions[MuteAction::Hold].clone();
                 let changes = self.mute_to_target(source, targets).await?;
 
-                self.set_channel_state(source, MuteState::Held).await?;
-                return self.apply_mute_changes(changes).await;
+                // Update the profile state, and apply changes..
+                self.profile.channels[source].mute_state = MuteState::Held;
+                self.apply_mute_changes(changes).await?;
+                return self.update_mute_state(source, MuteState::Held).await;
             }
             MuteState::Pressed => {
                 debug!("{:?} In pressed state, updating to Hold", source);
@@ -85,8 +108,7 @@ impl MuteHandler for GoXLR {
                 if current.is_empty() && targets.is_empty() {
                     // Both are 'Mute to All', there's nothing to do here..
                     debug!("Both Press and Hold are 'Mute to All', doing nothing");
-                    self.set_channel_state(source, MuteState::Held).await?;
-                    return Ok(());
+                    return self.update_mute_state(source, MuteState::Held).await;
                 }
 
                 // We can simply call 'Unmute' to reset the routing table to it's base state..
@@ -101,26 +123,62 @@ impl MuteHandler for GoXLR {
                 let mut channels_handled = vec![];
                 for channel in unmute_change.routing {
                     channels_handled.push(channel);
-                    self.apply_route_for_channel(channel).await?;
+                    self.apply_routing_for_channel(channel).await?;
                 }
 
                 for channel in mute_change.routing {
                     if !channels_handled.contains(&channel) {
-                        self.apply_route_for_channel(channel).await?;
+                        self.apply_routing_for_channel(channel).await?;
                     }
                 }
 
-                self.set_channel_state(source, MuteState::Held).await?;
+                return self.update_mute_state(source, MuteState::Held).await;
             }
             MuteState::Held => {
                 debug!("{:?} is already in held state, updating colour.", source);
-                self.set_channel_state(source, MuteState::Held).await?;
-                return Ok(());
+                return self.update_mute_state(source, MuteState::Held).await;
             }
         }
-        Ok(())
     }
 
+    async fn handle_unmute(&mut self, source: FaderSources) -> Result<()> {
+        let changes = self.unmute(source).await?;
+        self.apply_mute_changes(changes).await?;
+        return self.update_mute_state(source, MuteState::Unmuted).await;
+    }
+
+    fn get_mute_button_state(&mut self, source: Source) -> State {
+        let channel = self.profile.channels[source].clone();
+
+        match channel.mute_state {
+            MuteState::Unmuted => {
+                let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
+
+                // Apply 'Inactive' State..
+                match mute_behaviour {
+                    InactiveButtonBehaviour::DimActive => DimmedColour1,
+                    InactiveButtonBehaviour::DimInactive => DimmedColour2,
+                    InactiveButtonBehaviour::InactiveColour => Colour2,
+                }
+            }
+            MuteState::Pressed => State::Colour1,
+            MuteState::Held => State::Blinking,
+        }
+    }
+}
+
+#[async_trait]
+trait MuteHandlerLocal {
+    async fn mute_to_target(&mut self, source: Source, targets: Target) -> Result<MuteChanges>;
+    async fn mute_to_all(&mut self, source: Source) -> Result<MuteChanges>;
+    async fn unmute(&mut self, source: Source) -> Result<MuteChanges>;
+
+    async fn send_mute_state(&mut self, source: Source, state: ChannelMuteState) -> Result<()>;
+    async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()>;
+}
+
+#[async_trait]
+impl MuteHandlerLocal for GoXLR {
     async fn mute_to_target(&mut self, source: Source, targets: Target) -> Result<MuteChanges> {
         // If our target list is empty, activate 'mute to all' behaviour..
         if targets.is_empty() {
@@ -151,8 +209,10 @@ impl MuteHandler for GoXLR {
         }
 
         let routing = if routing_updated {
+            debug!("Routing has been updated for {:?}", source);
             vec![InputChannels::from(source)]
         } else {
+            debug!("No Routing Change from Mute for {:?}", source);
             vec![]
         };
 
@@ -236,37 +296,12 @@ impl MuteHandler for GoXLR {
 
         // Either way, replace the mute state in the struct with our new state.
         self.mute_state[source].replace(state);
-
         Ok(())
-    }
-
-    async fn set_channel_state(&mut self, source: FaderSources, state: MuteState) -> Result<()> {
-        self.profile.channels[source].mute_state = state;
-        Ok(())
-    }
-
-    fn get_mute_button_state(&mut self, source: Source) -> State {
-        let channel = self.profile.channels[source].clone();
-
-        match channel.mute_state {
-            MuteState::Unmuted => {
-                let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
-
-                // Apply 'Inactive' State..
-                match mute_behaviour {
-                    InactiveButtonBehaviour::DimActive => DimmedColour1,
-                    InactiveButtonBehaviour::DimInactive => DimmedColour2,
-                    InactiveButtonBehaviour::InactiveColour => Colour2,
-                }
-            }
-            MuteState::Pressed => State::Colour1,
-            MuteState::Held => State::Blinking,
-        }
     }
 
     async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()> {
         for channel in changes.routing {
-            self.apply_route_for_channel(channel).await?;
+            self.apply_routing_for_channel(channel).await?;
         }
         Ok(())
     }

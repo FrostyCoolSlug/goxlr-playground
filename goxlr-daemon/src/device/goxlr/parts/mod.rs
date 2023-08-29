@@ -1,3 +1,4 @@
+pub(crate) mod buttons;
 pub(crate) mod fader;
 pub(crate) mod interactions;
 pub(crate) mod load_profile;

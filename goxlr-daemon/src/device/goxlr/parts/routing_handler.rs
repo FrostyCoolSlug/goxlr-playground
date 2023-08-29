@@ -2,6 +2,7 @@ use anyhow::{bail, Result};
 use async_trait::async_trait;
 use enum_map::EnumMap;
 use log::debug;
+use strum::IntoEnumIterator;
 
 use crate::device::goxlr::device::GoXLR;
 use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
@@ -23,12 +24,13 @@ pub(crate) trait RoutingHandler {
     fn disable_route(&mut self, input: In, out: Out) -> Result<bool>;
     fn set_route_value(&mut self, input: In, out: Out, value: u8) -> Result<bool>;
     fn set_route(&mut self, input: In, out: Out, value: Value) -> Result<bool>;
-    fn get_input_row(&self, input: In) -> Row;
+    fn set_routing_row_from_profile(&mut self, input: In, values: EnumMap<OutputChannels, bool>);
+    fn get_routing_input_row(&self, input: In) -> Row;
 
     fn is_valid_routing_target(channel: FaderSources) -> bool;
 
     // Commands for actually sending routing information to the GoXLR..
-    async fn apply_route_for_channel(&self, source: In) -> Result<()>;
+    async fn apply_routing_for_channel(&self, source: In) -> Result<()>;
 }
 
 #[async_trait]
@@ -68,7 +70,20 @@ impl RoutingHandler for GoXLR {
         Ok(true)
     }
 
-    fn get_input_row(&self, input: In) -> Row {
+    fn set_routing_row_from_profile(&mut self, input: In, values: EnumMap<OutputChannels, bool>) {
+        for output in OutputChannels::iter() {
+            let route_out = RoutingOutput::from(output);
+            let out_value = match values[output] {
+                true => RouteValue::On,
+                false => RouteValue::Off,
+            };
+
+            // This wont throw an error, we're not setting RouteValue::Value.
+            let _ = self.set_route(input, route_out, out_value);
+        }
+    }
+
+    fn get_routing_input_row(&self, input: In) -> Row {
         self.routing_state.get_input_routes(input)
     }
 
@@ -90,8 +105,8 @@ impl RoutingHandler for GoXLR {
         return true;
     }
 
-    async fn apply_route_for_channel(&self, source: In) -> Result<()> {
-        let routes = self.get_input_row(source);
+    async fn apply_routing_for_channel(&self, source: In) -> Result<()> {
+        let routes = self.get_routing_input_row(source);
 
         debug!("Routing {:?} to {:?}", source, routes);
 

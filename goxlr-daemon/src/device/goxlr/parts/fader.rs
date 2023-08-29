@@ -1,16 +1,19 @@
 use anyhow::Result;
 use async_trait::async_trait;
+use goxlr_profile::MuteState;
 use goxlr_scribbles::get_scribble;
-use goxlr_shared::buttons::Buttons;
 use log::debug;
 
+use goxlr_shared::buttons::Buttons;
 use goxlr_shared::device::{DeviceType, GoXLRFeature};
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::scribbles::Scribble;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::device::GoXLR;
+use crate::device::goxlr::parts::buttons::ButtonHandlers;
 use crate::device::goxlr::parts::mute_handler::MuteHandler;
+use crate::device::goxlr::parts::profile::Profile;
 
 const SUBMIX_MITIGATION: &[FaderSources] = &[FaderSources::Headphones, FaderSources::LineOut];
 
@@ -20,6 +23,7 @@ const SUBMIX_MITIGATION: &[FaderSources] = &[FaderSources::Headphones, FaderSour
 #[async_trait]
 pub(crate) trait DeviceFader {
     async fn assign_fader(&mut self, fader: Fader, source: FaderSources) -> Result<()>;
+    async fn update_mute_state(&mut self, source: FaderSources, state: MuteState) -> Result<()>;
 }
 
 #[async_trait]
@@ -32,12 +36,29 @@ impl DeviceFader for GoXLR {
     async fn assign_fader(&mut self, fader: Fader, source: FaderSources) -> Result<()> {
         // Get the details for the source..
         let details = self.profile.channels[source].clone();
-
-        debug!("Assigning {:?} to {:?}", source, fader);
-        // Assign the fader..
         let command_source = ChannelSource::FromFaderSource(source);
-        let command = BasicResultCommand::AssignFader(fader, command_source);
-        self.send_no_result(command).await?;
+
+        debug!("Checking assign of {:?} to {:?}", source, fader);
+        let assign = if let Some(state) = self.fader_state[fader] {
+            if state != source {
+                debug!("Change needed, assigning {:?} to {:?}", source, fader);
+                true
+            } else {
+                debug!("{:?} already assigned to fader {:?}", source, fader);
+                false
+            }
+        } else {
+            debug!("Unknown State, Assigning {:?} to {:?}", source, fader);
+            true
+        };
+
+        if assign {
+            let command = BasicResultCommand::AssignFader(fader, command_source);
+            self.send_no_result(command).await?;
+
+            // Update the Cache after assignment
+            self.fader_state[fader].replace(source);
+        }
 
         debug!("Performing Submix mitigation Check");
         // Submix mitigation code, assigning output channels to faders can cause their volume to
@@ -93,6 +114,18 @@ impl DeviceFader for GoXLR {
         let state = self.get_mute_button_state(source);
         self.button_states.set_state(mute_button, state);
 
+        Ok(())
+    }
+
+    /// Called when the mute state gets updated (probably from mute_handler.rs) to update the
+    /// button state.
+    async fn update_mute_state(&mut self, source: FaderSources, state: MuteState) -> Result<()> {
+        self.profile.channels[source].mute_state = state;
+        if let Some(button) = self.get_button_for_channel(source) {
+            let state = self.get_mute_button_state(source);
+            self.button_states.set_state(button, state);
+            self.apply_button_states().await?;
+        }
         Ok(())
     }
 }
