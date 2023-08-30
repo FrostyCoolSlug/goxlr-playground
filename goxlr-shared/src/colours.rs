@@ -20,7 +20,7 @@ const MOOD_COUNT: usize = 2;
 const PRESET_COUNT: usize = 6;
 const ENCODER_COUNT: usize = 4;
 const SAMPLE_BANK_COUNT: usize = 3;
-const SAMPLE_BUTTON_COUNT: usize = 4;
+const SAMPLE_BUTTON_COUNT: usize = 5;
 const FX_BUTTON_COUNT: usize = 4;
 const MIC_BUTTON_COUNT: usize = 2;
 
@@ -42,7 +42,6 @@ pub struct ColourScheme {
     pub sample_buttons: [TwoColour; SAMPLE_BUTTON_COUNT],
     pub fx_buttons: [TwoColour; FX_BUTTON_COUNT],
     pub mic_buttons: [TwoColour; MIC_BUTTON_COUNT],
-    pub dummy3: [TwoColour; 1], // What this is, and what this does, is anyone's guess.
 }
 
 impl ColourScheme {

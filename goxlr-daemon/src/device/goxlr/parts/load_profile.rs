@@ -5,6 +5,7 @@ use strum::IntoEnumIterator;
 
 use goxlr_profile::MuteState;
 use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
+use goxlr_shared::colours::TwoColourTargets;
 use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
 use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
@@ -134,6 +135,12 @@ impl LoadProfileLocal for GoXLR {
         debug!("Loading Colour Map..");
 
         // Colours Schemes for Scribbles, Faders and Mute are handled in fader.rs
+
+        // Configure the swear button..
+        let target = TwoColourTargets::Swear;
+        let swear_button = self.colour_scheme.get_two_colour_target(target);
+        swear_button.colour1 = self.profile.swear.colours.active_colour;
+        swear_button.colour2 = self.profile.swear.colours.inactive_colour;
 
         let command = BasicResultCommand::SetColour(self.colour_scheme);
         self.send_no_result(command).await

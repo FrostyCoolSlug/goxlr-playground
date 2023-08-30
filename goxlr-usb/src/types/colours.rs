@@ -71,10 +71,6 @@ impl ColourStruct for ColourScheme {
             map.append(&mut button.get_bytes());
         }
 
-        for button in &self.dummy3 {
-            map.append(&mut button.get_bytes());
-        }
-
         map
     }
 }

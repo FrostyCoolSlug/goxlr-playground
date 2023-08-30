@@ -5,12 +5,12 @@ use goxlr_shared::channels::{InputChannels, OutputChannels};
 use goxlr_shared::colours::Colour;
 use goxlr_shared::faders::FaderSources;
 
-use crate::MuteAction;
 use crate::{
     ButtonColourSet, FaderChannel, FaderColourSet, FaderDisplay, FaderPage, FaderPages,
     InactiveButtonBehaviour, MuteState, Profile, Screen,
 };
 use crate::{Configuration, Fader};
+use crate::{MuteAction, SwearSettings};
 
 /// The default profile if one isn't found..
 /// TODO: This should be more basic, but using advanced stuff for testing..
@@ -212,10 +212,24 @@ impl Default for Profile {
             button_hold_time: 1000,
         };
 
+        let swear = SwearSettings {
+            volume: 255,
+            colours: ButtonColourSet {
+                active_colour: Colour {
+                    red: 0,
+                    green: 255,
+                    blue: 255,
+                },
+                inactive_colour: Default::default(),
+                inactive_behaviour: InactiveButtonBehaviour::DimActive,
+            },
+        };
+
         Profile {
             channels,
             pages,
             routing,
+            swear,
             configuration,
         }
     }

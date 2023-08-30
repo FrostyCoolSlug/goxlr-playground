@@ -18,6 +18,9 @@ pub struct Profile {
     /// Fader Paging Configuration
     pub pages: FaderPages,
 
+    /// Configuration for the Swear Button
+    pub swear: SwearSettings,
+
     /// The Routing Configuration
     ///
     /// Note, we don't use RoutingOutput here, as the HardTune setting is entirely transient thus
@@ -169,6 +172,12 @@ pub enum MuteState {
     Unmuted,
     Pressed,
     Held,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SwearSettings {
+    pub volume: u8,
+    pub colours: ButtonColourSet,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]

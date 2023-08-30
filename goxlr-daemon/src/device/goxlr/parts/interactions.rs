@@ -68,7 +68,10 @@ impl Interactions for GoXLR {
                 }
             }
 
-            Buttons::Swear => {}
+            Buttons::Swear => {
+                self.button_states.set_state(Buttons::Swear, State::Colour1);
+                self.apply_button_states().await?;
+            }
             _ => {}
         }
 

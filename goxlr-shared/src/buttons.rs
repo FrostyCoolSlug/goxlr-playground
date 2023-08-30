@@ -128,3 +128,9 @@ pub enum InactiveButtonBehaviour {
     /// This brightly displays the inactive colour.
     InactiveColour,
 }
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum ButtonActiveState {
+    Active,
+    Inactive,
+}
