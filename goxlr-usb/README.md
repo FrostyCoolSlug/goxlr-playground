@@ -98,7 +98,7 @@ of the GoXLR (button press / release, volume and encoder changes). The receiver 
 the type of change, or the new value (where applicable).
 
 `event_recv`: Informs of important events occurring on the GoXLR, these may be critical errors, or (if 
-`interaction_recv` is set to `None`) notification that the state may have changed, and you need to re-check the button behaviours.
+`interaction_event` is set to `None`) notification that the state may have changed, and you need to re-check the button behaviours.
 
 **NOTE**: Under Linux, due to not being able to listen for interrupts, the 'StatusChange' message will be triggered
 every 20ms like clockwork. You should be prepared to handle it, and be weary of having code that stalls this receiver,
