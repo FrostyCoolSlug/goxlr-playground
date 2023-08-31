@@ -7,6 +7,7 @@ use crate::device::device_manager::start_device_manager;
 use crate::stop::Stop;
 
 mod device;
+mod settings;
 mod stop;
 
 #[tokio::main]

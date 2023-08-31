@@ -4,8 +4,15 @@
    to ensure there are no misconceptions regarding the types and associations.
 */
 
-use enum_map::Enum;
+use enum_map::{Enum, EnumMap};
 use strum::EnumIter;
+
+#[derive(Debug, Default)]
+pub struct CurrentStates {
+    pub buttons: EnumMap<InteractiveButtons, ButtonStates>,
+    pub volumes: EnumMap<InteractiveFaders, u8>,
+    pub encoders: EnumMap<InteractiveEncoders, i8>,
+}
 
 #[derive(Debug, Enum, EnumIter, Copy, Clone)]
 pub enum InteractiveButtons {

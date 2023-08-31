@@ -76,6 +76,37 @@ impl From<InteractiveButtons> for PhysicalButton {
     }
 }
 
+impl From<PhysicalButton> for InteractiveButtons {
+    fn from(value: PhysicalButton) -> Self {
+        match value {
+            PhysicalButton::Fader1Mute => InteractiveButtons::Fader1Mute,
+            PhysicalButton::Fader2Mute => InteractiveButtons::Fader2Mute,
+            PhysicalButton::Fader3Mute => InteractiveButtons::Fader3Mute,
+            PhysicalButton::Fader4Mute => InteractiveButtons::Fader4Mute,
+            PhysicalButton::Swear => InteractiveButtons::Swear,
+            PhysicalButton::CoughButton => InteractiveButtons::CoughButton,
+            PhysicalButton::EffectSelect1 => InteractiveButtons::EffectSelect1,
+            PhysicalButton::EffectSelect2 => InteractiveButtons::EffectSelect2,
+            PhysicalButton::EffectSelect3 => InteractiveButtons::EffectSelect3,
+            PhysicalButton::EffectSelect4 => InteractiveButtons::EffectSelect4,
+            PhysicalButton::EffectSelect5 => InteractiveButtons::EffectSelect5,
+            PhysicalButton::EffectSelect6 => InteractiveButtons::EffectSelect6,
+            PhysicalButton::EffectFx => InteractiveButtons::EffectFx,
+            PhysicalButton::EffectMegaphone => InteractiveButtons::EffectMegaphone,
+            PhysicalButton::EffectRobot => InteractiveButtons::EffectRobot,
+            PhysicalButton::EffectHardTune => InteractiveButtons::EffectHardTune,
+            PhysicalButton::SamplerSelectA => InteractiveButtons::SamplerSelectA,
+            PhysicalButton::SamplerSelectB => InteractiveButtons::SamplerSelectB,
+            PhysicalButton::SamplerSelectC => InteractiveButtons::SamplerSelectC,
+            PhysicalButton::SamplerTopLeft => InteractiveButtons::SamplerTopLeft,
+            PhysicalButton::SamplerTopRight => InteractiveButtons::SamplerTopRight,
+            PhysicalButton::SamplerBottomLeft => InteractiveButtons::SamplerBottomLeft,
+            PhysicalButton::SamplerBottomRight => InteractiveButtons::SamplerBottomRight,
+            PhysicalButton::SamplerClear => InteractiveButtons::SamplerClear,
+        }
+    }
+}
+
 impl From<Buttons> for PhysicalButton {
     fn from(value: Buttons) -> Self {
         match value {

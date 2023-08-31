@@ -7,10 +7,14 @@ use std::cmp::Ordering;
 
 use anyhow::{bail, Result};
 use log::{debug, trace};
+use strum::IntoEnumIterator;
 use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 
 use goxlr_shared::device::{DeviceInfo, DeviceType, GoXLRFeature};
+use goxlr_shared::interaction::{
+    ButtonStates, CurrentStates, InteractiveEncoders, InteractiveFaders,
+};
 use goxlr_shared::version::VersionNumber;
 
 use crate::common::command_handler::GoXLRCommands;
@@ -19,6 +23,8 @@ use crate::events::interaction::InteractionEvent;
 use crate::handlers::state_tracker::StateTracker;
 use crate::platform::rusb::device::{GoXLRConfiguration, GoXLRDevice};
 use crate::types::channels::AssignableChannel;
+use crate::types::encoders::DeviceEncoder;
+use crate::types::faders::DeviceFader;
 use crate::USBLocation;
 
 // This is an obnoxiously long type, shorten it!
@@ -41,7 +47,10 @@ impl GoXLRUSBDevice {
         //let (msg_send, mut msg_recv) = mpsc::channel(128);
 
         // Create a state tracker to monitor for physical changes to the GoXLR..
-        let mut tracker = StateTracker::new(self.config.interaction_event.clone());
+        let mut tracker = None;
+        if let Some(interaction) = &self.config.interaction_event {
+            tracker = Some(StateTracker::new(interaction.clone()));
+        }
 
         let config = GoXLRConfiguration {
             device: self.config.device,
@@ -73,22 +82,17 @@ impl GoXLRUSBDevice {
                             bail!("Error in Message Handler, aborting");
                         },
                         DeviceMessage::Event(message) => {
-                            match message {
-                                // We handle StatusChange, and allow it to send specific change
-                                // messages to the parent controller.
-
-                                EventType::StatusChange => {
+                            if message == EventType::StatusChange {
+                                // Check to see if we're handling button states internally
+                                if let Some(tracker) = &mut tracker {
                                     let buttons = device.get_button_states().await?;
                                     tracker.update_states(buttons).await;
-                                },
-
-                                // Any other messages coming from the GoXLR should be sent upstream
-                                // to be handled by the parent controller.
-                                #[allow(unreachable_patterns)]
-                                _ => {
-                                    self.config.device_event.send(event).await?;
+                                    continue;
                                 }
                             }
+
+                            // Send the Event Upstream
+                            self.config.device_event.send(event).await?;
                         },
                     }
                 }
@@ -140,6 +144,29 @@ impl GoXLRUSBDevice {
                     let _ = responder.send(device.set_scribble(fader, data).await);
                 }
             },
+            CommandSender::GetButtonStates(responder) => {
+                // Grab the states from the GoXLR..
+                let states = device.get_button_states().await;
+                match states {
+                    Ok(states) => {
+                        // Convert them to something that can be used upstream
+                        let mut state = CurrentStates::default();
+                        for button in states.pressed {
+                            state.buttons[button.into()] = ButtonStates::Pressed;
+                        }
+                        for fader in DeviceFader::iter() {
+                            state.volumes[fader.into()] = states.volumes[fader as usize];
+                        }
+                        for encoder in DeviceEncoder::iter() {
+                            state.encoders[encoder.into()] = states.encoders[encoder as usize];
+                        }
+                    }
+                    Err(error) => {
+                        // Send the error upstream...
+                        let _ = responder.send(Err(error));
+                    }
+                }
+            }
         }
     }
 
@@ -210,7 +237,7 @@ pub async fn start_usb_device_runner(config: GoXLRUSBConfiguration, ready: Ready
 
 pub struct GoXLRUSBConfiguration {
     pub device: USBLocation,
-    pub interaction_event: mpsc::Sender<InteractionEvent>,
+    pub interaction_event: Option<mpsc::Sender<InteractionEvent>>,
     pub device_event: mpsc::Sender<DeviceMessage>,
     pub command_receiver: mpsc::Receiver<CommandSender>,
     pub stop: oneshot::Receiver<()>,
@@ -224,7 +251,7 @@ pub enum DeviceMessage {
     Event(EventType),
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum EventType {
     StatusChange,
 }

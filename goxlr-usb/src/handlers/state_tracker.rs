@@ -19,15 +19,17 @@ use goxlr_shared::interaction::{
 
 use crate::events::interaction::InteractionEvent;
 use crate::types::buttons::{CurrentButtonStates, PhysicalButton};
+use crate::types::encoders::DeviceEncoder;
+use crate::types::faders::DeviceFader;
 
 #[derive(Debug)]
 pub(crate) struct StateTracker {
     sender: mpsc::Sender<InteractionEvent>,
 
     first_run: bool,
-    button_states: EnumMap<InteractiveButtons, ButtonStates>,
-    volume_map: EnumMap<InteractiveFaders, u8>,
-    encoder_map: EnumMap<InteractiveEncoders, i8>,
+    button_states: EnumMap<PhysicalButton, ButtonStates>,
+    volume_map: EnumMap<DeviceFader, u8>,
+    encoder_map: EnumMap<DeviceEncoder, i8>,
 }
 
 impl StateTracker {
@@ -53,43 +55,46 @@ impl StateTracker {
     }
 
     async fn update_volumes(&mut self, volumes: [u8; 4]) {
-        for fader in InteractiveFaders::iter() {
+        for fader in DeviceFader::iter() {
             let volume = volumes[fader as usize];
             if self.volume_map[fader] != volume || self.first_run {
                 self.volume_map[fader] = volumes[fader as usize];
-                let _ = self
-                    .sender
-                    .send(InteractionEvent::VolumeChange(fader, volume))
-                    .await;
+
+                let message = InteractionEvent::VolumeChange(fader.into(), volume);
+                let _ = self.sender.send(message).await;
             }
         }
     }
 
     async fn update_encoders(&mut self, encoders: [i8; 4]) {
-        for encoder in InteractiveEncoders::iter() {
+        for encoder in DeviceEncoder::iter() {
             let value = encoders[encoder as usize];
             if self.encoder_map[encoder] != value || self.first_run {
                 self.encoder_map[encoder] = value;
-                let _ = self
-                    .sender
-                    .send(InteractionEvent::EncoderChange(encoder, value))
-                    .await;
+
+                let encoder = encoder.into();
+                let message = InteractionEvent::EncoderChange(encoder, value);
+                let _ = self.sender.send(message).await;
             }
         }
     }
 
     async fn update_buttons(&mut self, buttons: EnumSet<PhysicalButton>) {
-        for button in InteractiveButtons::iter() {
+        for button in PhysicalButton::iter() {
             let current_state = self.button_states[button];
             let status_button = PhysicalButton::from(button);
 
             if buttons.contains(status_button) && current_state == ButtonStates::NotPressed {
-                let _ = self.sender.send(InteractionEvent::ButtonDown(button)).await;
                 self.button_states[button] = ButtonStates::Pressed;
+
+                let button = button.into();
+                let _ = self.sender.send(InteractionEvent::ButtonDown(button)).await;
             }
             if !buttons.contains(status_button) && current_state == ButtonStates::Pressed {
-                let _ = self.sender.send(InteractionEvent::ButtonUp(button)).await;
                 self.button_states[button] = ButtonStates::NotPressed;
+
+                let button = button.into();
+                let _ = self.sender.send(InteractionEvent::ButtonUp(button)).await;
             }
         }
     }

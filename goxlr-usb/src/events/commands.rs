@@ -7,6 +7,7 @@ use goxlr_shared::channels::{
 };
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
 use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::interaction::CurrentStates;
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::ButtonDisplayStates;
 
@@ -33,5 +34,6 @@ pub enum ChannelSource {
 }
 
 pub enum CommandSender {
+    GetButtonStates(oneshot::Sender<Result<CurrentStates>>),
     BasicResultCommand(BasicResultCommand, oneshot::Sender<Result<()>>),
 }

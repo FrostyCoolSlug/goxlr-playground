@@ -105,7 +105,7 @@ impl GoXLR {
         // Build the configuration for the USB Runner, with the relevant messaging queues
         let configuration = GoXLRUSBConfiguration {
             device: self.config.device,
-            interaction_event: interaction_send,
+            interaction_event: Some(interaction_send),
             device_event: event_send,
             command_receiver: command_recv,
             stop: stop_recv,
