@@ -8,7 +8,7 @@ use goxlr_shared::buttons::Buttons;
 use goxlr_shared::device::{DeviceType, GoXLRFeature};
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::scribbles::Scribble;
-use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
+use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::device::GoXLR;
 use crate::device::goxlr::parts::buttons::ButtonHandlers;

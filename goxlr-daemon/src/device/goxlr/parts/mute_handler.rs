@@ -11,7 +11,7 @@ use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::State;
 use goxlr_shared::states::State::{Colour2, DimmedColour1, DimmedColour2};
-use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
+use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::device::GoXLR;
 use crate::device::goxlr::parts::fader::DeviceFader;

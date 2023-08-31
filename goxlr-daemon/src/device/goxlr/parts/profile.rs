@@ -1,9 +1,10 @@
-use crate::device::goxlr::device::GoXLR;
-use anyhow::bail;
 use async_trait::async_trait;
+use strum::IntoEnumIterator;
+
 use goxlr_shared::buttons::Buttons;
 use goxlr_shared::faders::{Fader, FaderSources};
-use strum::IntoEnumIterator;
+
+use crate::device::goxlr::device::GoXLR;
 
 #[async_trait]
 pub(crate) trait Profile {

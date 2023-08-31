@@ -14,10 +14,10 @@ use goxlr_shared::device::DeviceInfo;
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::routing::RoutingTable;
 use goxlr_shared::states::ButtonDisplayStates;
-use goxlr_usb_messaging::events::commands::{BasicResultCommand, CommandSender};
-use goxlr_usb_messaging::events::interaction::InteractionEvent;
-use goxlr_usb_messaging::runners::device::DeviceMessage;
-use goxlr_usb_messaging::runners::device::{start_usb_device_runner, GoXLRUSBConfiguration};
+use goxlr_usb::events::commands::{BasicResultCommand, CommandSender};
+use goxlr_usb::events::interaction::InteractionEvent;
+use goxlr_usb::runners::device::DeviceMessage;
+use goxlr_usb::runners::device::{start_usb_device_runner, GoXLRUSBConfiguration};
 
 use crate::device::device_manager::{RunnerMessage, RunnerState};
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;

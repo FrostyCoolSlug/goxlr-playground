@@ -2,7 +2,7 @@ use crate::device::goxlr::device::GoXLR;
 use anyhow::Result;
 use async_trait::async_trait;
 use goxlr_shared::buttons::{ButtonActiveState, Buttons};
-use goxlr_usb_messaging::events::commands::BasicResultCommand;
+use goxlr_usb::events::commands::BasicResultCommand;
 
 #[async_trait]
 pub(crate) trait ButtonHandlers {

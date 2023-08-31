@@ -1,5 +1,5 @@
 [package]
-name = "goxlr-usb-messaging"
+name = "goxlr-usb"
 version = "0.1.0"
 edition = "2021"
 

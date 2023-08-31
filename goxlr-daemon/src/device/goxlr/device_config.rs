@@ -1,6 +1,6 @@
 use tokio::sync::mpsc::Sender;
 
-use goxlr_usb_messaging::USBLocation;
+use goxlr_usb::USBLocation;
 
 use crate::device::device_manager::RunnerMessage;
 use crate::stop::Stop;

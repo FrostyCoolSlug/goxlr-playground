@@ -4,11 +4,12 @@ use enum_map::EnumMap;
 use log::debug;
 use strum::IntoEnumIterator;
 
-use crate::device::goxlr::device::GoXLR;
 use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
 use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
-use goxlr_usb_messaging::events::commands::BasicResultCommand;
+use goxlr_usb::events::commands::BasicResultCommand;
+
+use crate::device::goxlr::device::GoXLR;
 
 // These just help keep the function definitions slightly tidier..
 type In = InputChannels;

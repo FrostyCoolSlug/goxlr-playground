@@ -8,7 +8,7 @@ use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
 use goxlr_shared::colours::TwoColourTargets;
 use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
-use goxlr_usb_messaging::events::commands::{BasicResultCommand, ChannelSource};
+use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::device::GoXLR;
 use crate::device::goxlr::parts::buttons::ButtonHandlers;

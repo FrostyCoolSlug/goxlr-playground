@@ -9,9 +9,9 @@ use log::{debug, error, info};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task, time};
 
-use goxlr_usb_messaging::runners::pnp::PnPDeviceMessage;
-use goxlr_usb_messaging::runners::pnp::{start_pnp_runner, PnPConfiguration};
-use goxlr_usb_messaging::USBLocation;
+use goxlr_usb::runners::pnp::PnPDeviceMessage;
+use goxlr_usb::runners::pnp::{start_pnp_runner, PnPConfiguration};
+use goxlr_usb::USBLocation;
 
 use crate::device::goxlr::device::start_goxlr;
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;

@@ -1,10 +1,10 @@
 use anyhow::{bail, Result};
 use async_trait::async_trait;
-use goxlr_profile::MuteAction::Press;
-use goxlr_shared::faders::Fader;
-use goxlr_usb_messaging::events::commands::BasicResultCommand;
 use log::{debug, warn};
 use strum::IntoEnumIterator;
+
+use goxlr_shared::faders::Fader;
+use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::device::GoXLR;
 use crate::device::goxlr::parts::fader::DeviceFader;
