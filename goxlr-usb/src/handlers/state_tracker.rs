@@ -18,7 +18,7 @@ use goxlr_shared::interaction::{
 };
 
 use crate::events::interaction::InteractionEvent;
-use crate::types::buttons::{CurrentButtonStates, PhysicalButton};
+use crate::types::buttons::{CurrentButtonStates, DeviceButton};
 use crate::types::encoders::DeviceEncoder;
 use crate::types::faders::DeviceFader;
 
@@ -27,7 +27,7 @@ pub(crate) struct StateTracker {
     sender: mpsc::Sender<InteractionEvent>,
 
     first_run: bool,
-    button_states: EnumMap<PhysicalButton, ButtonStates>,
+    button_states: EnumMap<DeviceButton, ButtonStates>,
     volume_map: EnumMap<DeviceFader, u8>,
     encoder_map: EnumMap<DeviceEncoder, i8>,
 }
@@ -79,10 +79,10 @@ impl StateTracker {
         }
     }
 
-    async fn update_buttons(&mut self, buttons: EnumSet<PhysicalButton>) {
-        for button in PhysicalButton::iter() {
+    async fn update_buttons(&mut self, buttons: EnumSet<DeviceButton>) {
+        for button in DeviceButton::iter() {
             let current_state = self.button_states[button];
-            let status_button = PhysicalButton::from(button);
+            let status_button = DeviceButton::from(button);
 
             if buttons.contains(status_button) && current_state == ButtonStates::NotPressed {
                 self.button_states[button] = ButtonStates::Pressed;

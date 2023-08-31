@@ -6,13 +6,13 @@ use strum::EnumIter;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct CurrentButtonStates {
-    pub pressed: EnumSet<PhysicalButton>,
+    pub pressed: EnumSet<DeviceButton>,
     pub volumes: [u8; 4],
     pub encoders: [i8; 4],
 }
 
 #[derive(EnumSetType, Enum, EnumIter, Debug)]
-pub(crate) enum PhysicalButton {
+pub(crate) enum DeviceButton {
     // These are all the buttons from the GoXLR Mini.
     Fader1Mute = 4,
     Fader2Mute = 9,
@@ -45,95 +45,95 @@ pub(crate) enum PhysicalButton {
     SamplerClear = 18,
 }
 
-impl From<InteractiveButtons> for PhysicalButton {
+impl From<InteractiveButtons> for DeviceButton {
     fn from(value: InteractiveButtons) -> Self {
         match value {
-            InteractiveButtons::Fader1Mute => PhysicalButton::Fader1Mute,
-            InteractiveButtons::Fader2Mute => PhysicalButton::Fader2Mute,
-            InteractiveButtons::Fader3Mute => PhysicalButton::Fader3Mute,
-            InteractiveButtons::Fader4Mute => PhysicalButton::Fader4Mute,
-            InteractiveButtons::Swear => PhysicalButton::Swear,
-            InteractiveButtons::CoughButton => PhysicalButton::CoughButton,
-            InteractiveButtons::EffectSelect1 => PhysicalButton::EffectSelect1,
-            InteractiveButtons::EffectSelect2 => PhysicalButton::EffectSelect2,
-            InteractiveButtons::EffectSelect3 => PhysicalButton::EffectSelect3,
-            InteractiveButtons::EffectSelect4 => PhysicalButton::EffectSelect4,
-            InteractiveButtons::EffectSelect5 => PhysicalButton::EffectSelect5,
-            InteractiveButtons::EffectSelect6 => PhysicalButton::EffectSelect6,
-            InteractiveButtons::EffectFx => PhysicalButton::EffectFx,
-            InteractiveButtons::EffectMegaphone => PhysicalButton::EffectMegaphone,
-            InteractiveButtons::EffectRobot => PhysicalButton::EffectRobot,
-            InteractiveButtons::EffectHardTune => PhysicalButton::EffectHardTune,
-            InteractiveButtons::SamplerSelectA => PhysicalButton::SamplerSelectA,
-            InteractiveButtons::SamplerSelectB => PhysicalButton::SamplerSelectB,
-            InteractiveButtons::SamplerSelectC => PhysicalButton::SamplerSelectC,
-            InteractiveButtons::SamplerTopLeft => PhysicalButton::SamplerTopLeft,
-            InteractiveButtons::SamplerTopRight => PhysicalButton::SamplerTopRight,
-            InteractiveButtons::SamplerBottomLeft => PhysicalButton::SamplerBottomLeft,
-            InteractiveButtons::SamplerBottomRight => PhysicalButton::SamplerBottomRight,
-            InteractiveButtons::SamplerClear => PhysicalButton::SamplerClear,
+            InteractiveButtons::Fader1Mute => DeviceButton::Fader1Mute,
+            InteractiveButtons::Fader2Mute => DeviceButton::Fader2Mute,
+            InteractiveButtons::Fader3Mute => DeviceButton::Fader3Mute,
+            InteractiveButtons::Fader4Mute => DeviceButton::Fader4Mute,
+            InteractiveButtons::Swear => DeviceButton::Swear,
+            InteractiveButtons::CoughButton => DeviceButton::CoughButton,
+            InteractiveButtons::EffectSelect1 => DeviceButton::EffectSelect1,
+            InteractiveButtons::EffectSelect2 => DeviceButton::EffectSelect2,
+            InteractiveButtons::EffectSelect3 => DeviceButton::EffectSelect3,
+            InteractiveButtons::EffectSelect4 => DeviceButton::EffectSelect4,
+            InteractiveButtons::EffectSelect5 => DeviceButton::EffectSelect5,
+            InteractiveButtons::EffectSelect6 => DeviceButton::EffectSelect6,
+            InteractiveButtons::EffectFx => DeviceButton::EffectFx,
+            InteractiveButtons::EffectMegaphone => DeviceButton::EffectMegaphone,
+            InteractiveButtons::EffectRobot => DeviceButton::EffectRobot,
+            InteractiveButtons::EffectHardTune => DeviceButton::EffectHardTune,
+            InteractiveButtons::SamplerSelectA => DeviceButton::SamplerSelectA,
+            InteractiveButtons::SamplerSelectB => DeviceButton::SamplerSelectB,
+            InteractiveButtons::SamplerSelectC => DeviceButton::SamplerSelectC,
+            InteractiveButtons::SamplerTopLeft => DeviceButton::SamplerTopLeft,
+            InteractiveButtons::SamplerTopRight => DeviceButton::SamplerTopRight,
+            InteractiveButtons::SamplerBottomLeft => DeviceButton::SamplerBottomLeft,
+            InteractiveButtons::SamplerBottomRight => DeviceButton::SamplerBottomRight,
+            InteractiveButtons::SamplerClear => DeviceButton::SamplerClear,
         }
     }
 }
 
-impl From<PhysicalButton> for InteractiveButtons {
-    fn from(value: PhysicalButton) -> Self {
+impl From<DeviceButton> for InteractiveButtons {
+    fn from(value: DeviceButton) -> Self {
         match value {
-            PhysicalButton::Fader1Mute => InteractiveButtons::Fader1Mute,
-            PhysicalButton::Fader2Mute => InteractiveButtons::Fader2Mute,
-            PhysicalButton::Fader3Mute => InteractiveButtons::Fader3Mute,
-            PhysicalButton::Fader4Mute => InteractiveButtons::Fader4Mute,
-            PhysicalButton::Swear => InteractiveButtons::Swear,
-            PhysicalButton::CoughButton => InteractiveButtons::CoughButton,
-            PhysicalButton::EffectSelect1 => InteractiveButtons::EffectSelect1,
-            PhysicalButton::EffectSelect2 => InteractiveButtons::EffectSelect2,
-            PhysicalButton::EffectSelect3 => InteractiveButtons::EffectSelect3,
-            PhysicalButton::EffectSelect4 => InteractiveButtons::EffectSelect4,
-            PhysicalButton::EffectSelect5 => InteractiveButtons::EffectSelect5,
-            PhysicalButton::EffectSelect6 => InteractiveButtons::EffectSelect6,
-            PhysicalButton::EffectFx => InteractiveButtons::EffectFx,
-            PhysicalButton::EffectMegaphone => InteractiveButtons::EffectMegaphone,
-            PhysicalButton::EffectRobot => InteractiveButtons::EffectRobot,
-            PhysicalButton::EffectHardTune => InteractiveButtons::EffectHardTune,
-            PhysicalButton::SamplerSelectA => InteractiveButtons::SamplerSelectA,
-            PhysicalButton::SamplerSelectB => InteractiveButtons::SamplerSelectB,
-            PhysicalButton::SamplerSelectC => InteractiveButtons::SamplerSelectC,
-            PhysicalButton::SamplerTopLeft => InteractiveButtons::SamplerTopLeft,
-            PhysicalButton::SamplerTopRight => InteractiveButtons::SamplerTopRight,
-            PhysicalButton::SamplerBottomLeft => InteractiveButtons::SamplerBottomLeft,
-            PhysicalButton::SamplerBottomRight => InteractiveButtons::SamplerBottomRight,
-            PhysicalButton::SamplerClear => InteractiveButtons::SamplerClear,
+            DeviceButton::Fader1Mute => InteractiveButtons::Fader1Mute,
+            DeviceButton::Fader2Mute => InteractiveButtons::Fader2Mute,
+            DeviceButton::Fader3Mute => InteractiveButtons::Fader3Mute,
+            DeviceButton::Fader4Mute => InteractiveButtons::Fader4Mute,
+            DeviceButton::Swear => InteractiveButtons::Swear,
+            DeviceButton::CoughButton => InteractiveButtons::CoughButton,
+            DeviceButton::EffectSelect1 => InteractiveButtons::EffectSelect1,
+            DeviceButton::EffectSelect2 => InteractiveButtons::EffectSelect2,
+            DeviceButton::EffectSelect3 => InteractiveButtons::EffectSelect3,
+            DeviceButton::EffectSelect4 => InteractiveButtons::EffectSelect4,
+            DeviceButton::EffectSelect5 => InteractiveButtons::EffectSelect5,
+            DeviceButton::EffectSelect6 => InteractiveButtons::EffectSelect6,
+            DeviceButton::EffectFx => InteractiveButtons::EffectFx,
+            DeviceButton::EffectMegaphone => InteractiveButtons::EffectMegaphone,
+            DeviceButton::EffectRobot => InteractiveButtons::EffectRobot,
+            DeviceButton::EffectHardTune => InteractiveButtons::EffectHardTune,
+            DeviceButton::SamplerSelectA => InteractiveButtons::SamplerSelectA,
+            DeviceButton::SamplerSelectB => InteractiveButtons::SamplerSelectB,
+            DeviceButton::SamplerSelectC => InteractiveButtons::SamplerSelectC,
+            DeviceButton::SamplerTopLeft => InteractiveButtons::SamplerTopLeft,
+            DeviceButton::SamplerTopRight => InteractiveButtons::SamplerTopRight,
+            DeviceButton::SamplerBottomLeft => InteractiveButtons::SamplerBottomLeft,
+            DeviceButton::SamplerBottomRight => InteractiveButtons::SamplerBottomRight,
+            DeviceButton::SamplerClear => InteractiveButtons::SamplerClear,
         }
     }
 }
 
-impl From<Buttons> for PhysicalButton {
+impl From<Buttons> for DeviceButton {
     fn from(value: Buttons) -> Self {
         match value {
-            Buttons::FaderA => PhysicalButton::Fader1Mute,
-            Buttons::FaderB => PhysicalButton::Fader2Mute,
-            Buttons::FaderC => PhysicalButton::Fader3Mute,
-            Buttons::FaderD => PhysicalButton::Fader4Mute,
-            Buttons::Swear => PhysicalButton::Swear,
-            Buttons::CoughButton => PhysicalButton::CoughButton,
-            Buttons::EffectSelect1 => PhysicalButton::EffectSelect1,
-            Buttons::EffectSelect2 => PhysicalButton::EffectSelect2,
-            Buttons::EffectSelect3 => PhysicalButton::EffectSelect3,
-            Buttons::EffectSelect4 => PhysicalButton::EffectSelect4,
-            Buttons::EffectSelect5 => PhysicalButton::EffectSelect5,
-            Buttons::EffectSelect6 => PhysicalButton::EffectSelect6,
-            Buttons::EffectFx => PhysicalButton::EffectFx,
-            Buttons::EffectMegaphone => PhysicalButton::EffectMegaphone,
-            Buttons::EffectRobot => PhysicalButton::EffectRobot,
-            Buttons::EffectHardTune => PhysicalButton::EffectHardTune,
-            Buttons::SamplerSelectA => PhysicalButton::SamplerSelectA,
-            Buttons::SamplerSelectB => PhysicalButton::SamplerSelectB,
-            Buttons::SamplerSelectC => PhysicalButton::SamplerSelectC,
-            Buttons::SamplerTopLeft => PhysicalButton::SamplerTopLeft,
-            Buttons::SamplerTopRight => PhysicalButton::SamplerTopRight,
-            Buttons::SamplerBottomLeft => PhysicalButton::SamplerBottomLeft,
-            Buttons::SamplerBottomRight => PhysicalButton::SamplerBottomRight,
-            Buttons::SamplerClear => PhysicalButton::SamplerClear,
+            Buttons::FaderA => DeviceButton::Fader1Mute,
+            Buttons::FaderB => DeviceButton::Fader2Mute,
+            Buttons::FaderC => DeviceButton::Fader3Mute,
+            Buttons::FaderD => DeviceButton::Fader4Mute,
+            Buttons::Swear => DeviceButton::Swear,
+            Buttons::CoughButton => DeviceButton::CoughButton,
+            Buttons::EffectSelect1 => DeviceButton::EffectSelect1,
+            Buttons::EffectSelect2 => DeviceButton::EffectSelect2,
+            Buttons::EffectSelect3 => DeviceButton::EffectSelect3,
+            Buttons::EffectSelect4 => DeviceButton::EffectSelect4,
+            Buttons::EffectSelect5 => DeviceButton::EffectSelect5,
+            Buttons::EffectSelect6 => DeviceButton::EffectSelect6,
+            Buttons::EffectFx => DeviceButton::EffectFx,
+            Buttons::EffectMegaphone => DeviceButton::EffectMegaphone,
+            Buttons::EffectRobot => DeviceButton::EffectRobot,
+            Buttons::EffectHardTune => DeviceButton::EffectHardTune,
+            Buttons::SamplerSelectA => DeviceButton::SamplerSelectA,
+            Buttons::SamplerSelectB => DeviceButton::SamplerSelectB,
+            Buttons::SamplerSelectC => DeviceButton::SamplerSelectC,
+            Buttons::SamplerTopLeft => DeviceButton::SamplerTopLeft,
+            Buttons::SamplerTopRight => DeviceButton::SamplerTopRight,
+            Buttons::SamplerBottomLeft => DeviceButton::SamplerBottomLeft,
+            Buttons::SamplerBottomRight => DeviceButton::SamplerBottomRight,
+            Buttons::SamplerClear => DeviceButton::SamplerClear,
         }
     }
 }
