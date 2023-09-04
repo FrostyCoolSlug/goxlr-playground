@@ -144,6 +144,10 @@ impl GoXLRUSBDevice {
                     let _ = responder.send(device.set_scribble(fader, data).await);
                 }
             },
+            CommandSender::GetMicLevel(responder) => {
+                let _ = responder.send(device.get_microphone_level().await);
+            }
+
             CommandSender::GetButtonStates(responder) => {
                 // Grab the states from the GoXLR..
                 let states = device.get_button_states().await;

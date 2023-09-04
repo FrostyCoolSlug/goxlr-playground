@@ -227,4 +227,9 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
 
         Ok(())
     }
+
+    async fn get_microphone_level(&mut self) -> Result<u16> {
+        let result = self.request_data(Command::GetMicrophoneLevel, &[]).await?;
+        Ok(LittleEndian::read_u16(&result))
+    }
 }

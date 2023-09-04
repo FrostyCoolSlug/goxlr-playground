@@ -14,6 +14,7 @@ use goxlr_shared::device::DeviceInfo;
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::routing::RoutingTable;
 use goxlr_shared::states::ButtonDisplayStates;
+use goxlr_usb::events::commands::CommandSender::GetMicLevel;
 use goxlr_usb::events::commands::{BasicResultCommand, CommandSender};
 use goxlr_usb::events::interaction::InteractionEvent;
 use goxlr_usb::runners::device::DeviceMessage;
@@ -178,6 +179,19 @@ impl GoXLR {
                     _ = ticker.tick() => {
                         // Things to do every 20ms..
                         let _ = self.check_held().await;
+
+                        // Lets grab the current db value of the Microphone..
+                        let (msg_send, msg_receive) = oneshot::channel();
+
+                        let command_sender = self.command_sender.clone();
+                        let sender = command_sender.context("Sender not configured!")?;
+
+                        // Send the message..
+                        let command = CommandSender::GetMicLevel(msg_send);
+                        let _ = sender.send(command).await;
+
+                        // Return the Response..
+                        debug!("{:?}", msg_receive.await);
                     }
                     _ = self.shutdown.recv() => {
                         debug!("[GoXLR]{} Shutdown Triggered!", self.config.device);
