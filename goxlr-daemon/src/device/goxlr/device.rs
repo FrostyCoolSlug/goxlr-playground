@@ -184,12 +184,11 @@ impl GoXLR {
                         // let (msg_send, msg_receive) = oneshot::channel();
                         //
                         // if let Some(sender) = self.command_sender.clone() {
-                        // let command = CommandSender::GetMicLevel(msg_send);
-                        // let _ = sender.send(command).await;
+                        //     let command = CommandSender::GetMicLevel(msg_send);
+                        //     let _ = sender.send(command).await;
                         //
                         //     if let Ok(Ok(value)) = msg_receive.await {
-                        //         let y = (f64::log(value.into(), 10.) * 20.) - 72.2;
-                        //         debug!("{} - {}", value, y.clamp(-72.2, 0.));
+                        //         debug!("{}", value);
                         //     }
                         // }
                     }

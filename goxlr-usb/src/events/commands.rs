@@ -35,6 +35,6 @@ pub enum ChannelSource {
 
 pub enum CommandSender {
     GetButtonStates(oneshot::Sender<Result<CurrentStates>>),
-    GetMicLevel(oneshot::Sender<Result<u16>>),
+    GetMicLevel(oneshot::Sender<Result<f64>>),
     BasicResultCommand(BasicResultCommand, oneshot::Sender<Result<()>>),
 }

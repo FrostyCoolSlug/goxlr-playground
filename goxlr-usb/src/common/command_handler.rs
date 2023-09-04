@@ -228,8 +228,12 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         Ok(())
     }
 
-    async fn get_microphone_level(&mut self) -> Result<u16> {
+    async fn get_microphone_level(&mut self) -> Result<f64> {
         let result = self.request_data(Command::GetMicrophoneLevel, &[]).await?;
-        Ok(LittleEndian::read_u16(&result))
+        let value = LittleEndian::read_u16(&result);
+
+        // Convert the Value to Decibels
+        let decibels = (f64::log(value.into(), 10.) * 20.) - 72.2;
+        Ok(decibels.clamp(-72.2, 0.))
     }
 }
