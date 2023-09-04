@@ -179,6 +179,19 @@ impl GoXLR {
                     _ = ticker.tick() => {
                         // Things to do every 20ms..
                         let _ = self.check_held().await;
+
+                        // // Lets grab the current db value of the Microphone..
+                        // let (msg_send, msg_receive) = oneshot::channel();
+                        //
+                        // if let Some(sender) = self.command_sender.clone() {
+                        // let command = CommandSender::GetMicLevel(msg_send);
+                        // let _ = sender.send(command).await;
+                        //
+                        //     if let Ok(Ok(value)) = msg_receive.await {
+                        //         let y = (f64::log(value.into(), 10.) * 20.) - 72.2;
+                        //         debug!("{} - {}", value, y.clamp(-72.2, 0.));
+                        //     }
+                        // }
                     }
                     _ = self.shutdown.recv() => {
                         debug!("[GoXLR]{} Shutdown Triggered!", self.config.device);
