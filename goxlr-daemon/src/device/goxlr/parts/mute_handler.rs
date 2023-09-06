@@ -151,16 +151,7 @@ impl MuteHandler for GoXLR {
         let channel = self.profile.channels[source].clone();
 
         match channel.mute_state {
-            MuteState::Unmuted => {
-                let mute_behaviour = channel.display.mute_colours.inactive_behaviour;
-
-                // Apply 'Inactive' State..
-                match mute_behaviour {
-                    InactiveButtonBehaviour::DimActive => DimmedColour1,
-                    InactiveButtonBehaviour::DimInactive => DimmedColour2,
-                    InactiveButtonBehaviour::InactiveColour => Colour2,
-                }
-            }
+            MuteState::Unmuted => State::from(channel.display.mute_colours.inactive_behaviour),
             MuteState::Pressed => State::Colour1,
             MuteState::Held => State::Blinking,
         }

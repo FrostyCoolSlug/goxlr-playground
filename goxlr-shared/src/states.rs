@@ -1,6 +1,6 @@
 use enum_map::EnumMap;
 
-use crate::buttons::Buttons;
+use crate::buttons::{Buttons, InactiveButtonBehaviour};
 
 #[derive(Debug, Default, Copy, Clone)]
 pub struct ButtonDisplayStates {
@@ -27,4 +27,14 @@ pub enum State {
     DimmedColour1,
     DimmedColour2,
     Blinking,
+}
+
+impl From<InactiveButtonBehaviour> for State {
+    fn from(value: InactiveButtonBehaviour) -> Self {
+        match value {
+            InactiveButtonBehaviour::DimActive => State::DimmedColour1,
+            InactiveButtonBehaviour::DimInactive => State::DimmedColour2,
+            InactiveButtonBehaviour::InactiveColour => State::Colour2,
+        }
+    }
 }

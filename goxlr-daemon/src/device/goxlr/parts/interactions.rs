@@ -35,40 +35,25 @@ impl Interactions for GoXLR {
 
         debug!("Button Down: {:?}", button);
         match button {
-            Buttons::FaderA => {
-                // This exists on button down for all fader buttons, it basically determines
-                // whether we should page for a button combination.
-                if let Some(state) = self.button_down_states[Buttons::FaderB] {
+            // Mute behaviours happen on button up, so we can use down to check paging here..
+            Buttons::FaderA | Buttons::FaderB | Buttons::FaderC | Buttons::FaderD => {
+                // Grab the button 'paired' with this one and check to see if it's pressed
+                let pair = self.get_page_paired_button(button);
+                if let Some(state) = self.button_down_states[pair] {
+                    // Make sure the button hasn't been handled by something else
                     if !state.hold_handled {
+                        // Check whether we're going forward or backwards through the pages
+                        let previous_page = button == Buttons::FaderA || button == Buttons::FaderB;
+
                         // This internally handles the pressing of the button for release handling,
-                        // so we're safe to return off of this.
-                        return self.handle_page(Buttons::FaderB, button, true).await;
-                    }
-                }
-            }
-            Buttons::FaderB => {
-                if let Some(state) = self.button_down_states[Buttons::FaderA] {
-                    if !state.hold_handled {
-                        return self.handle_page(Buttons::FaderA, button, true).await;
-                    }
-                }
-            }
-            Buttons::FaderC => {
-                if let Some(state) = self.button_down_states[Buttons::FaderD] {
-                    if !state.hold_handled {
-                        return self.handle_page(Buttons::FaderD, button, false).await;
-                    }
-                }
-            }
-            Buttons::FaderD => {
-                if let Some(state) = self.button_down_states[Buttons::FaderC] {
-                    if !state.hold_handled {
-                        return self.handle_page(Buttons::FaderC, button, false).await;
+                        // so we're safe to return straight off of this.
+                        return self.handle_page(pair, button, previous_page).await;
                     }
                 }
             }
 
             Buttons::Swear => {
+                // The swear button is super easy, we just turn it's light on..
                 self.button_states.set_state(Buttons::Swear, State::Colour1);
                 self.apply_button_states().await?;
             }
@@ -104,7 +89,11 @@ impl Interactions for GoXLR {
                     self.handle_mute_press(channel).await?;
                 }
             }
-
+            Buttons::Swear => {
+                // Button released, revert to inactive state.
+                let state = State::from(self.profile.swear.colours.inactive_behaviour);
+                self.button_states.set_state(button, state);
+            }
             _ => {
                 // TODO: Remove this..
                 self.button_states.set_state(button, State::DimmedColour1);
@@ -129,6 +118,7 @@ impl Interactions for GoXLR {
                 self.handle_mute_hold(channel).await?;
             }
             _ => {
+                // TODO: Remove this, for testing only.
                 self.button_states.set_state(button, State::Blinking);
                 self.apply_button_states().await?;
             }
@@ -183,6 +173,7 @@ impl Interactions for GoXLR {
 #[async_trait]
 trait InteractionsLocal {
     fn is_held_handled(&self, button: Buttons) -> bool;
+    fn get_page_paired_button(&mut self, button: Buttons) -> Buttons;
 
     async fn handle_page(&mut self, one: Buttons, two: Buttons, prev: bool) -> Result<()>;
 }
@@ -194,6 +185,19 @@ impl InteractionsLocal for GoXLR {
             state.hold_handled
         } else {
             false
+        }
+    }
+
+    /// Returns the paired button for fader paging
+    fn get_page_paired_button(&mut self, button: Buttons) -> Buttons {
+        match button {
+            Buttons::FaderA => Buttons::FaderB,
+            Buttons::FaderB => Buttons::FaderA,
+            Buttons::FaderC => Buttons::FaderD,
+            Buttons::FaderD => Buttons::FaderC,
+            _ => {
+                panic!("Invalid Button Passed!");
+            }
         }
     }
 
