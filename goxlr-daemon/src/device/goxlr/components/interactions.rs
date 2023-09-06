@@ -10,11 +10,11 @@ use goxlr_shared::encoders::Encoders;
 use goxlr_shared::faders::Fader;
 use goxlr_shared::states::State;
 
+use crate::device::goxlr::components::buttons::ButtonHandlers;
+use crate::device::goxlr::components::mute_handler::MuteHandler;
+use crate::device::goxlr::components::pages::FaderPages;
+use crate::device::goxlr::components::profile::Profile;
 use crate::device::goxlr::device::{ButtonState, GoXLR};
-use crate::device::goxlr::parts::buttons::ButtonHandlers;
-use crate::device::goxlr::parts::mute_handler::MuteHandler;
-use crate::device::goxlr::parts::pages::FaderPages;
-use crate::device::goxlr::parts::profile::Profile;
 
 #[async_trait]
 pub(crate) trait Interactions {

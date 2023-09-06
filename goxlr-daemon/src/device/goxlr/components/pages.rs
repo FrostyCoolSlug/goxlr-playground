@@ -6,8 +6,8 @@ use strum::IntoEnumIterator;
 use goxlr_shared::faders::Fader;
 use goxlr_usb::events::commands::BasicResultCommand;
 
+use crate::device::goxlr::components::fader::DeviceFader;
 use crate::device::goxlr::device::GoXLR;
-use crate::device::goxlr::parts::fader::DeviceFader;
 
 /// This trait is responsible for fader paging, anything that need to happen (including changing
 /// the page) should be sent through methods here.

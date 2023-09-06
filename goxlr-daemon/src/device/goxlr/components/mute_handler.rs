@@ -11,9 +11,9 @@ use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::State;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 
+use crate::device::goxlr::components::fader::DeviceFader;
+use crate::device::goxlr::components::routing_handler::RoutingHandler;
 use crate::device::goxlr::device::GoXLR;
-use crate::device::goxlr::parts::fader::DeviceFader;
-use crate::device::goxlr::parts::routing_handler::RoutingHandler;
 
 type Source = FaderSources;
 type Target = Vec<OutputChannels>;

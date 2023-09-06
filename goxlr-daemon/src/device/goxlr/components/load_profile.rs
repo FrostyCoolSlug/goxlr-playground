@@ -9,11 +9,11 @@ use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 
+use crate::device::goxlr::components::buttons::ButtonHandlers;
+use crate::device::goxlr::components::mute_handler::MuteHandler;
+use crate::device::goxlr::components::pages::FaderPages;
+use crate::device::goxlr::components::routing_handler::RoutingHandler;
 use crate::device::goxlr::device::GoXLR;
-use crate::device::goxlr::parts::buttons::ButtonHandlers;
-use crate::device::goxlr::parts::mute_handler::MuteHandler;
-use crate::device::goxlr::parts::pages::FaderPages;
-use crate::device::goxlr::parts::routing_handler::RoutingHandler;
 
 /// This trait contains all public methods needed to successfully load a profile, and are implemented
 /// for the GoXLR type immediately after. This code assumes that self.profile is accurate.
@@ -56,7 +56,7 @@ trait LoadProfileLocal {
     fn setup_colours(&mut self);
     fn setup_button_states(&mut self);
 
-    /// The next three are responsible for loading the various parts of the device..
+    /// The next three are responsible for loading the various components of the device..
     async fn load_volumes(&self) -> Result<()>;
     async fn load_mute_states(&mut self) -> Result<()>;
     async fn load_colours(&mut self) -> Result<()>;

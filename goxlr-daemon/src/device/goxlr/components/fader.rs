@@ -10,10 +10,10 @@ use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::scribbles::Scribble;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 
+use crate::device::goxlr::components::buttons::ButtonHandlers;
+use crate::device::goxlr::components::mute_handler::MuteHandler;
+use crate::device::goxlr::components::profile::Profile;
 use crate::device::goxlr::device::GoXLR;
-use crate::device::goxlr::parts::buttons::ButtonHandlers;
-use crate::device::goxlr::parts::mute_handler::MuteHandler;
-use crate::device::goxlr::parts::profile::Profile;
 
 const SUBMIX_MITIGATION: &[FaderSources] = &[FaderSources::Headphones, FaderSources::LineOut];
 

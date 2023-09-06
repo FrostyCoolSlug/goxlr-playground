@@ -21,9 +21,9 @@ use goxlr_usb::runners::device::DeviceMessage;
 use goxlr_usb::runners::device::{start_usb_device_runner, GoXLRUSBConfiguration};
 
 use crate::device::device_manager::{ManagerMessage, RunnerMessage, RunnerState};
+use crate::device::goxlr::components::interactions::Interactions;
+use crate::device::goxlr::components::load_profile::LoadProfile;
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
-use crate::device::goxlr::parts::interactions::Interactions;
-use crate::device::goxlr::parts::load_profile::LoadProfile;
 use crate::stop::Stop;
 
 pub(crate) struct GoXLR {
