@@ -18,7 +18,7 @@ pub async fn handle_packet(request: DaemonRequest, sender: Messanger) -> Respons
             let (tx, rx) = oneshot::channel();
 
             sender
-                .send(DeviceCommand::GetDaemonStatus(tx))
+                .send(DeviceCommand::GetStatus(tx))
                 .await
                 .map_err(|e| anyhow!(e.to_string()))
                 .context("Failed to send message to device manager")?;
@@ -29,7 +29,7 @@ pub async fn handle_packet(request: DaemonRequest, sender: Messanger) -> Respons
         DaemonRequest::Daemon(daemon_command) => {
             let (tx, rx) = oneshot::channel();
             sender
-                .send(DeviceCommand::RunDaemonCommand(daemon_command, tx))
+                .send(DeviceCommand::RunDaemon(daemon_command, tx))
                 .await
                 .map_err(|e| anyhow!(e.to_string()))
                 .context("Failed to send message to device manager")?;
@@ -40,7 +40,7 @@ pub async fn handle_packet(request: DaemonRequest, sender: Messanger) -> Respons
         DaemonRequest::DeviceCommand(serial, command) => {
             let (tx, rx) = oneshot::channel();
             sender
-                .send(DeviceCommand::RunDeviceCommand(serial, command, tx))
+                .send(DeviceCommand::RunDevice(serial, command, tx))
                 .await
                 .map_err(|e| anyhow!(e.to_string()))
                 .context("Failed to send message to device manager")?;

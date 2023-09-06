@@ -139,6 +139,7 @@ impl Interactions for GoXLR {
     }
 
     async fn on_encoder_change(&mut self, encoder: Encoders, value: i8) -> Result<()> {
+        debug!("Encoder {:?} changed to {}", encoder, value);
         match encoder {
             Encoders::Pitch => {}
             Encoders::Gender => {}

@@ -249,13 +249,13 @@ impl DeviceManager {
 
     async fn handle_command(&self, command: DeviceCommand) {
         match command {
-            DeviceCommand::GetDaemonStatus(tx) => {
+            DeviceCommand::GetStatus(tx) => {
                 let _ = tx.send(DaemonStatus {});
             }
-            DeviceCommand::RunDaemonCommand(command, tx) => {
+            DeviceCommand::RunDaemon(command, tx) => {
                 let _ = tx.send(DaemonResponse::Ok);
             }
-            DeviceCommand::RunDeviceCommand(serial, command, tx) => {
+            DeviceCommand::RunDevice(serial, command, tx) => {
                 if let Some(usb) = self.serials.get(&*serial) {
                     if let Some(device) = self.states.get(usb) {
                         let (cmd_tx, cmd_rx) = oneshot::channel();
@@ -275,11 +275,10 @@ impl DeviceManager {
                                 let _ = tx.send(GoXLRCommandResponse::Error(error.to_string()));
                             }
                         }
-                        return;
                     }
                 } else {
                     let error = format!("Device {} not found", serial);
-                    let _ = tx.send(GoXLRCommandResponse::Error(String::from(error)));
+                    let _ = tx.send(GoXLRCommandResponse::Error(error));
                 }
             }
         }
@@ -291,8 +290,7 @@ pub async fn start_device_manager(message_receiver: mpsc::Receiver<DeviceCommand
     manager.run(message_receiver).await;
 }
 
-struct DeviceManagerConfig {}
-
+#[derive(Debug)]
 pub enum ManagerMessage {
     Execute(GoXLRCommand, oneshot::Sender<GoXLRCommandResponse>),
 }

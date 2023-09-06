@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use enum_map::EnumMap;
+use goxlr_ipc::commands::GoXLRCommandResponse;
 use log::{debug, error, warn};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task, time};
@@ -14,13 +15,12 @@ use goxlr_shared::device::DeviceInfo;
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::routing::RoutingTable;
 use goxlr_shared::states::ButtonDisplayStates;
-use goxlr_usb::events::commands::CommandSender::GetMicLevel;
 use goxlr_usb::events::commands::{BasicResultCommand, CommandSender};
 use goxlr_usb::events::interaction::InteractionEvent;
 use goxlr_usb::runners::device::DeviceMessage;
 use goxlr_usb::runners::device::{start_usb_device_runner, GoXLRUSBConfiguration};
 
-use crate::device::device_manager::{RunnerMessage, RunnerState};
+use crate::device::device_manager::{ManagerMessage, RunnerMessage, RunnerState};
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
 use crate::device::goxlr::parts::interactions::Interactions;
 use crate::device::goxlr::parts::load_profile::LoadProfile;
@@ -145,7 +145,12 @@ impl GoXLR {
             loop {
                 select! {
                     Some(event) = self.config.manager_recv.recv() => {
-                        debug!("Received Message from Manager!");
+                        debug!("Received Message from Manager! {:?}", event);
+                        match event {
+                            ManagerMessage::Execute(command, tx) => {
+                                let _ = tx.send(GoXLRCommandResponse::Ok);
+                            }
+                        }
                     }
                     Some(event) = event_recv.recv() => {
                         debug!("[GoXLR]{} Event: {:?}", self.config.device, event);

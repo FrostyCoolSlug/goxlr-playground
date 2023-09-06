@@ -30,10 +30,7 @@ impl ExecutableGoXLR for GoXLRDevice {
             self.command_count = 0;
         } else {
             if self.command_count == u16::MAX {
-                let result = self.request_data(Command::ResetCommandIndex, &[]).await;
-                if result.is_err() {
-                    return result;
-                }
+                let _ = self.request_data(Command::ResetCommandIndex, &[]).await?;
             }
             self.command_count += 1;
         }

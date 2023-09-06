@@ -113,6 +113,6 @@ impl RoutingHandler for GoXLR {
             return false;
         }
 
-        return true;
+        true
     }
 }

@@ -5,7 +5,7 @@ use goxlr_ipc::commands::{
 };
 
 pub enum DeviceCommand {
-    GetDaemonStatus(oneshot::Sender<DaemonStatus>),
-    RunDaemonCommand(DaemonCommand, oneshot::Sender<DaemonResponse>),
-    RunDeviceCommand(String, GoXLRCommand, oneshot::Sender<GoXLRCommandResponse>),
+    GetStatus(oneshot::Sender<DaemonStatus>),
+    RunDaemon(DaemonCommand, oneshot::Sender<DaemonResponse>),
+    RunDevice(String, GoXLRCommand, oneshot::Sender<GoXLRCommandResponse>),
 }

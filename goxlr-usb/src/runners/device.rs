@@ -12,9 +12,7 @@ use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 
 use goxlr_shared::device::{DeviceInfo, DeviceType, GoXLRFeature};
-use goxlr_shared::interaction::{
-    ButtonStates, CurrentStates, InteractiveEncoders, InteractiveFaders,
-};
+use goxlr_shared::interaction::{ButtonStates, CurrentStates};
 use goxlr_shared::version::VersionNumber;
 
 use crate::common::command_handler::GoXLRCommands;

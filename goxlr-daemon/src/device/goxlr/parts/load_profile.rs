@@ -3,7 +3,6 @@ use async_trait::async_trait;
 use log::debug;
 use strum::IntoEnumIterator;
 
-use goxlr_profile::MuteState;
 use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
 use goxlr_shared::colours::TwoColourTargets;
 use goxlr_shared::faders::FaderSources;

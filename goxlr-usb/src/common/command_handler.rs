@@ -5,13 +5,12 @@ use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
 use enum_map::EnumMap;
 use enumset::EnumSet;
-use goxlr_shared::buttons::Buttons;
 use strum::IntoEnumIterator;
 
+use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::{InputChannels, RoutingOutput};
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
 use goxlr_shared::faders::Fader;
-use goxlr_shared::interaction::{ButtonStates, InteractiveButtons};
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::ButtonDisplayStates;
 use goxlr_shared::version::{FirmwareVersions, VersionNumber};

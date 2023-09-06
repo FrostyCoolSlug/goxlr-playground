@@ -1,7 +1,6 @@
 use enum_map::{Enum, EnumMap};
-use strum::IntoEnumIterator;
 
-use crate::channels::{InputChannels, OutputChannels, RoutingOutput};
+use crate::channels::{InputChannels, RoutingOutput};
 
 // Types to help keep things tidy..
 type Row = EnumMap<RoutingOutput, RouteValue>;

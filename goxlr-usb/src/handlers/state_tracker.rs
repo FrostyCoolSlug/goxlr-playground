@@ -13,9 +13,7 @@ use enumset::EnumSet;
 use strum::IntoEnumIterator;
 use tokio::sync::mpsc;
 
-use goxlr_shared::interaction::{
-    ButtonStates, InteractiveButtons, InteractiveEncoders, InteractiveFaders,
-};
+use goxlr_shared::interaction::ButtonStates;
 
 use crate::events::interaction::InteractionEvent;
 use crate::types::buttons::{CurrentButtonStates, DeviceButton};
@@ -82,15 +80,14 @@ impl StateTracker {
     async fn update_buttons(&mut self, buttons: EnumSet<DeviceButton>) {
         for button in DeviceButton::iter() {
             let current_state = self.button_states[button];
-            let status_button = DeviceButton::from(button);
 
-            if buttons.contains(status_button) && current_state == ButtonStates::NotPressed {
+            if buttons.contains(button) && current_state == ButtonStates::NotPressed {
                 self.button_states[button] = ButtonStates::Pressed;
 
                 let button = button.into();
                 let _ = self.sender.send(InteractionEvent::ButtonDown(button)).await;
             }
-            if !buttons.contains(status_button) && current_state == ButtonStates::Pressed {
+            if !buttons.contains(button) && current_state == ButtonStates::Pressed {
                 self.button_states[button] = ButtonStates::NotPressed;
 
                 let button = button.into();
