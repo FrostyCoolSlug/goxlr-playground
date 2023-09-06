@@ -1,0 +1,25 @@
+[package]
+name = "goxlr-ipc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Include the Shared Structures, including the serde feature for serialising.
+goxlr-shared = { path = "../goxlr-shared", features = ["serde"] }
+
+# The profile and daemon are intrinsicly linked, so we'll borrow some profile structs, rather than remapping.
+goxlr-profile = { path = "../goxlr-profile" }
+
+tokio = { version = "1.32.0", features = ["sync", "net"] }
+async-trait = "0.1.73"
+anyhow = "1.0.75"
+
+serde = { version = "1.0.152", features = ["derive"] }
+tokio-util = { version = "0.7.4", features=["codec", "compat"]}
+tokio-serde = { version = "0.8.0", features=["bincode", "json"] }
+interprocess = { version = "1.2.1", features=["tokio_support"]}
+serde_repr = "0.1.10"
+futures = "0.3.25"
+
+# Used for Web Requests
+reqwest = { version = "0.11", default-features = false, features = ["json"] }

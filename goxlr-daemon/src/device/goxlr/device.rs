@@ -144,6 +144,9 @@ impl GoXLR {
             // Sit and wait for various signals to come, and process them as they do.
             loop {
                 select! {
+                    Some(event) = self.config.manager_recv.recv() => {
+                        debug!("Received Message from Manager!");
+                    }
                     Some(event) = event_recv.recv() => {
                         debug!("[GoXLR]{} Event: {:?}", self.config.device, event);
                         match event {

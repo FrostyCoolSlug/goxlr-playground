@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# We need to strip this out at some point..
+# We'll borrow 'goxlr-shared' for some common structures that sit between USB, the daemon and the profile.
 goxlr-shared = { path="../goxlr-shared", features = ["serde"] }
 
 # Various things for enhancing Enums..

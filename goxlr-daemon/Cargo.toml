@@ -7,11 +7,12 @@ edition = "2021"
 
 [dependencies]
 goxlr-profile = { path = "../goxlr-profile" }
-goxlr-shared = { path="../goxlr-shared" }
-goxlr-usb = { path= "../goxlr-usb" }
+goxlr-shared = { path = "../goxlr-shared" }
+goxlr-usb = { path = "../goxlr-usb" }
+goxlr-ipc = { path = "../goxlr-ipc" }
 
 # We'll need our own scribble handler eventually, we can borrow from the util for now..
-goxlr-scribbles = { git="https://github.com/GoXLR-on-Linux/goxlr-utility.git", rev="d6a556396c56f756c4bf5c0acec11c554069351f" }
+goxlr-scribbles = { git = "https://github.com/GoXLR-on-Linux/goxlr-utility.git", rev = "d6a556396c56f756c4bf5c0acec11c554069351f" }
 
 # For handling the Enum Maps and sets inside the profile..
 strum = { version = "0.25", features = ["derive"] }
@@ -36,3 +37,6 @@ log = "0.4.19"
 
 # Async Trait Support
 async-trait = "0.1.72"
+
+# IPC Server Support
+interprocess = { version = "1.2.1", features = ["tokio_support"] }

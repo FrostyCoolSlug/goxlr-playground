@@ -9,32 +9,43 @@ use log::{debug, error, info};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task, time};
 
+use goxlr_ipc::commands::{DaemonResponse, DaemonStatus, GoXLRCommand, GoXLRCommandResponse};
 use goxlr_usb::runners::pnp::PnPDeviceMessage;
 use goxlr_usb::runners::pnp::{start_pnp_runner, PnPConfiguration};
 use goxlr_usb::USBLocation;
 
+use crate::device::device_manager::ManagerMessage::Execute;
 use crate::device::goxlr::device::start_goxlr;
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
+use crate::device::messaging::DeviceCommand;
 use crate::stop::Stop;
 
 struct DeviceManager {
-    receiver: mpsc::Receiver<RunnerMessage>,
-    sender: mpsc::Sender<RunnerMessage>,
+    /// Used for Devices sending messages back to the Manager
+    device_receiver: mpsc::Receiver<RunnerMessage>,
+    device_sender: mpsc::Sender<RunnerMessage>,
 
+    /// Current State of all attached devices
     states: HashMap<USBLocation, DeviceState>,
+
+    /// Currently registered device serials
     serials: HashMap<String, USBLocation>,
 
+    /// Shutdown Signaller
     shutdown: Stop,
+
+    /// Simple bool to help track shutdown
     stopping: bool,
 }
 
 impl DeviceManager {
     pub fn new(shutdown: Stop) -> Self {
-        let (sender, receiver) = mpsc::channel(128);
+        let (device_sender, device_receiver) = mpsc::channel(128);
 
         Self {
-            receiver,
-            sender,
+            device_receiver,
+            device_sender,
+
             states: HashMap::default(),
             serials: HashMap::default(),
             shutdown,
@@ -42,7 +53,7 @@ impl DeviceManager {
         }
     }
 
-    pub async fn run(&mut self) {
+    pub async fn run(&mut self, mut message_receiver: mpsc::Receiver<DeviceCommand>) {
         info!("[DeviceManager] Starting Device Manager..");
         let (pnp_send, pnp_recv) = oneshot::channel();
         let (device_send, mut device_recv) = mpsc::channel(32);
@@ -59,6 +70,9 @@ impl DeviceManager {
 
         loop {
             select! {
+                Some(message) = message_receiver.recv() => {
+                    self.handle_command(message).await;
+                }
                 Some(device) = device_recv.recv() => {
                     match device {
                         PnPDeviceMessage::Attached(device) => {
@@ -71,7 +85,7 @@ impl DeviceManager {
                         },
                     }
                 },
-                Some(message) = self.receiver.recv() => {
+                Some(message) = self.device_receiver.recv() => {
                     debug!("[DeviceManager] Received State Change from GoXLR: {:?}", message);
                     match message {
                         RunnerMessage::UpdateState(device, state) => {
@@ -97,7 +111,7 @@ impl DeviceManager {
         // all the devices to finish up..
         loop {
             select! {
-                Some(message) = self.receiver.recv() => {
+                Some(message) = self.device_receiver.recv() => {
                     debug!("[DeviceManager-SD] Received State Change from GoXLR..");
                     match message {
                         RunnerMessage::UpdateState(device, state) => {
@@ -120,16 +134,20 @@ impl DeviceManager {
 
     async fn add_device(&mut self, device: USBLocation) {
         let stop = Stop::new();
+        let (manager_send, manager_recv) = mpsc::channel(64);
+
         // Ok, we have a new device, we need to add it and set it up..
         let config = GoXLRDeviceConfiguration {
             stop: stop.clone(),
             device,
-            manager_sender: self.sender.clone(),
+            manager_sender: self.device_sender.clone(),
+            manager_recv,
         };
 
         let state = DeviceState {
             stop,
             state: RunnerState::Starting,
+            messanger: manager_send,
         };
 
         self.states.insert(device, state);
@@ -173,6 +191,10 @@ impl DeviceManager {
 
     fn update_state(&mut self, device: USBLocation, state: RunnerState) {
         if let RunnerState::Running(serial) = &state {
+            info!(
+                "[DeviceManager]{} Serial {} entered Running State",
+                device, serial
+            );
             self.serials.insert(serial.to_owned(), device);
         }
 
@@ -224,16 +246,61 @@ impl DeviceManager {
         }
         true
     }
+
+    async fn handle_command(&self, command: DeviceCommand) {
+        match command {
+            DeviceCommand::GetDaemonStatus(tx) => {
+                let _ = tx.send(DaemonStatus {});
+            }
+            DeviceCommand::RunDaemonCommand(command, tx) => {
+                let _ = tx.send(DaemonResponse::Ok);
+            }
+            DeviceCommand::RunDeviceCommand(serial, command, tx) => {
+                if let Some(usb) = self.serials.get(&*serial) {
+                    if let Some(device) = self.states.get(usb) {
+                        let (cmd_tx, cmd_rx) = oneshot::channel();
+
+                        let result = device.messanger.send(Execute(command, cmd_tx)).await;
+                        if let Err(e) = result {
+                            let _ = tx.send(GoXLRCommandResponse::Error(e.to_string()));
+                            return;
+                        }
+
+                        let response = cmd_rx.await;
+                        match response {
+                            Ok(result) => {
+                                let _ = tx.send(result);
+                            }
+                            Err(error) => {
+                                let _ = tx.send(GoXLRCommandResponse::Error(error.to_string()));
+                            }
+                        }
+                        return;
+                    }
+                } else {
+                    let error = format!("Device {} not found", serial);
+                    let _ = tx.send(GoXLRCommandResponse::Error(String::from(error)));
+                }
+            }
+        }
+    }
 }
 
-pub async fn start_device_manager(shutdown: Stop) {
+pub async fn start_device_manager(message_receiver: mpsc::Receiver<DeviceCommand>, shutdown: Stop) {
     let mut manager = DeviceManager::new(shutdown);
-    manager.run().await;
+    manager.run(message_receiver).await;
+}
+
+struct DeviceManagerConfig {}
+
+pub enum ManagerMessage {
+    Execute(GoXLRCommand, oneshot::Sender<GoXLRCommandResponse>),
 }
 
 struct DeviceState {
     stop: Stop,
     state: RunnerState,
+    messanger: mpsc::Sender<ManagerMessage>,
 }
 
 #[derive(Debug)]

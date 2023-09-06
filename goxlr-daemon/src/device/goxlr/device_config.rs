@@ -1,12 +1,13 @@
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::{Receiver, Sender};
 
 use goxlr_usb::USBLocation;
 
-use crate::device::device_manager::RunnerMessage;
+use crate::device::device_manager::{ManagerMessage, RunnerMessage};
 use crate::stop::Stop;
 
 pub struct GoXLRDeviceConfiguration {
     pub(crate) stop: Stop,
     pub(crate) device: USBLocation,
     pub(crate) manager_sender: Sender<RunnerMessage>,
+    pub(crate) manager_recv: Receiver<ManagerMessage>,
 }

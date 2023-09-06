@@ -126,7 +126,7 @@ impl LoadProfileLocal for GoXLR {
         debug!("Loading Mute States");
 
         for source in FaderSources::iter() {
-            self.handle_mute_initial(source).await?;
+            self.set_mute_initial(source).await?;
         }
         Ok(())
     }

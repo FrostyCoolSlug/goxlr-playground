@@ -28,10 +28,11 @@ pub(crate) trait RoutingHandler {
     fn set_routing_row_from_profile(&mut self, input: In, values: EnumMap<OutputChannels, bool>);
     fn get_routing_input_row(&self, input: In) -> Row;
 
-    fn is_valid_routing_target(channel: FaderSources) -> bool;
-
     // Commands for actually sending routing information to the GoXLR..
     async fn apply_routing_for_channel(&self, source: In) -> Result<()>;
+
+    /// Global method for checking whether a target is valid for routing
+    fn is_valid_routing_target(channel: FaderSources) -> bool;
 }
 
 #[async_trait]
@@ -88,6 +89,15 @@ impl RoutingHandler for GoXLR {
         self.routing_state.get_input_routes(input)
     }
 
+    async fn apply_routing_for_channel(&self, source: In) -> Result<()> {
+        let routes = self.get_routing_input_row(source);
+
+        debug!("Routing {:?} to {:?}", source, routes);
+
+        let command = BasicResultCommand::ApplyRouting(source, routes);
+        self.send_no_result(command).await
+    }
+
     /// Headphone, LineOut and MicrophoneMonitor *ARE* valid mute targets, but they're
     /// not valid routing targets. This helper method allows code to check.
     fn is_valid_routing_target(channel: FaderSources) -> bool {
@@ -104,14 +114,5 @@ impl RoutingHandler for GoXLR {
         }
 
         return true;
-    }
-
-    async fn apply_routing_for_channel(&self, source: In) -> Result<()> {
-        let routes = self.get_routing_input_row(source);
-
-        debug!("Routing {:?} to {:?}", source, routes);
-
-        let command = BasicResultCommand::ApplyRouting(source, routes);
-        self.send_no_result(command).await
     }
 }

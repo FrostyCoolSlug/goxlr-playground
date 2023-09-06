@@ -23,3 +23,9 @@ pub enum DeviceType {
     Full,
     Mini,
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum DeviceColour {
+    Black,
+    White,
+}
