@@ -10,6 +10,7 @@ use goxlr_shared::routing::RouteValue;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::components::buttons::ButtonHandlers;
+use crate::device::goxlr::components::channel::Channels;
 use crate::device::goxlr::components::mute_handler::MuteHandler;
 use crate::device::goxlr::components::pages::FaderPages;
 use crate::device::goxlr::components::routing_handler::RoutingHandler;
@@ -105,17 +106,9 @@ impl LoadProfileLocal for GoXLR {
     async fn load_volumes(&self) -> Result<()> {
         debug!("Loading Volumes..");
 
-        for channel in FaderSources::iter() {
-            let volume = self.profile.channels[channel].volume;
-            let target = ChannelSource::FromFaderSource(channel);
-
-            debug!(
-                "Setting Volume for {:?} from profile to {:?}",
-                channel, volume
-            );
-
-            let command = BasicResultCommand::SetVolume(target, volume);
-            self.send_no_result(command).await?;
+        for source in FaderSources::iter() {
+            let volume = self.profile.channels[source].volume;
+            self.set_channel_volume(source, volume).await?;
         }
 
         Ok(())

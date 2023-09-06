@@ -1,13 +1,13 @@
 use enum_map::{enum_map, EnumMap};
 use strum::IntoEnumIterator;
 
-use goxlr_shared::channels::{InputChannels, OutputChannels};
+use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels};
 use goxlr_shared::colours::Colour;
 use goxlr_shared::faders::FaderSources;
 
 use crate::{
     ButtonColourSet, FaderChannel, FaderColourSet, FaderDisplay, FaderPage, FaderPages,
-    InactiveButtonBehaviour, MuteState, Profile, Screen,
+    InactiveButtonBehaviour, Profile, Screen,
 };
 use crate::{Configuration, Fader};
 use crate::{MuteAction, SwearSettings};

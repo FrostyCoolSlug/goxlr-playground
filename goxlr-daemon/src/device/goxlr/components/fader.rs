@@ -1,10 +1,10 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use goxlr_profile::MuteState;
 use goxlr_scribbles::get_scribble;
 use log::debug;
 
 use goxlr_shared::buttons::Buttons;
+use goxlr_shared::channels::MuteState;
 use goxlr_shared::device::{DeviceType, GoXLRFeature};
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::scribbles::Scribble;

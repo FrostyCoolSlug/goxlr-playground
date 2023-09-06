@@ -24,6 +24,7 @@ use crate::device::device_manager::{ManagerMessage, RunnerMessage, RunnerState};
 use crate::device::goxlr::components::interactions::Interactions;
 use crate::device::goxlr::components::load_profile::LoadProfile;
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
+use crate::device::goxlr::ipc::handler::IPCCommandHandler;
 use crate::stop::Stop;
 
 pub(crate) struct GoXLR {
@@ -148,7 +149,12 @@ impl GoXLR {
                         debug!("Received Message from Manager! {:?}", event);
                         match event {
                             ManagerMessage::Execute(command, tx) => {
-                                let _ = tx.send(GoXLRCommandResponse::Ok);
+                                let result = self.handle_ipc_command(command).await;
+                                let message = match result {
+                                    Ok(res) => res,
+                                    Err(e) => GoXLRCommandResponse::Error(e.to_string()),
+                                };
+                                let _ = tx.send(message);
                             }
                         }
                     }

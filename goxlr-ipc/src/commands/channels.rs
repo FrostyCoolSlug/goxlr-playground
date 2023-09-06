@@ -1,6 +1,5 @@
+use goxlr_shared::channels::MuteState;
 use serde::{Deserialize, Serialize};
-
-use goxlr_profile::MuteState;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ChannelCommand {

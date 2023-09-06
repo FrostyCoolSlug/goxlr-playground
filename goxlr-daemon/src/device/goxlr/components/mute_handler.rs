@@ -3,9 +3,11 @@ use async_trait::async_trait;
 use log::debug;
 use strum::IntoEnumIterator;
 
-use goxlr_profile::{MuteAction, MuteState};
+use goxlr_profile::MuteAction;
 use goxlr_shared::channels::ChannelMuteState::{Muted, Unmuted};
-use goxlr_shared::channels::{ChannelMuteState, InputChannels, OutputChannels, RoutingOutput};
+use goxlr_shared::channels::{
+    ChannelMuteState, InputChannels, MuteState, OutputChannels, RoutingOutput,
+};
 use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::State;

@@ -1,0 +1,20 @@
+[package]
+name = "goxlr-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Dependency Stuff.
+interprocess = { version = "1.2.1", features = ["tokio_support"] }
+
+goxlr-ipc = { path = "../goxlr-ipc" }
+goxlr-shared = { path = "../goxlr-shared", features = ["clap"] }
+
+# Command Line Parsing
+clap = { version = "4.0.32", features = ["derive"] }
+
+# Tokio Stuff
+tokio = { version = "1.23.0", features = ["full"] }
+
+# Error Handling
+anyhow = "1.0.75"

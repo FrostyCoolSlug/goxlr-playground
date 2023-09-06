@@ -1,11 +1,13 @@
+#[cfg(feature = "clap")]
+use clap::ValueEnum;
 use enum_map::Enum;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
 use crate::buttons::Buttons;
 use crate::channels::InputChannels;
 use crate::interaction::InteractiveFaders;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 
 /// A Simple list of the faders, with A being the far left
 #[derive(Debug, Copy, Clone, Enum, EnumIter, Eq, PartialEq)]
@@ -45,6 +47,7 @@ impl From<Buttons> for Fader {
 /// A list of channels which can be assigned to a fader.
 #[derive(Debug, Copy, Clone, Enum, EnumIter, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum FaderSources {
     Microphone,
     Chat,

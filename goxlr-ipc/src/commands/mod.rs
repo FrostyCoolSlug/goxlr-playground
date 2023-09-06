@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use goxlr_shared::channels::InputChannels;
+use goxlr_shared::faders::FaderSources;
 
 use crate::commands::channels::{ChannelCommand, ChannelResponse};
 
@@ -34,7 +35,7 @@ pub enum DaemonCommand {}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum GoXLRCommand {
-    Channels(InputChannels, ChannelCommand),
+    Channels(FaderSources, ChannelCommand),
 }
 
 /// The GoXLR Command Response will contain command specific responses, generally not much more

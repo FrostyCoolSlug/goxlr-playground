@@ -4,7 +4,7 @@ use enum_map::{enum_map, Enum, EnumMap};
 use serde::{Deserialize, Serialize};
 
 use goxlr_shared::buttons::InactiveButtonBehaviour;
-use goxlr_shared::channels::{InputChannels, OutputChannels};
+use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels};
 use goxlr_shared::colours::{Colour, FaderColour, FaderDisplayMode, TwoColour};
 use goxlr_shared::faders::{Fader, FaderSources};
 
@@ -164,14 +164,6 @@ impl From<MuteState> for MuteAction {
             MuteState::Held => MuteAction::Hold,
         }
     }
-}
-
-/// This represents the current state of a Channel
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq)]
-pub enum MuteState {
-    Unmuted,
-    Pressed,
-    Held,
 }
 
 #[derive(Serialize, Deserialize)]
