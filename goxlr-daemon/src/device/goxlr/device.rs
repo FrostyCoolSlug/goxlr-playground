@@ -146,9 +146,10 @@ impl GoXLR {
             loop {
                 select! {
                     Some(event) = self.config.manager_recv.recv() => {
-                        debug!("Received Message from Manager! {:?}", event);
                         match event {
                             ManagerMessage::Execute(command, tx) => {
+                                debug!("Handling IPC Command: {:?}", command);
+
                                 let result = self.handle_ipc_command(command).await;
                                 let message = match result {
                                     Ok(res) => res,

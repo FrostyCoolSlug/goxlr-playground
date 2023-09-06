@@ -224,7 +224,7 @@ impl MuteHandlerLocal for GoXLR {
         */
 
         // Don't unmute on a channel which isn't flagged as muted..
-        debug!("Unmuting channel {:?}", source);
+        debug!("Checking device state for {:?}", source);
         self.send_mute_state(source, Unmuted).await?;
 
         Ok(MuteChanges {
