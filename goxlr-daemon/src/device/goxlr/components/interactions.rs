@@ -93,6 +93,7 @@ impl Interactions for GoXLR {
                 // Button released, revert to inactive state.
                 let state = State::from(self.profile.swear.colours.inactive_behaviour);
                 self.button_states.set_state(button, state);
+                self.apply_button_states().await?;
             }
             _ => {
                 // TODO: Remove this..
@@ -118,9 +119,7 @@ impl Interactions for GoXLR {
                 self.handle_mute_hold(channel).await?;
             }
             _ => {
-                // TODO: Remove this, for testing only.
-                self.button_states.set_state(button, State::Blinking);
-                self.apply_button_states().await?;
+                // Nothing to do for this button
             }
         }
 
