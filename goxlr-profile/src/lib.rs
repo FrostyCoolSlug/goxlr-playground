@@ -193,10 +193,10 @@ pub struct CoughSettings {
     pub colours: ButtonColourSet,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Enum, Eq, PartialEq)]
 pub enum CoughBehaviour {
-    PRESS,
-    HOLD,
+    Press,
+    Hold,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]

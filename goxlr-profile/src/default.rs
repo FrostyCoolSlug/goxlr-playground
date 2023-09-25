@@ -6,8 +6,8 @@ use goxlr_shared::colours::Colour;
 use goxlr_shared::faders::FaderSources;
 
 use crate::{
-    ButtonColourSet, CoughSettings, FaderChannel, FaderColourSet, FaderDisplay, FaderPage,
-    FaderPages, InactiveButtonBehaviour, Profile, Screen,
+    ButtonColourSet, CoughBehaviour, CoughSettings, FaderChannel, FaderColourSet, FaderDisplay,
+    FaderPage, FaderPages, InactiveButtonBehaviour, Profile, Screen,
 };
 use crate::{Configuration, Fader};
 use crate::{MuteAction, SwearSettings};
@@ -226,7 +226,8 @@ impl Default for Profile {
         };
 
         let cough = CoughSettings {
-            channel_assignment: FaderSources::Microphone,
+            cough_behaviour: CoughBehaviour::Press,
+            channel_assignment: FaderSources::System,
             mute_state: MuteState::Unmuted,
             mute_actions: Default::default(),
             colours: ButtonColourSet {

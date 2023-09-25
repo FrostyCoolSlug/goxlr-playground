@@ -56,7 +56,7 @@ impl Interactions for GoXLR {
                 }
             }
             Buttons::CoughButton => {
-                if self.profile.cough.cough_behaviour == CoughBehaviour::HOLD {
+                if self.profile.cough.cough_behaviour == CoughBehaviour::Hold {
                     // We should apply the cough muting, and ignore hold behaviour.
                     skip_hold = true;
                 }
@@ -99,11 +99,11 @@ impl Interactions for GoXLR {
                 }
             }
             Buttons::CoughButton => {
-                if self.profile.cough.cough_behaviour == CoughBehaviour::HOLD {
-                    // We need to unmute the cough button
-                } else {
-                    // We need to do something based on the current MuteState..
-                }
+                // if self.profile.cough.cough_behaviour == CoughBehaviour::HOLD {
+                //     // We need to unmute the cough button
+                // } else {
+                //     // We need to do something based on the current MuteState..
+                // }
             }
             Buttons::Swear => {
                 // Button released, revert to inactive state.
