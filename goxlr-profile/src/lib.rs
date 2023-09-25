@@ -177,6 +177,9 @@ pub struct SwearSettings {
 /// This is for handling the cough button and it's settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoughSettings {
+    /// The behaviour when pressing the button
+    pub cough_behaviour: CoughBehaviour,
+
     /// The current Channel Assigned to the button (Defaults to Mic)
     pub channel_assignment: FaderSources,
 
@@ -188,6 +191,12 @@ pub struct CoughSettings {
 
     /// Defines the colours and styling of the button
     pub colours: ButtonColourSet,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CoughBehaviour {
+    PRESS,
+    HOLD,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
