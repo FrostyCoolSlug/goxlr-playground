@@ -1,15 +1,14 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use goxlr_shared::buttons::Buttons;
 use log::debug;
 use strum::IntoEnumIterator;
 
-use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels, RoutingOutput};
+use goxlr_shared::buttons::Buttons::CoughButton;
+use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
 use goxlr_shared::colours::TwoColourTargets;
 use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
-use goxlr_shared::states::State;
-use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
+use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::components::buttons::ButtonHandlers;
 use crate::device::goxlr::components::channel::Channels;
@@ -106,6 +105,9 @@ impl LoadProfileLocal for GoXLR {
 
         debug!("Building Initial States..");
         // Fader Mute buttons are handled by fader.rs
+
+        let cough_state = self.get_cough_button_state();
+        self.button_states.set_state(CoughButton, cough_state);
     }
 
     async fn load_volumes(&self) -> Result<()> {
@@ -138,12 +140,6 @@ impl LoadProfileLocal for GoXLR {
         let cough_button = self.colour_scheme.get_two_colour_target(target);
         cough_button.colour1 = self.profile.cough.colours.active_colour;
         cough_button.colour2 = self.profile.cough.colours.inactive_colour;
-        let state = match self.profile.cough.mute_state {
-            MuteState::Unmuted => State::from(self.profile.cough.colours.inactive_behaviour),
-            MuteState::Pressed => State::Colour1,
-            MuteState::Held => State::Blinking,
-        };
-        self.button_states.set_state(Buttons::CoughButton, state);
 
         // Configure the swear button..
         let target = TwoColourTargets::Swear;
