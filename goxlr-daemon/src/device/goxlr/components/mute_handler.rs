@@ -34,8 +34,6 @@ pub(crate) trait MuteHandler {
     async fn handle_mute_hold(&mut self, source: Source) -> Result<()>;
     async fn handle_unmute(&mut self, source: Source) -> Result<()>;
 
-    fn add_cough_mute(&mut self, source: Source, current: Option<Target>) -> Option<Target>;
-
     /// Returns the Button state for a mute button..
     fn get_mute_button_state(&self, source: Source) -> State;
 
@@ -54,6 +52,7 @@ impl MuteHandler for GoXLR {
                 if let Some(target) = self.add_cough_mute(source, None) {
                     // If the target list is empty, we're going to trigger a hard mute on the channel,
                     // so we don't need to unmute first!
+
                     if !target.is_empty() {
                         // However, if the target list isn't empty, we're doing a transient mute,
                         // so need to make sure the channel isn't muted.
@@ -74,25 +73,21 @@ impl MuteHandler for GoXLR {
                 let targets = self.profile.channels[source].mute_actions[action].clone();
 
                 // Apply the Cough Button Settings (if needed)
-                if let Some(targets) = self.add_cough_mute(source, Some(targets.clone())) {
-                    // Again, if we're not muting to all, make sure the channel is unmuted..
-                    if !targets.is_empty() {
-                        self.unmute(source).await?;
-                    }
-
-                    // Then mute to targets..
-                    let changes = self.mute_to_targets(source, targets).await?;
-                    self.apply_mute_changes(changes).await?;
+                let cough_targets = self.add_cough_mute(source, Some(targets.clone()));
+                let targets = if let Some(targets) = cough_targets {
+                    targets
                 } else {
-                    // Marginal CopyPasta, the target list is different :p
-                    if !targets.is_empty() {
-                        self.unmute(source).await?;
-                    }
+                    targets
+                };
 
-                    // Cough button didn't provide additional data, use existing list.
-                    let changes = self.mute_to_targets(source, targets).await?;
-                    self.apply_mute_changes(changes).await?;
+                // Should we unmute existing channels?
+                if !targets.is_empty() {
+                    self.unmute(source).await?;
                 }
+
+                // Then mute to targets..
+                let changes = self.mute_to_targets(source, targets).await?;
+                self.apply_mute_changes(changes).await?;
             }
         }
 
@@ -205,43 +200,6 @@ impl MuteHandler for GoXLR {
         return self.update_mute_state(source, MuteState::Unmuted).await;
     }
 
-    fn add_cough_mute(&mut self, source: Source, current: Option<Target>) -> Option<Target> {
-        let cough_source = self.profile.cough.channel_assignment;
-        let cough_state = self.profile.cough.mute_state;
-
-        if cough_source != source || cough_state == MuteState::Unmuted {
-            // We're not attached to this source, nor are we muted, nothing to do here.
-            return None;
-        }
-
-        // Ok, we need to adjust our target list to correctly match.
-        let cough_action = MuteAction::from(cough_state);
-        let cough_targets = self.profile.cough.mute_actions[cough_action].clone();
-
-        return match current.clone() {
-            None => {
-                // No targets passed in, all we need is the current target list
-                Some(cough_targets)
-            }
-            Some(channels) => {
-                // If either of our lists are empty, return empty (Mute to All)
-                if channels.is_empty() || cough_targets.is_empty() {
-                    return Some(vec![]);
-                }
-
-                // Build a list containing targets for both source, and cough..
-                let current = current.unwrap();
-                let mut final_targets = current.clone();
-                cough_targets.iter().for_each(|target| {
-                    if !final_targets.contains(target) {
-                        final_targets.push(*target);
-                    }
-                });
-                Some(final_targets)
-            }
-        };
-    }
-
     fn get_mute_button_state(&self, source: Source) -> State {
         let channel = self.profile.channels[source].clone();
 
@@ -270,6 +228,7 @@ trait MuteHandlerLocal {
     async fn send_mute_state(&mut self, source: Source, state: ChannelMuteState) -> Result<()>;
     async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()>;
 
+    fn add_cough_mute(&mut self, source: Source, current: Option<Target>) -> Option<Target>;
     fn restore_routing_from_profile(&mut self, source: Source) -> Result<MuteChanges>;
 }
 
@@ -367,6 +326,43 @@ impl MuteHandlerLocal for GoXLR {
             self.apply_routing_for_channel(channel).await?;
         }
         Ok(())
+    }
+
+    fn add_cough_mute(&mut self, source: Source, current: Option<Target>) -> Option<Target> {
+        let cough_source = self.profile.cough.channel_assignment;
+        let cough_state = self.profile.cough.mute_state;
+
+        if cough_source != source || cough_state == MuteState::Unmuted {
+            // We're not attached to this source, nor are we muted, nothing to do here.
+            return None;
+        }
+
+        // Ok, we need to adjust our target list to correctly match.
+        let cough_action = MuteAction::from(cough_state);
+        let cough_targets = self.profile.cough.mute_actions[cough_action].clone();
+
+        return match current.clone() {
+            None => {
+                // No targets passed in, all we need is the current target list
+                Some(cough_targets)
+            }
+            Some(channels) => {
+                // If either of our lists are empty, return empty (Mute to All)
+                if channels.is_empty() || cough_targets.is_empty() {
+                    return Some(vec![]);
+                }
+
+                // Build a list containing targets for both source, and cough..
+                let current = current.unwrap();
+                let mut final_targets = current.clone();
+                cough_targets.iter().for_each(|target| {
+                    if !final_targets.contains(target) {
+                        final_targets.push(*target);
+                    }
+                });
+                Some(final_targets)
+            }
+        };
     }
 
     /// This function simply updates the routing table to reset any transient mute states from
