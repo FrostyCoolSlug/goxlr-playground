@@ -11,7 +11,7 @@ use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task, time};
 
 use goxlr_ipc::commands::{
-    DaemonResponse, DaemonStatus, DeviceStatus, GoXLRCommand, GoXLRCommandResponse,
+    DaemonResponse, DaemonStatus, DeviceStatus, GoXLRCommand, GoXLRCommandResponse, Profiles,
 };
 use goxlr_profile::Profile;
 use goxlr_usb::runners::pnp::PnPDeviceMessage;
@@ -328,7 +328,7 @@ pub async fn start_device_manager(message_receiver: mpsc::Receiver<DeviceMessage
 
 #[derive(Debug)]
 pub enum ManagerMessage {
-    GetConfig(oneshot::Sender<Profile>),
+    GetConfig(oneshot::Sender<Profiles>),
     Execute(GoXLRCommand, oneshot::Sender<GoXLRCommandResponse>),
 }
 

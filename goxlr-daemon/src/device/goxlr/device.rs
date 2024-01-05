@@ -2,12 +2,12 @@ use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use enum_map::EnumMap;
-use goxlr_ipc::commands::GoXLRCommandResponse;
+use goxlr_ipc::commands::{GoXLRCommandResponse, Profiles};
 use log::{debug, error, warn};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task, time};
 
-use goxlr_profile::Profile;
+use goxlr_profile::{MicProfile, Profile};
 use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::ChannelMuteState;
 use goxlr_shared::colours::ColourScheme;
@@ -32,6 +32,7 @@ pub(crate) struct GoXLR {
     command_sender: Option<mpsc::Sender<CommandSender>>,
 
     pub profile: Profile,
+    pub mic_profile: MicProfile,
 
     // These are 'caches' of the state which are manipulated directly.
     pub colour_scheme: ColourScheme,
@@ -55,6 +56,7 @@ impl GoXLR {
 
             colour_scheme: Default::default(),
             profile: Default::default(),
+            mic_profile: Default::default(),
             button_states: Default::default(),
             routing_state: Default::default(),
             mute_state: Default::default(),
@@ -149,7 +151,12 @@ impl GoXLR {
                         match event {
                             ManagerMessage::GetConfig(tx) => {
                                 debug!("Returning Config for Device");
-                                let _ = tx.send(self.profile.clone());
+                                let profiles = Profiles {
+                                    profile: self.profile.clone(),
+                                    mic_profile: self.mic_profile
+                                };
+
+                                let _ = tx.send(profiles);
                             },
                             ManagerMessage::Execute(command, tx) => {
                                 debug!("Handling IPC Command: {:?}", command);

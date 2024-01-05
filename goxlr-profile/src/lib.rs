@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use goxlr_shared::buttons::InactiveButtonBehaviour;
 use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels};
 use goxlr_shared::colours::{Colour, FaderColour, FaderDisplayMode, TwoColour};
+use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
 use goxlr_shared::faders::{Fader, FaderSources};
 
 mod default;
@@ -203,4 +204,56 @@ pub enum CoughBehaviour {
 pub struct Configuration {
     pub button_hold_time: u16,
     pub change_page_with_buttons: bool,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub struct MicProfile {
+    microphone: Microphone,
+    equalizer: EnumMap<Frequencies, EqualizerValue>,
+    equalizer_mini: EnumMap<MiniFrequencies, EqualizerValue>,
+    compressor: Compressor,
+    deess: u8,
+    gate: Gate,
+    bleep_volume: i8,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub struct Microphone {
+    mic_type: MicrophoneType,
+    phantom: bool,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum MicrophoneType {
+    XLR,
+    TRS,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub struct EqualizerValue {
+    gain: i8,
+    frequency: f32,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub struct Compressor {
+    select: u8, // Always '1' in official app..
+
+    threshold: i8,
+    ratio: u8,
+    attack: u8,
+    release: u8,
+    makeup_gain: i8,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub struct Gate {
+    mode: u8, // Always 2 in official App
+    enabled: bool,
+
+    amount: u8,
+    threshold: i8,
+    attack: u8,
+    release: u8,
+    attenuation: u8,
 }

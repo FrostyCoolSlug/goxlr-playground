@@ -3,11 +3,13 @@ use strum::IntoEnumIterator;
 
 use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels};
 use goxlr_shared::colours::Colour;
+use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
 use goxlr_shared::faders::FaderSources;
 
 use crate::{
-    ButtonColourSet, CoughBehaviour, CoughSettings, FaderChannel, FaderColourSet, FaderDisplay,
-    FaderPage, FaderPages, InactiveButtonBehaviour, Profile, Screen,
+    ButtonColourSet, Compressor, CoughBehaviour, CoughSettings, EqualizerValue, FaderChannel,
+    FaderColourSet, FaderDisplay, FaderPage, FaderPages, Gate, InactiveButtonBehaviour, MicProfile,
+    Microphone, MicrophoneType, Profile, Screen,
 };
 use crate::{Configuration, Fader};
 use crate::{MuteAction, SwearSettings};
@@ -284,6 +286,108 @@ impl Default for Profile {
             swear,
             cough,
             configuration,
+        }
+    }
+}
+
+impl Default for MicProfile {
+    fn default() -> Self {
+        let eq = enum_map! {
+            Frequencies::Eq31h => EqualizerValue {
+                frequency: 31.5,
+                gain: 0,
+            },
+            Frequencies::Eq63h => EqualizerValue {
+                frequency: 63.,
+                gain: 0
+            },
+            Frequencies::Eq125h => EqualizerValue {
+                frequency: 125.,
+                gain: 0,
+            },
+            Frequencies::Eq250h => EqualizerValue {
+                frequency: 250.,
+                gain: 0,
+            },
+            Frequencies::Eq500h => EqualizerValue {
+                frequency: 500.,
+                gain: 0
+            },
+            Frequencies::Eq1kh => EqualizerValue {
+                frequency: 1000.,
+                gain: 0
+            },
+            Frequencies::Eq2kh => EqualizerValue {
+                frequency: 2000.,
+                gain: 0
+            },
+            Frequencies::Eq4kh => EqualizerValue {
+                frequency: 4000.,
+                gain: 0
+            },
+            Frequencies::Eq8kh => EqualizerValue {
+                frequency: 8000.,
+                gain: 0
+            },
+            Frequencies::Eq16kh => EqualizerValue {
+                frequency: 16000.,
+                gain: 0
+            }
+        };
+
+        let eq_mini = enum_map! {
+                MiniFrequencies::Eq90h => EqualizerValue {
+                frequency: 90.,
+                gain: 0
+            },
+            MiniFrequencies::Eq250h => EqualizerValue {
+                frequency: 250.,
+                gain: 0
+            },
+            MiniFrequencies::Eq500h => EqualizerValue {
+                frequency: 500.,
+                gain: 0
+            },
+            MiniFrequencies::Eq1kh => EqualizerValue {
+                frequency: 1000.,
+                gain: 0
+            },
+            MiniFrequencies::Eq3kh => EqualizerValue {
+                frequency: 3000.,
+                gain: 0
+            },
+            MiniFrequencies::Eq8kh => EqualizerValue {
+                frequency: 8000.,
+                gain: 0
+            }
+        };
+
+        MicProfile {
+            microphone: Microphone {
+                mic_type: MicrophoneType::XLR,
+                phantom: true,
+            },
+            equalizer: eq,
+            equalizer_mini: eq_mini,
+            compressor: Compressor {
+                select: 1,
+                threshold: 0,
+                ratio: 9,
+                attack: 1,
+                release: 9,
+                makeup_gain: 0,
+            },
+            deess: 0,
+            gate: Gate {
+                mode: 2,
+                enabled: true,
+                amount: 0,
+                threshold: -30,
+                attack: 0,
+                release: 19,
+                attenuation: 100,
+            },
+            bleep_volume: -10,
         }
     }
 }

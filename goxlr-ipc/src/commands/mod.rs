@@ -1,4 +1,4 @@
-use goxlr_profile::Profile;
+use goxlr_profile::{MicProfile, Profile};
 use serde::{Deserialize, Serialize};
 
 use goxlr_shared::faders::FaderSources;
@@ -69,5 +69,11 @@ pub struct DaemonStatus {
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct DeviceStatus {
     pub serial: String,
-    pub config: Profile,
+    pub config: Profiles,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct Profiles {
+    pub profile: Profile,
+    pub mic_profile: MicProfile,
 }

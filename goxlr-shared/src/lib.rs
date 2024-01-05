@@ -3,6 +3,7 @@ pub mod channels;
 pub mod colours;
 pub mod device;
 pub mod encoders;
+pub mod eq_frequencies;
 pub mod faders;
 pub mod interaction;
 pub mod routing;
