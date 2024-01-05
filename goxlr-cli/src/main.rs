@@ -1,5 +1,5 @@
-use anyhow::Context;
 use anyhow::Result;
+use anyhow::{bail, Context};
 use clap::Parser;
 use goxlr_ipc::client::Client;
 use interprocess::local_socket::tokio::LocalSocketStream;
@@ -23,7 +23,7 @@ static NAMED_PIPE: &str = "@goxlr.socket";
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let client: Box<dyn Client>;
+    let mut client: Box<dyn Client>;
 
     // Build the Client..
     let connection = LocalSocketStream::connect(match NameTypeSupport::query() {
@@ -35,11 +35,26 @@ async fn main() -> Result<()> {
 
     let socket: Socket<DaemonResponse, DaemonRequest> = Socket::new(connection);
     client = Box::new(IPCClient::new(socket));
-
-    let serial = String::from("S201200586CQK");
+    client.poll_status().await?;
 
     if cli.status_json {
-        println!("{:?}", client.status());
+        println!("{:#?}", client.status());
+    }
+
+    let serial;
+
+    if client.status().devices.is_empty() {
+        bail!("No GoXLR Devices Detected");
+    }
+
+    if client.status().devices.len() > 1 && cli.serial.is_none() {
+        bail!("More than one device detected, specify device with --serial");
+    }
+
+    if let Some(cli_serial) = cli.serial {
+        serial = cli_serial;
+    } else {
+        serial = client.status().devices[0].serial.clone();
     }
 
     if let Some(command) = cli.command {

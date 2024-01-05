@@ -1,3 +1,4 @@
+use goxlr_profile::Profile;
 use serde::{Deserialize, Serialize};
 
 use goxlr_shared::faders::FaderSources;
@@ -61,4 +62,12 @@ pub enum GoXLRCommandResponse {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct DaemonStatus {}
+pub struct DaemonStatus {
+    pub devices: Vec<DeviceStatus>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct DeviceStatus {
+    pub serial: String,
+    pub config: Profile,
+}

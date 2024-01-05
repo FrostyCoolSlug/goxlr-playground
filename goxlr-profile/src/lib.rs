@@ -10,7 +10,7 @@ use goxlr_shared::faders::{Fader, FaderSources};
 
 mod default;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Profile {
     /// All the Assignable Channels, and their settings..
     pub channels: EnumMap<FaderSources, FaderChannel>,
@@ -34,13 +34,13 @@ pub struct Profile {
     pub configuration: Configuration,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FaderPages {
     pub current: usize,
     pub page_list: Vec<FaderPage>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FaderPage {
     pub faders: EnumMap<Fader, FaderSources>,
 }
@@ -168,7 +168,7 @@ impl From<MuteState> for MuteAction {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SwearSettings {
     pub volume: u8,
     pub colours: ButtonColourSet,

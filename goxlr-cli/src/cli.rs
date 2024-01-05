@@ -6,6 +6,9 @@ use goxlr_shared::faders::{Fader, FaderSources};
 #[command(about, version, author)]
 #[command(arg_required_else_help = true)]
 pub struct Cli {
+    /// Optional Device Serial
+    pub serial: Option<String>,
+
     /// Displays the Status information as JSON
     #[arg(long)]
     pub status_json: bool,

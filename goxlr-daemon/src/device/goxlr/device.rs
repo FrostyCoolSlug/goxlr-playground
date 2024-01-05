@@ -147,6 +147,10 @@ impl GoXLR {
                 select! {
                     Some(event) = self.config.manager_recv.recv() => {
                         match event {
+                            ManagerMessage::GetConfig(tx) => {
+                                debug!("Returning Config for Device");
+                                let _ = tx.send(self.profile.clone());
+                            },
                             ManagerMessage::Execute(command, tx) => {
                                 debug!("Handling IPC Command: {:?}", command);
 

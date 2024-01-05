@@ -5,16 +5,20 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
+use tokio::sync::oneshot::error::RecvError;
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task, time};
 
-use goxlr_ipc::commands::{DaemonResponse, DaemonStatus, GoXLRCommand, GoXLRCommandResponse};
+use goxlr_ipc::commands::{
+    DaemonResponse, DaemonStatus, DeviceStatus, GoXLRCommand, GoXLRCommandResponse,
+};
+use goxlr_profile::Profile;
 use goxlr_usb::runners::pnp::PnPDeviceMessage;
 use goxlr_usb::runners::pnp::{start_pnp_runner, PnPConfiguration};
 use goxlr_usb::USBLocation;
 
-use crate::device::device_manager::ManagerMessage::Execute;
+use crate::device::device_manager::ManagerMessage::{Execute, GetConfig};
 use crate::device::goxlr::device::start_goxlr;
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
 use crate::device::messaging::DeviceMessage;
@@ -250,7 +254,39 @@ impl DeviceManager {
     async fn handle_command(&self, command: DeviceMessage) {
         match command {
             DeviceMessage::GetStatus(tx) => {
-                let _ = tx.send(DaemonStatus {});
+                debug!("Getting Status..");
+                let mut status = DaemonStatus { devices: vec![] };
+
+                for (serial, usb) in &self.serials {
+                    if let Some(device) = self.states.get(usb) {
+                        let (cmd_tx, cmd_rx) = oneshot::channel();
+
+                        let result = device.messanger.send(GetConfig(cmd_tx)).await;
+                        if let Err(e) = result {
+                            warn!("Unable to Fetch Device Config: {}", e);
+                        }
+
+                        let response = cmd_rx.await;
+                        match response {
+                            Ok(profile) => {
+                                status.devices.push(DeviceStatus {
+                                    serial: serial.clone(),
+                                    config: profile,
+                                });
+                            }
+                            Err(error) => {
+                                debug!(
+                                    "Error Fetching Profile Information for {}: {}",
+                                    serial, error
+                                );
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+                debug!("Status: {:#?}", status);
+                let _ = tx.send(status);
             }
             DeviceMessage::RunDaemon(command, tx) => {
                 let _ = tx.send(DaemonResponse::Ok);
@@ -292,6 +328,7 @@ pub async fn start_device_manager(message_receiver: mpsc::Receiver<DeviceMessage
 
 #[derive(Debug)]
 pub enum ManagerMessage {
+    GetConfig(oneshot::Sender<Profile>),
     Execute(GoXLRCommand, oneshot::Sender<GoXLRCommandResponse>),
 }
 
