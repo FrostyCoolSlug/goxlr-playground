@@ -362,10 +362,16 @@ impl Default for MicProfile {
             }
         };
 
+        let gains = enum_map! {
+            MicrophoneType::XLR => 40,
+            MicrophoneType::Phantom => 40,
+            MicrophoneType::TRS => 40,
+        };
+
         MicProfile {
             microphone: Microphone {
-                mic_type: MicrophoneType::XLR,
-                phantom: true,
+                mic_type: MicrophoneType::Phantom,
+                mic_gains: gains,
             },
             equalizer: eq,
             equalizer_mini: eq_mini,

@@ -8,6 +8,7 @@ use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels};
 use goxlr_shared::colours::{Colour, FaderColour, FaderDisplayMode, TwoColour};
 use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
 use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::microphone::MicrophoneType;
 
 mod default;
 
@@ -220,13 +221,7 @@ pub struct MicProfile {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Microphone {
     mic_type: MicrophoneType,
-    phantom: bool,
-}
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum MicrophoneType {
-    XLR,
-    TRS,
+    mic_gains: EnumMap<MicrophoneType, u8>,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
