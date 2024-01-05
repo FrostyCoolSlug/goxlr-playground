@@ -1,6 +1,6 @@
-use clap::{Args, Parser, Subcommand};
-use goxlr_shared::channels::{ChannelMuteState, MuteState};
-use goxlr_shared::faders::FaderSources;
+use clap::{Parser, Subcommand};
+use goxlr_shared::channels::MuteState;
+use goxlr_shared::faders::{Fader, FaderSources};
 
 #[derive(Parser, Debug)]
 #[command(about, version, author)]
@@ -23,9 +23,30 @@ pub enum SubCommands {
         #[command(subcommand)]
         command: ChannelCommands,
     },
+
+    Pages {
+        #[command(subcommand)]
+        command: PageCommands,
+    },
 }
 #[derive(Debug, Subcommand)]
 pub enum ChannelCommands {
     Volume { volume: u8 },
-    Mute { state: MuteState },
+    Mute { mute_state: MuteState },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum PageCommands {
+    SetPage {
+        page_number: u8,
+    },
+    AddPage,
+    RemovePage {
+        page_number: u8,
+    },
+    SetFader {
+        page_number: u8,
+        fader: Fader,
+        channel: FaderSources,
+    },
 }

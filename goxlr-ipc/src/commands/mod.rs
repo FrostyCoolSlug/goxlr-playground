@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use goxlr_shared::channels::InputChannels;
 use goxlr_shared::faders::FaderSources;
 
-use crate::commands::channels::{ChannelCommand, ChannelResponse};
+use crate::commands::channels::ChannelCommand;
+use crate::commands::pages::PageCommand;
 
 pub mod channels;
+pub mod pages;
 
 /// This is the base IPC request structure, it's async driven so each request will require a
 /// response 'oneshot' channel for receiving a reply, this allows us to better manage a request /  
@@ -19,7 +20,7 @@ pub enum DaemonRequest {
     GetStatus,
 
     Daemon(DaemonCommand),
-    DeviceCommand(String, GoXLRCommand),
+    DeviceCommand(DeviceCommand),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,11 +32,24 @@ pub enum DaemonResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct DeviceCommand {
+    pub serial: String,
+    pub command: GoXLRCommand,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub enum DaemonCommand {}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum GoXLRCommand {
-    Channels(FaderSources, ChannelCommand),
+    Channels(Channels),
+    Pages(PageCommand),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Channels {
+    pub channel: FaderSources,
+    pub command: ChannelCommand,
 }
 
 /// The GoXLR Command Response will contain command specific responses, generally not much more
@@ -44,8 +58,6 @@ pub enum GoXLRCommand {
 pub enum GoXLRCommandResponse {
     Ok,
     Error(String),
-
-    Channels(ChannelResponse),
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

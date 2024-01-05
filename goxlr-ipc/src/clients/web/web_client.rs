@@ -1,6 +1,8 @@
 use crate::client::Client;
 
-use crate::commands::{DaemonRequest, DaemonResponse, DaemonStatus, GoXLRCommand};
+use crate::commands::{
+    DaemonRequest, DaemonResponse, DaemonStatus, DeviceCommand, GoXLRCommand, GoXLRCommandResponse,
+};
 use anyhow::bail;
 use async_trait::async_trait;
 
@@ -38,10 +40,10 @@ impl Client for WebClient {
             }
             DaemonResponse::Ok => Ok(()),
             DaemonResponse::Error(error) => bail!("{}", error),
-            DaemonResponse::Command(command) => {
-                println!("{:?}", command);
-                Ok(())
-            }
+            DaemonResponse::Command(response) => match response {
+                GoXLRCommandResponse::Ok => Ok(()),
+                GoXLRCommandResponse::Error(error) => bail!("{}", error),
+            },
         }
     }
 
@@ -50,8 +52,11 @@ impl Client for WebClient {
     }
 
     async fn command(&mut self, serial: &str, command: GoXLRCommand) -> anyhow::Result<()> {
-        self.send(DaemonRequest::DeviceCommand(serial.to_string(), command))
-            .await
+        let command = DaemonRequest::DeviceCommand(DeviceCommand {
+            serial: serial.to_string(),
+            command,
+        });
+        self.send(command).await
     }
 
     fn status(&self) -> &DaemonStatus {

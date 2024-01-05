@@ -1,8 +1,8 @@
 use anyhow::Result;
 
 use goxlr_ipc::client::Client;
-use goxlr_ipc::commands::channels::ChannelCommand;
-use goxlr_ipc::commands::{DaemonRequest, GoXLRCommand};
+use goxlr_ipc::commands::channels::{ChannelCommand, SetMute, SetVolume};
+use goxlr_ipc::commands::{Channels, DaemonRequest, DeviceCommand, GoXLRCommand};
 use goxlr_shared::faders::FaderSources;
 
 use crate::cli::ChannelCommands;
@@ -16,16 +16,16 @@ pub async fn handle_channels(
     match command {
         ChannelCommands::Volume { volume } => {
             // Build the Command..
-            let command = ChannelCommand::SetVolume(volume);
-            let command = GoXLRCommand::Channels(channel, command);
-            let command = DaemonRequest::DeviceCommand(serial, command);
+            let command = ChannelCommand::SetVolume(SetVolume { volume });
+            let command = GoXLRCommand::Channels(Channels { channel, command });
+            let command = DaemonRequest::DeviceCommand(DeviceCommand { serial, command });
 
             client.send(command).await?;
         }
-        ChannelCommands::Mute { state } => {
-            let command = ChannelCommand::SetMute(state);
-            let command = GoXLRCommand::Channels(channel, command);
-            let command = DaemonRequest::DeviceCommand(serial, command);
+        ChannelCommands::Mute { mute_state } => {
+            let command = ChannelCommand::SetMute(SetMute { mute_state });
+            let command = GoXLRCommand::Channels(Channels { channel, command });
+            let command = DaemonRequest::DeviceCommand(DeviceCommand { serial, command });
 
             client.send(command).await?;
         }

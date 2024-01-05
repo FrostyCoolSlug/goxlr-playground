@@ -17,7 +17,7 @@ use goxlr_usb::USBLocation;
 use crate::device::device_manager::ManagerMessage::Execute;
 use crate::device::goxlr::device::start_goxlr;
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
-use crate::device::messaging::DeviceCommand;
+use crate::device::messaging::DeviceMessage;
 use crate::stop::Stop;
 
 struct DeviceManager {
@@ -53,7 +53,7 @@ impl DeviceManager {
         }
     }
 
-    pub async fn run(&mut self, mut message_receiver: mpsc::Receiver<DeviceCommand>) {
+    pub async fn run(&mut self, mut message_receiver: mpsc::Receiver<DeviceMessage>) {
         info!("[DeviceManager] Starting Device Manager..");
         let (pnp_send, pnp_recv) = oneshot::channel();
         let (device_send, mut device_recv) = mpsc::channel(32);
@@ -247,15 +247,15 @@ impl DeviceManager {
         true
     }
 
-    async fn handle_command(&self, command: DeviceCommand) {
+    async fn handle_command(&self, command: DeviceMessage) {
         match command {
-            DeviceCommand::GetStatus(tx) => {
+            DeviceMessage::GetStatus(tx) => {
                 let _ = tx.send(DaemonStatus {});
             }
-            DeviceCommand::RunDaemon(command, tx) => {
+            DeviceMessage::RunDaemon(command, tx) => {
                 let _ = tx.send(DaemonResponse::Ok);
             }
-            DeviceCommand::RunDevice(serial, command, tx) => {
+            DeviceMessage::RunDevice(serial, command, tx) => {
                 if let Some(usb) = self.serials.get(&*serial) {
                     if let Some(device) = self.states.get(usb) {
                         let (cmd_tx, cmd_rx) = oneshot::channel();
@@ -285,7 +285,7 @@ impl DeviceManager {
     }
 }
 
-pub async fn start_device_manager(message_receiver: mpsc::Receiver<DeviceCommand>, shutdown: Stop) {
+pub async fn start_device_manager(message_receiver: mpsc::Receiver<DeviceMessage>, shutdown: Stop) {
     let mut manager = DeviceManager::new(shutdown);
     manager.run(message_receiver).await;
 }

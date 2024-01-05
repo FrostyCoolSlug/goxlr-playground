@@ -12,6 +12,7 @@ use crate::interaction::InteractiveFaders;
 /// A Simple list of the faders, with A being the far left
 #[derive(Debug, Copy, Clone, Enum, EnumIter, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum Fader {
     A,
     B,

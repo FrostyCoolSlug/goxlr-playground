@@ -263,7 +263,7 @@ impl Default for Profile {
         let cough = CoughSettings {
             cough_behaviour: CoughBehaviour::Press,
             channel_assignment: FaderSources::System,
-            mute_state: MuteState::Held,
+            mute_state: MuteState::Unmuted,
             mute_actions: mute_action,
 
             colours: ButtonColourSet {

@@ -23,14 +23,14 @@ impl IPCChannelHandler for GoXLR {
     async fn ipc_channel(&mut self, channel: Source, command: Command) -> Response {
         match command {
             Command::SetVolume(volume) => {
-                self.profile.channels[channel].volume = volume;
-                self.set_channel_volume(channel, volume).await?;
+                self.profile.channels[channel].volume = volume.volume;
+                self.set_channel_volume(channel, volume.volume).await?;
 
                 Ok(GoXLRCommandResponse::Ok)
             }
             Command::SetMute(state) => {
                 debug!("Applying Mute State..");
-                self.set_mute_state(channel, state).await?;
+                self.set_mute_state(channel, state.mute_state).await?;
 
                 Ok(GoXLRCommandResponse::Ok)
             }

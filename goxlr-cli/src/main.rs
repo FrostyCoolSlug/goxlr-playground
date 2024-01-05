@@ -11,6 +11,7 @@ use goxlr_ipc::commands::{DaemonRequest, DaemonResponse};
 
 use crate::cli::{Cli, SubCommands};
 use crate::processors::channel::handle_channels;
+use crate::processors::pages::handle_pages;
 
 mod cli;
 mod processors;
@@ -45,6 +46,9 @@ async fn main() -> Result<()> {
         match command {
             SubCommands::Channels { channel, command } => {
                 handle_channels(serial, client, channel, command).await?;
+            }
+            SubCommands::Pages { command } => {
+                handle_pages(serial, client, command).await?;
             }
         }
     }

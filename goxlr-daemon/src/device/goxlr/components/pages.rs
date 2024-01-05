@@ -1,9 +1,10 @@
 use anyhow::{bail, Result};
 use async_trait::async_trait;
+use goxlr_profile::FaderPage;
 use log::{debug, warn};
 use strum::IntoEnumIterator;
 
-use goxlr_shared::faders::Fader;
+use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::components::fader::DeviceFader;
@@ -19,6 +20,16 @@ pub(crate) trait FaderPages {
     async fn prev_page(&mut self) -> Result<()>;
 
     async fn set_page(&mut self, page: usize) -> Result<()>;
+
+    // IPC Related Commands
+    async fn add_page(&mut self) -> Result<()>;
+    async fn remove_page(&mut self, page_number: usize) -> Result<()>;
+    async fn set_page_fader_source(
+        &mut self,
+        page_number: usize,
+        fader: Fader,
+        channel: FaderSources,
+    ) -> Result<()>;
 }
 
 #[async_trait]
@@ -92,5 +103,75 @@ impl FaderPages for GoXLR {
         debug!("Changing Fader Page to {}", page);
         self.profile.pages.current = page;
         self.load_current_page(true).await
+    }
+
+    async fn add_page(&mut self) -> Result<()> {
+        let page_count = self.profile.pages.page_list.len();
+        if page_count >= 10 {
+            bail!("Maximum 10 pages reached");
+        }
+
+        self.profile.pages.page_list.push(FaderPage::default());
+        Ok(())
+    }
+
+    async fn remove_page(&mut self, page_number: usize) -> Result<()> {
+        let page_count = self.profile.pages.page_list.len();
+        if page_count == 1 {
+            bail!("Unable to Remove Last Page");
+        }
+
+        if page_number > page_count - 1 {
+            bail!("Invalid Page Number: {}, Max: {}", page_number, page_count);
+        }
+
+        self.profile.pages.page_list.remove(page_number);
+
+        if page_number == self.profile.pages.current {
+            // Move to the previous, or next, page..
+            if page_number == 0 {
+                self.set_page(0).await?;
+            } else if page_number == page_count {
+                self.set_page(page_number - 1).await?;
+            } else {
+                self.load_current_page(true).await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn set_page_fader_source(
+        &mut self,
+        page_number: usize,
+        fader: Fader,
+        channel: FaderSources,
+    ) -> Result<()> {
+        let current_page_number = self.profile.pages.current;
+        let page_count = self.profile.pages.page_list.len();
+
+        if page_number > page_count - 1 {
+            bail!("Invalid Page Number: {}, Max: {}", page_number, page_count);
+        }
+
+        // Is this channel already assigned to this page?
+        let fader_page = &mut self.profile.pages.page_list[page_number].faders;
+        for fader_iter in Fader::iter() {
+            if fader_page[fader_iter] == channel {
+                // We need to perform a swap with whatever is at the target fader..
+                debug!("Switching Fader {:?} and {:?}", fader_iter, fader);
+                fader_page[fader_iter] = fader_page[fader];
+                break;
+            }
+        }
+        fader_page[fader] = channel;
+        debug!("{:?}", fader_page);
+
+        if current_page_number == page_number {
+            debug!("Reloading current page..");
+            self.load_current_page(true).await?;
+        }
+
+        Ok(())
     }
 }

@@ -3,12 +3,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ChannelCommand {
-    SetVolume(u8),
-    SetMute(MuteState),
+    SetVolume(SetVolume),
+    SetMute(SetMute),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ChannelResponse {
-    Volume(u8),
-    Mute(MuteState),
+pub struct SetMute {
+    pub mute_state: MuteState,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetVolume {
+    pub volume: u8,
 }

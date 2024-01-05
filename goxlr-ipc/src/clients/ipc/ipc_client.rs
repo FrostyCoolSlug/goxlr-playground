@@ -1,7 +1,9 @@
 use crate::client::Client;
 use crate::clients::ipc::ipc_socket::Socket;
-use crate::commands::{DaemonRequest, DaemonResponse, DaemonStatus, GoXLRCommand};
-use anyhow::{anyhow, Context, Result};
+use crate::commands::{
+    DaemonRequest, DaemonResponse, DaemonStatus, DeviceCommand, GoXLRCommand, GoXLRCommandResponse,
+};
+use anyhow::{anyhow, bail, Context, Result};
 use async_trait::async_trait;
 
 #[derive(Debug)]
@@ -39,8 +41,11 @@ impl Client for IPCClient {
                 Ok(())
             }
             DaemonResponse::Ok => Ok(()),
-            DaemonResponse::Error(error) => Err(anyhow!("{}", error)),
-            DaemonResponse::Command(_response) => Ok(()),
+            DaemonResponse::Error(error) => bail!("{}", error),
+            DaemonResponse::Command(response) => match response {
+                GoXLRCommandResponse::Ok => Ok(()),
+                GoXLRCommandResponse::Error(error) => Err(anyhow!("{}", error)),
+            },
         }
     }
 
@@ -49,8 +54,12 @@ impl Client for IPCClient {
     }
 
     async fn command(&mut self, serial: &str, command: GoXLRCommand) -> Result<()> {
-        self.send(DaemonRequest::DeviceCommand(serial.to_string(), command))
-            .await
+        let command = DaemonRequest::DeviceCommand(DeviceCommand {
+            serial: serial.to_string(),
+            command,
+        });
+
+        self.send(command).await
     }
 
     fn status(&self) -> &DaemonStatus {

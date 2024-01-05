@@ -2,11 +2,11 @@ use anyhow::{anyhow, Context, Result};
 use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
 
-use goxlr_ipc::commands::{DaemonRequest, DaemonResponse};
+use goxlr_ipc::commands::{DaemonRequest, DaemonResponse, DeviceCommand};
 
-use crate::device::messaging::DeviceCommand;
+use crate::device::messaging::DeviceMessage;
 
-pub type Messanger = Sender<DeviceCommand>;
+pub type Messanger = Sender<DeviceMessage>;
 type Response = Result<DaemonResponse>;
 
 /// This is pretty similar to the GoXLR Utility, as very little really needs to change here.
@@ -18,7 +18,7 @@ pub async fn handle_packet(request: DaemonRequest, sender: Messanger) -> Respons
             let (tx, rx) = oneshot::channel();
 
             sender
-                .send(DeviceCommand::GetStatus(tx))
+                .send(DeviceMessage::GetStatus(tx))
                 .await
                 .map_err(|e| anyhow!(e.to_string()))
                 .context("Failed to send message to device manager")?;
@@ -29,7 +29,7 @@ pub async fn handle_packet(request: DaemonRequest, sender: Messanger) -> Respons
         DaemonRequest::Daemon(daemon_command) => {
             let (tx, rx) = oneshot::channel();
             sender
-                .send(DeviceCommand::RunDaemon(daemon_command, tx))
+                .send(DeviceMessage::RunDaemon(daemon_command, tx))
                 .await
                 .map_err(|e| anyhow!(e.to_string()))
                 .context("Failed to send message to device manager")?;
@@ -37,16 +37,19 @@ pub async fn handle_packet(request: DaemonRequest, sender: Messanger) -> Respons
             rx.await.context("Error from device manager")?;
             Ok(DaemonResponse::Ok)
         }
-        DaemonRequest::DeviceCommand(serial, command) => {
-            let (tx, rx) = oneshot::channel();
-            sender
-                .send(DeviceCommand::RunDevice(serial, command, tx))
-                .await
-                .map_err(|e| anyhow!(e.to_string()))
-                .context("Failed to send message to device manager")?;
+        DaemonRequest::DeviceCommand(command) => {
+            let DeviceCommand { serial, command } = command;
+            {
+                let (tx, rx) = oneshot::channel();
+                sender
+                    .send(DeviceMessage::RunDevice(serial, command, tx))
+                    .await
+                    .map_err(|e| anyhow!(e.to_string()))
+                    .context("Failed to send message to device manager")?;
 
-            let result = rx.await.context("Error from Device Manager")?;
-            Ok(DaemonResponse::Command(result))
+                let result = rx.await.context("Error from Device Manager")?;
+                Ok(DaemonResponse::Command(result))
+            }
         }
     }
 }
