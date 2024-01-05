@@ -1,9 +1,11 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use log::debug;
+use log::{debug, warn};
 use strum::IntoEnumIterator;
 
+use crate::device::goxlr::components::buttons::ButtonHandlers;
 use goxlr_profile::MuteAction;
+use goxlr_shared::buttons::Buttons::CoughButton;
 use goxlr_shared::channels::ChannelMuteState::{Muted, Unmuted};
 use goxlr_shared::channels::{
     ChannelMuteState, InputChannels, MuteState, OutputChannels, RoutingOutput,
@@ -33,6 +35,9 @@ pub(crate) trait MuteHandler {
     async fn handle_mute_press(&mut self, source: Source) -> Result<()>;
     async fn handle_mute_hold(&mut self, source: Source) -> Result<()>;
     async fn handle_unmute(&mut self, source: Source) -> Result<()>;
+
+    /// Used for the Cough Buttons..
+    async fn handle_cough_press(&mut self, hold: bool) -> Result<()>;
 
     /// Returns the Button state for a mute button..
     fn get_mute_button_state(&self, source: Source) -> State;
@@ -98,11 +103,6 @@ impl MuteHandler for GoXLR {
     async fn set_mute_state(&mut self, source: Source, state: MuteState) -> Result<()> {
         let current = self.profile.channels[source].mute_state;
 
-        // Same State, nothing to do here.
-        if state == current {
-            return Ok(());
-        }
-
         // Are we simply unmuting this channel?
         if state == MuteState::Unmuted {
             // We need to update the lighting regardless, but also need to maintain the cough filter
@@ -164,8 +164,15 @@ impl MuteHandler for GoXLR {
 
         let current = self.profile.channels[source].mute_state;
         if current != MuteState::Unmuted {
-            debug!("{:?} currently muted, unmuting..", source);
-            let changes = self.unmute(source).await?;
+            debug!("{:?} currently muted, handling unmute..", source);
+
+            // Before we 'Unmute', double check the Cough Button..
+            let changes = if let Some(targets) = self.add_cough_mute(source, None) {
+                debug!("Restoring Cough Mute State..");
+                self.mute_to_targets(source, targets).await?
+            } else {
+                self.unmute(source).await?
+            };
             self.apply_mute_changes(changes).await?;
             return self.update_mute_state(source, MuteState::Unmuted).await;
         }
@@ -198,6 +205,36 @@ impl MuteHandler for GoXLR {
         let changes = self.unmute(source).await?;
         self.apply_mute_changes(changes).await?;
         return self.update_mute_state(source, MuteState::Unmuted).await;
+    }
+
+    async fn handle_cough_press(&mut self, hold: bool) -> Result<()> {
+        // This is relatively simple, we simply re-process the channel we're attached to..
+        let current = self.profile.cough.mute_state;
+        let cough_source = self.profile.cough.channel_assignment;
+
+        // Get the current mute state of this channel..
+        let channel_state = self.profile.channels[cough_source].mute_state;
+
+        // Update the state of the Mute Button..
+        if hold && current != MuteState::Held {
+            debug!("Cough Held, Handling..");
+            self.profile.cough.mute_state = MuteState::Held;
+        } else if current == MuteState::Unmuted {
+            debug!("Cough Unmuted, Muting to X");
+            self.profile.cough.mute_state = MuteState::Pressed;
+        } else {
+            debug!("Cough Muted, Unmuting..");
+            self.profile.cough.mute_state = MuteState::Unmuted;
+        }
+
+        // Resync the state of the channel
+        self.set_mute_state(cough_source, channel_state).await?;
+
+        let cough_state = self.get_cough_button_state();
+        self.button_states.set_state(CoughButton, cough_state);
+        self.apply_button_states().await?;
+
+        Ok(())
     }
 
     fn get_mute_button_state(&self, source: Source) -> State {
@@ -247,7 +284,9 @@ impl MuteHandlerLocal for GoXLR {
             return self.restore_routing_from_profile(source);
         }
 
-        // Ok, new targets incoming, step one, remove all existing transient routes
+        // Grab the current routing row for this source..
+        let original = self.get_routing_input_row(InputChannels::from(source));
+
         let mut restore = self.restore_routing_from_profile(source)?;
         let source = InputChannels::from(source);
 
@@ -261,6 +300,13 @@ impl MuteHandlerLocal for GoXLR {
                 debug!("Activating Transient Mute {:?} to {:?}", source, route);
                 route_change = true;
             }
+        }
+
+        let new = self.get_routing_input_row(source);
+
+        if original == new {
+            debug!("No Change to Routing Row, returning empty");
+            return Ok(MuteChanges::default());
         }
 
         // If we were updated, send back the response.

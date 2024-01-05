@@ -60,26 +60,56 @@ impl Default for Profile {
         };
 
         let channel = FaderChannel {
-            volume: 128,
+            volume: 182,
             mute_state: MuteState::Unmuted,
-            mute_actions: mute_action,
-            display: fader_display,
+            mute_actions: mute_action.clone(),
+            display: fader_display.clone(),
+        };
+        let channel2 = FaderChannel {
+            volume: 220,
+            mute_state: MuteState::Unmuted,
+            mute_actions: mute_action.clone(),
+            display: fader_display.clone(),
+        };
+        let channel3 = FaderChannel {
+            volume: 126,
+            mute_state: MuteState::Unmuted,
+            mute_actions: mute_action.clone(),
+            display: fader_display.clone(),
+        };
+        let channel4 = FaderChannel {
+            volume: 70,
+            mute_state: MuteState::Unmuted,
+            mute_actions: mute_action.clone(),
+            display: fader_display.clone(),
+        };
+        let channel5 = FaderChannel {
+            volume: 120,
+            mute_state: MuteState::Unmuted,
+            mute_actions: mute_action.clone(),
+            display: fader_display.clone(),
+        };
+        let channel6 = FaderChannel {
+            volume: 212,
+            mute_state: MuteState::Unmuted,
+            mute_actions: mute_action.clone(),
+            display: fader_display.clone(),
         };
 
         // We're just going to clone this config out to all the channels, these would realistically
         // all be very different..
         let mut channels: EnumMap<FaderSources, FaderChannel> = enum_map! {
                 FaderSources::Microphone => channel.clone(),
-                FaderSources::Chat  => channel.clone(),
-                FaderSources::Music => channel.clone(),
-                FaderSources::Game => channel.clone(),
-                FaderSources::Console => channel.clone(),
-                FaderSources::LineIn => channel.clone(),
+                FaderSources::Chat  => channel2.clone(),
+                FaderSources::Music => channel3.clone(),
+                FaderSources::Game => channel4.clone(),
+                FaderSources::Console => channel5.clone(),
+                FaderSources::LineIn => channel6.clone(),
                 FaderSources::System => channel.clone(),
-                FaderSources::Sample => channel.clone(),
-                FaderSources::Headphones => channel.clone(),
-                FaderSources::LineOut => channel.clone(),
-                FaderSources::MicrophoneMonitor => channel.clone(),
+                FaderSources::Sample => channel2.clone(),
+                FaderSources::Headphones => channel3.clone(),
+                FaderSources::LineOut => channel4.clone(),
+                FaderSources::MicrophoneMonitor => channel5.clone(),
         };
 
         // Bump headphones volume to 100%..

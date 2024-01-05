@@ -7,6 +7,7 @@ use log::debug;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons;
+use goxlr_shared::channels::MuteState;
 use goxlr_shared::encoders::Encoders;
 use goxlr_shared::faders::Fader;
 use goxlr_shared::states::State;
@@ -36,7 +37,7 @@ impl Interactions for GoXLR {
 
         debug!("Button Down: {:?}", button);
         let mut skip_hold = false;
-        let mut skip_release = false;
+        let skip_release = false;
 
         match button {
             // Mute behaviours happen on button up, so we can use down to check paging here..
@@ -58,6 +59,9 @@ impl Interactions for GoXLR {
             Buttons::CoughButton => {
                 if self.profile.cough.cough_behaviour == CoughBehaviour::Hold {
                     // We should apply the cough muting, and ignore hold behaviour.
+                    skip_hold = true;
+                    self.handle_cough_press(false).await?;
+                } else if self.profile.cough.mute_state == MuteState::Held {
                     skip_hold = true;
                 }
             }
@@ -99,11 +103,9 @@ impl Interactions for GoXLR {
                 }
             }
             Buttons::CoughButton => {
-                // if self.profile.cough.cough_behaviour == CoughBehaviour::HOLD {
-                //     // We need to unmute the cough button
-                // } else {
-                //     // We need to do something based on the current MuteState..
-                // }
+                if !self.is_held_handled(button) {
+                    self.handle_cough_press(false).await?;
+                }
             }
             Buttons::Swear => {
                 // Button released, revert to inactive state.
@@ -136,6 +138,7 @@ impl Interactions for GoXLR {
             }
             Buttons::CoughButton => {
                 // We need to Trigger the 'Hold' behaviour..
+                self.handle_cough_press(true).await?;
             }
             _ => {
                 // Nothing to do for this button

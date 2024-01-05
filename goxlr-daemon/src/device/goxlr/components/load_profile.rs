@@ -1,10 +1,11 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use log::debug;
+use goxlr_profile::CoughBehaviour;
+use log::{debug, warn};
 use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons::CoughButton;
-use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
+use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels, RoutingOutput};
 use goxlr_shared::colours::TwoColourTargets;
 use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
@@ -105,6 +106,15 @@ impl LoadProfileLocal for GoXLR {
 
         debug!("Building Initial States..");
         // Fader Mute buttons are handled by fader.rs
+
+        // Make sure the 'Cough' configuration is valid..
+        let behaviour = self.profile.cough.cough_behaviour;
+        let state = self.profile.cough.mute_state;
+
+        if behaviour == CoughBehaviour::Hold && state == MuteState::Held {
+            warn!("Invalid cough config detected, correcting..");
+            self.profile.cough.mute_state = MuteState::Unmuted;
+        }
 
         let cough_state = self.get_cough_button_state();
         self.button_states.set_state(CoughButton, cough_state);
