@@ -141,6 +141,9 @@ impl GoXLRUSBDevice {
                 BasicResultCommand::SetScribble(fader, data) => {
                     let _ = responder.send(device.set_scribble(fader, data).await);
                 }
+                BasicResultCommand::SetMicGain(mic_type, gain) => {
+                    let _ = responder.send(device.set_microphone_gain(mic_type, gain).await);
+                }
             },
             CommandSender::GetMicLevel(responder) => {
                 let _ = responder.send(device.get_microphone_level().await);

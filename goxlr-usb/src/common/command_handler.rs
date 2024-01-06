@@ -1,8 +1,8 @@
-use std::io::Cursor;
+use std::io::{Cursor, Write};
 
 use anyhow::Result;
 use async_trait::async_trait;
-use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
+use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
 use enum_map::EnumMap;
 use enumset::EnumSet;
 use strum::IntoEnumIterator;
@@ -21,12 +21,18 @@ use crate::types::buttons::{CurrentButtonStates, DeviceButton};
 use crate::types::channels::{AssignableChannel, ChannelState};
 use crate::types::colours::ColourStruct;
 use crate::types::faders::DeviceFader;
+use crate::types::mic_keys::MicrophoneParamKeys;
+use crate::types::microphone::MicrophoneType;
 use crate::types::routing::RoutingChannel::{Left, Right};
 use crate::types::routing::{RoutingInputChannel, RoutingOutputDevice};
 use crate::types::states::ButtonDisplay;
 
 type RoutingValues = EnumMap<RoutingOutput, RouteValue>;
 type Channel = AssignableChannel;
+
+type EffectKeys = goxlr_shared::microphone::MicrophoneEffectKey;
+type ParamKeys = goxlr_shared::microphone::MicrophoneParamKeys;
+type MicType = goxlr_shared::microphone::MicrophoneType;
 
 #[async_trait]
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
@@ -234,5 +240,41 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         // Convert the Value to Decibels
         let decibels = (f64::log(value.into(), 10.) * 20.) - 72.2;
         Ok(decibels.clamp(-72.2, 0.))
+    }
+
+    /// Microphone Stuff..
+    async fn set_microphone_gain(&mut self, mic_type: MicType, gain: u8) -> Result<()> {
+        let mic_type = MicrophoneType::from(mic_type);
+
+        let mut gain_value = [0; 4];
+        LittleEndian::write_u32(&mut gain_value, gain as u32);
+
+        self.set_mic_param(&[
+            (
+                ParamKeys::MicType,
+                match mic_type.has_phantom() {
+                    true => [0x01, 0x00, 0x00, 0x00],
+                    false => [0x00, 0x00, 0x00, 0x00],
+                },
+            ),
+            (mic_type.get_gain_param(), gain_value),
+        ])
+        .await?;
+
+        Ok(())
+    }
+
+    async fn set_mic_param(&mut self, params: &[(ParamKeys, [u8; 4])]) -> Result<()> {
+        let mut data = Vec::with_capacity(params.len() * 8);
+        let mut cursor = Cursor::new(&mut data);
+        for (key, value) in params {
+            let key = MicrophoneParamKeys::from(*key);
+            cursor.write_u32::<LittleEndian>(key as u32)?;
+            cursor.write_all(value)?;
+        }
+        self.request_data(Command::SetMicrophoneParameters, &data)
+            .await?;
+
+        Ok(())
     }
 }

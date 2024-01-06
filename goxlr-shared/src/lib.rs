@@ -6,6 +6,7 @@ pub mod encoders;
 pub mod eq_frequencies;
 pub mod faders;
 pub mod interaction;
+pub mod microphone;
 pub mod routing;
 pub mod scribbles;
 pub mod states;

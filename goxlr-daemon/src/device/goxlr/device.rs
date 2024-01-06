@@ -23,6 +23,7 @@ use goxlr_usb::runners::device::{start_usb_device_runner, GoXLRUSBConfiguration}
 use crate::device::device_manager::{ManagerMessage, RunnerMessage, RunnerState};
 use crate::device::goxlr::components::interactions::Interactions;
 use crate::device::goxlr::components::load_profile::LoadProfile;
+use crate::device::goxlr::components::mic::load_profile::LoadMicProfile;
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
 use crate::device::goxlr::ipc::handler::IPCCommandHandler;
 use crate::stop::Stop;
@@ -137,6 +138,11 @@ impl GoXLR {
         let mut load_fail = false;
         if let Err(error) = self.load_profile().await {
             warn!("Error While Loading Profile: {}", error);
+            load_fail = true;
+        }
+
+        if let Err(error) = self.load_mic_profile().await {
+            warn!("Error while loading Mic Profile: {}", error);
             load_fail = true;
         }
 

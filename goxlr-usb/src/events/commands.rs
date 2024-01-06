@@ -8,6 +8,7 @@ use goxlr_shared::channels::{
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::interaction::CurrentStates;
+use goxlr_shared::microphone::MicrophoneType;
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::ButtonDisplayStates;
 
@@ -23,6 +24,9 @@ pub enum BasicResultCommand {
     SetFaderStyle(Fader, Vec<FaderDisplayMode>),
     SetButtonStates(ButtonDisplayStates),
     SetScribble(Fader, [u8; 1024]),
+
+    /// Mic Stuff
+    SetMicGain(MicrophoneType, u8),
 }
 
 #[derive(Copy, Clone)]

@@ -209,19 +209,19 @@ pub struct Configuration {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct MicProfile {
-    microphone: Microphone,
-    equalizer: EnumMap<Frequencies, EqualizerValue>,
-    equalizer_mini: EnumMap<MiniFrequencies, EqualizerValue>,
-    compressor: Compressor,
-    deess: u8,
-    gate: Gate,
-    bleep_volume: i8,
+    pub microphone: Microphone,
+    pub equalizer: EnumMap<Frequencies, EqualizerValue>,
+    pub equalizer_mini: EnumMap<MiniFrequencies, EqualizerValue>,
+    pub compressor: Compressor,
+    pub deess: u8,
+    pub gate: Gate,
+    pub bleep_volume: i8,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Microphone {
-    mic_type: MicrophoneType,
-    mic_gains: EnumMap<MicrophoneType, u8>,
+    pub mic_type: MicrophoneType,
+    pub mic_gains: EnumMap<MicrophoneType, u8>,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
