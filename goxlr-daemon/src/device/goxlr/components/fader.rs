@@ -52,13 +52,15 @@ impl DeviceFader for GoXLR {
             true
         };
 
-        if assign {
-            let command = BasicResultCommand::AssignFader(fader, command_source);
-            self.send_no_result(command).await?;
-
-            // Update the Cache after assignment
-            self.fader_state[fader].replace(source);
+        if !assign {
+            return Ok(());
         }
+
+        let command = BasicResultCommand::AssignFader(fader, command_source);
+        self.send_no_result(command).await?;
+
+        // Update the Cache after assignment
+        self.fader_state[fader].replace(source);
 
         debug!("Performing Submix mitigation Check");
         // Submix mitigation code, assigning output channels to faders can cause their volume to
