@@ -176,6 +176,10 @@ impl GoXLR {
                                     }
                                 };
                                 let _ = tx.send(message);
+
+                                // There's a high probability that a GoXLR Command has changed the state,
+                                // so we'll let the manager know to send a patch.
+                                let _ = self.config.manager_sender.send(RunnerMessage::StatusChange).await;
                             }
                         }
                     }
@@ -207,6 +211,7 @@ impl GoXLR {
                             }
                         };
 
+                        let _ = self.config.manager_sender.send(RunnerMessage::StatusChange).await;
                         if let Err(error) = result {
                             warn!("Error Handling Button Press: {:?}", error);
                         }

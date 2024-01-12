@@ -60,7 +60,7 @@ async fn main() -> Result<()> {
     tokio::spawn(spawn_http_server(
         manager_send.clone(),
         httpd_tx,
-        broadcast_tx,
+        broadcast_tx.clone(),
         http_settings,
     ));
     let http_server = httpd_rx.await?;
@@ -69,10 +69,14 @@ async fn main() -> Result<()> {
     // sleep(Duration::from_secs(5)).await;
     // shutdown.trigger();
 
-    let task = task::spawn(start_device_manager(manager_recv, shutdown.clone()));
+    let task = task::spawn(start_device_manager(
+        manager_recv,
+        shutdown.clone(),
+        broadcast_tx.clone(),
+    ));
     let _ = join!(task, communications_handle);
 
-    http_server.stop(true).await;
+    join!(http_server.stop(true));
 
     debug!("Should be done!");
     Ok(())

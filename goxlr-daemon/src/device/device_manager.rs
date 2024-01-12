@@ -2,10 +2,12 @@
    The primary device manager, this is responsible for most of the general workings of the daemon
 */
 
+use json_patch::diff;
 use std::collections::HashMap;
 use std::time::Duration;
 
 use log::{debug, error, info, warn};
+use tokio::sync::broadcast::Sender;
 use tokio::sync::oneshot::error::RecvError;
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task, time};
@@ -22,9 +24,13 @@ use crate::device::device_manager::ManagerMessage::{Execute, GetConfig};
 use crate::device::goxlr::device::start_goxlr;
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
 use crate::device::messaging::DeviceMessage;
+use crate::servers::http_server::PatchEvent;
 use crate::stop::Stop;
 
 struct DeviceManager {
+    last_status: DaemonStatus,
+    patch_broadcast: Sender<PatchEvent>,
+
     /// Used for Devices sending messages back to the Manager
     device_receiver: mpsc::Receiver<RunnerMessage>,
     device_sender: mpsc::Sender<RunnerMessage>,
@@ -43,10 +49,13 @@ struct DeviceManager {
 }
 
 impl DeviceManager {
-    pub fn new(shutdown: Stop) -> Self {
+    pub fn new(shutdown: Stop, broadcast_tx: Sender<PatchEvent>) -> Self {
         let (device_sender, device_receiver) = mpsc::channel(128);
 
         Self {
+            last_status: DaemonStatus::default(),
+            patch_broadcast: broadcast_tx,
+
             device_receiver,
             device_sender,
 
@@ -76,6 +85,7 @@ impl DeviceManager {
             select! {
                 Some(message) = message_receiver.recv() => {
                     self.handle_command(message).await;
+                    self.update_status().await;
                 }
                 Some(device) = device_recv.recv() => {
                     match device {
@@ -88,6 +98,7 @@ impl DeviceManager {
                             self.remove_device(device).await;
                         },
                     }
+                    self.update_status().await;
                 },
                 Some(message) = self.device_receiver.recv() => {
                     debug!("[DeviceManager] Received State Change from GoXLR: {:?}", message);
@@ -98,7 +109,12 @@ impl DeviceManager {
                         RunnerMessage::Error(device) => {
                             self.handle_error(device);
                         },
+                        RunnerMessage::StatusChange => {
+                            // We don't actually need to do anything here, simply because we call
+                            // self.update_status regardless, but this is useful to trigger it.
+                        }
                     }
+                    self.update_status().await;
                 },
                 _ = self.shutdown.recv() => {
                     let _ = pnp_send.send(());
@@ -124,6 +140,7 @@ impl DeviceManager {
                         RunnerMessage::Error(device) => {
                             self.handle_error(device);
                         },
+                        _ => {}
                     }
                     if self.devices_stopped() {
                         break;
@@ -251,42 +268,55 @@ impl DeviceManager {
         true
     }
 
+    async fn update_status(&mut self) {
+        debug!("Updating Status..");
+        let mut status = DaemonStatus::default();
+
+        for (serial, usb) in &self.serials {
+            if let Some(device) = self.states.get(usb) {
+                let (cmd_tx, cmd_rx) = oneshot::channel();
+
+                let result = device.messanger.send(GetConfig(cmd_tx)).await;
+                if let Err(e) = result {
+                    warn!("Unable to Fetch Device Config: {}", e);
+                }
+
+                let response = cmd_rx.await;
+                match response {
+                    Ok(profile) => {
+                        status.devices.push(DeviceStatus {
+                            serial: serial.clone(),
+                            config: profile,
+                        });
+                    }
+                    Err(error) => {
+                        debug!(
+                            "Error Fetching Profile Information for {}: {}",
+                            serial, error
+                        );
+                        continue;
+                    }
+                }
+            }
+        }
+
+        let previous = serde_json::to_value(&self.last_status).unwrap();
+        let new = serde_json::to_value(&status).unwrap();
+
+        let patch = diff(&previous, &new);
+        if !patch.0.is_empty() {
+            // Broadcast Patch..
+            debug!("Patch To Send: {:#?}", patch);
+            let _ = self.patch_broadcast.send(PatchEvent { data: patch });
+        }
+
+        self.last_status = status;
+    }
+
     async fn handle_command(&self, command: DeviceMessage) {
         match command {
             DeviceMessage::GetStatus(tx) => {
-                debug!("Getting Status..");
-                let mut status = DaemonStatus { devices: vec![] };
-
-                for (serial, usb) in &self.serials {
-                    if let Some(device) = self.states.get(usb) {
-                        let (cmd_tx, cmd_rx) = oneshot::channel();
-
-                        let result = device.messanger.send(GetConfig(cmd_tx)).await;
-                        if let Err(e) = result {
-                            warn!("Unable to Fetch Device Config: {}", e);
-                        }
-
-                        let response = cmd_rx.await;
-                        match response {
-                            Ok(profile) => {
-                                status.devices.push(DeviceStatus {
-                                    serial: serial.clone(),
-                                    config: profile,
-                                });
-                            }
-                            Err(error) => {
-                                debug!(
-                                    "Error Fetching Profile Information for {}: {}",
-                                    serial, error
-                                );
-                                continue;
-                            }
-                        }
-                    }
-                }
-
-                debug!("Status: {:#?}", status);
-                let _ = tx.send(status);
+                let _ = tx.send(self.last_status.clone());
             }
             DeviceMessage::RunDaemon(command, tx) => {
                 let _ = tx.send(DaemonResponse::Ok);
@@ -321,8 +351,12 @@ impl DeviceManager {
     }
 }
 
-pub async fn start_device_manager(message_receiver: mpsc::Receiver<DeviceMessage>, shutdown: Stop) {
-    let mut manager = DeviceManager::new(shutdown);
+pub async fn start_device_manager(
+    message_receiver: mpsc::Receiver<DeviceMessage>,
+    shutdown: Stop,
+    broadcast_tx: Sender<PatchEvent>,
+) {
+    let mut manager = DeviceManager::new(shutdown, broadcast_tx);
     manager.run(message_receiver).await;
 }
 
@@ -342,6 +376,7 @@ struct DeviceState {
 pub enum RunnerMessage {
     UpdateState(USBLocation, RunnerState),
     Error(USBLocation),
+    StatusChange,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
