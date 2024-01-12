@@ -5,6 +5,11 @@ use crate::commands::{
 };
 use anyhow::{anyhow, bail, Context, Result};
 use async_trait::async_trait;
+use interprocess::local_socket::tokio::LocalSocketStream;
+use interprocess::local_socket::NameTypeSupport;
+
+static SOCKET_PATH: &str = "/tmp/goxlr.socket";
+static NAMED_PIPE: &str = "@goxlr.socket";
 
 #[derive(Debug)]
 pub struct IPCClient {
@@ -13,7 +18,18 @@ pub struct IPCClient {
 }
 
 impl IPCClient {
-    pub fn new(socket: Socket<DaemonResponse, DaemonRequest>) -> Self {
+    pub async fn connect() -> Result<Self> {
+        let connection = LocalSocketStream::connect(match NameTypeSupport::query() {
+            NameTypeSupport::OnlyPaths | NameTypeSupport::Both => SOCKET_PATH,
+            NameTypeSupport::OnlyNamespaced => NAMED_PIPE,
+        })
+        .await?;
+        let socket: Socket<DaemonResponse, DaemonRequest> = Socket::new(connection);
+
+        Ok(IPCClient::start(socket))
+    }
+
+    fn start(socket: Socket<DaemonResponse, DaemonRequest>) -> Self {
         Self {
             socket,
             status: DaemonStatus::default(),
