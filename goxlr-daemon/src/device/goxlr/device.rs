@@ -86,6 +86,12 @@ impl GoXLR {
         msg_receive.await?
     }
 
+    pub(crate) async fn send_device_update(&self) {
+        if self.config.update_sender.capacity() > 0 {
+            let _ = self.config.update_sender.send(()).await;
+        }
+    }
+
     pub async fn run(&mut self) -> Result<()> {
         debug!("[GoXLR]{} Starting Event Loop", self.config.device);
 
@@ -179,7 +185,8 @@ impl GoXLR {
 
                                 // There's a high probability that a GoXLR Command has changed the state,
                                 // so we'll let the manager know to send a patch.
-                                let _ = self.config.manager_sender.send(RunnerMessage::StatusChange).await;
+                                debug!("Device Sending Status Change..");
+                                let _ = self.send_device_update().await;
                             }
                         }
                     }
@@ -211,10 +218,11 @@ impl GoXLR {
                             }
                         };
 
-                        let _ = self.config.manager_sender.send(RunnerMessage::StatusChange).await;
                         if let Err(error) = result {
                             warn!("Error Handling Button Press: {:?}", error);
                         }
+
+                        let _ = self.send_device_update().await;
                     }
                     _ = ticker.tick() => {
                         // Things to do every 20ms..

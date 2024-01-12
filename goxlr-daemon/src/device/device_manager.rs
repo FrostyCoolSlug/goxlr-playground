@@ -2,20 +2,18 @@
    The primary device manager, this is responsible for most of the general workings of the daemon
 */
 
-use json_patch::diff;
 use std::collections::HashMap;
 use std::time::Duration;
 
+use json_patch::diff;
 use log::{debug, error, info, warn};
 use tokio::sync::broadcast::Sender;
-use tokio::sync::oneshot::error::RecvError;
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task, time};
 
 use goxlr_ipc::commands::{
     DaemonResponse, DaemonStatus, DeviceStatus, GoXLRCommand, GoXLRCommandResponse, Profiles,
 };
-use goxlr_profile::Profile;
 use goxlr_usb::runners::pnp::PnPDeviceMessage;
 use goxlr_usb::runners::pnp::{start_pnp_runner, PnPConfiguration};
 use goxlr_usb::USBLocation;
@@ -35,6 +33,10 @@ struct DeviceManager {
     device_receiver: mpsc::Receiver<RunnerMessage>,
     device_sender: mpsc::Sender<RunnerMessage>,
 
+    /// Used for notification that the DeviceStatus needs refreshing..
+    update_receiver: mpsc::Receiver<()>,
+    update_sender: mpsc::Sender<()>,
+
     /// Current State of all attached devices
     states: HashMap<USBLocation, DeviceState>,
 
@@ -51,6 +53,7 @@ struct DeviceManager {
 impl DeviceManager {
     pub fn new(shutdown: Stop, broadcast_tx: Sender<PatchEvent>) -> Self {
         let (device_sender, device_receiver) = mpsc::channel(128);
+        let (update_sender, update_receiver) = mpsc::channel(1);
 
         Self {
             last_status: DaemonStatus::default(),
@@ -58,6 +61,9 @@ impl DeviceManager {
 
             device_receiver,
             device_sender,
+
+            update_sender,
+            update_receiver,
 
             states: HashMap::default(),
             serials: HashMap::default(),
@@ -84,8 +90,9 @@ impl DeviceManager {
         loop {
             select! {
                 Some(message) = message_receiver.recv() => {
-                    self.handle_command(message).await;
-                    self.update_status().await;
+                    if self.handle_command(message).await {
+                        self.update_status().await;
+                    }
                 }
                 Some(device) = device_recv.recv() => {
                     match device {
@@ -98,24 +105,21 @@ impl DeviceManager {
                             self.remove_device(device).await;
                         },
                     }
-                    self.update_status().await;
                 },
                 Some(message) = self.device_receiver.recv() => {
                     debug!("[DeviceManager] Received State Change from GoXLR: {:?}", message);
                     match message {
                         RunnerMessage::UpdateState(device, state) => {
-                            self.update_state(device, state);
+                            self.update_state(device, state).await;
                         }
                         RunnerMessage::Error(device) => {
                             self.handle_error(device);
                         },
-                        RunnerMessage::StatusChange => {
-                            // We don't actually need to do anything here, simply because we call
-                            // self.update_status regardless, but this is useful to trigger it.
-                        }
                     }
-                    self.update_status().await;
                 },
+                Some(()) = self.update_receiver.recv() => {
+                    self.update_status().await;
+                }
                 _ = self.shutdown.recv() => {
                     let _ = pnp_send.send(());
                     self.stopping = true;
@@ -135,7 +139,7 @@ impl DeviceManager {
                     debug!("[DeviceManager-SD] Received State Change from GoXLR..");
                     match message {
                         RunnerMessage::UpdateState(device, state) => {
-                            self.update_state(device, state);
+                            self.update_state(device, state).await;
                         }
                         RunnerMessage::Error(device) => {
                             self.handle_error(device);
@@ -161,6 +165,7 @@ impl DeviceManager {
         let config = GoXLRDeviceConfiguration {
             stop: stop.clone(),
             device,
+            update_sender: self.update_sender.clone(),
             manager_sender: self.device_sender.clone(),
             manager_recv,
         };
@@ -193,6 +198,9 @@ impl DeviceManager {
         // If we're not already running, we should just nuke knowledge of the device..
         self.serials.retain(|_, dev| *dev != device);
         self.states.retain(|dev, _| *dev != device);
+
+        debug!("Updating DaemonStatus due to device removal");
+        self.update_status().await;
     }
 
     async fn check_devices(&mut self) {
@@ -210,13 +218,16 @@ impl DeviceManager {
         }
     }
 
-    fn update_state(&mut self, device: USBLocation, state: RunnerState) {
+    async fn update_state(&mut self, device: USBLocation, state: RunnerState) {
         if let RunnerState::Running(serial) = &state {
             info!(
                 "[DeviceManager]{} Serial {} entered Running State",
                 device, serial
             );
             self.serials.insert(serial.to_owned(), device);
+
+            debug!("Device Active, Updating DaemonStatus state..");
+            self.update_status().await;
         }
 
         if let Some(current) = self.states.get_mut(&device) {
@@ -232,6 +243,9 @@ impl DeviceManager {
                     // We've stopped, but we're not supposed to, that's an error.
                     current.state = RunnerState::Error;
                 }
+
+                debug!("Device Deactivated, Updating DaemonStatus state..");
+                self.update_status().await;
                 return;
             }
 
@@ -284,10 +298,13 @@ impl DeviceManager {
                 let response = cmd_rx.await;
                 match response {
                     Ok(profile) => {
-                        status.devices.push(DeviceStatus {
-                            serial: serial.clone(),
-                            config: profile,
-                        });
+                        status.devices.insert(
+                            serial.clone(),
+                            DeviceStatus {
+                                serial: serial.clone(),
+                                config: profile,
+                            },
+                        );
                     }
                     Err(error) => {
                         debug!(
@@ -313,13 +330,16 @@ impl DeviceManager {
         self.last_status = status;
     }
 
-    async fn handle_command(&self, command: DeviceMessage) {
+    async fn handle_command(&self, command: DeviceMessage) -> bool {
+        let mut update = false;
+
         match command {
             DeviceMessage::GetStatus(tx) => {
                 let _ = tx.send(self.last_status.clone());
             }
             DeviceMessage::RunDaemon(command, tx) => {
                 let _ = tx.send(DaemonResponse::Ok);
+                update = true;
             }
             DeviceMessage::RunDevice(serial, command, tx) => {
                 if let Some(usb) = self.serials.get(&*serial) {
@@ -329,7 +349,7 @@ impl DeviceManager {
                         let result = device.messanger.send(Execute(command, cmd_tx)).await;
                         if let Err(e) = result {
                             let _ = tx.send(GoXLRCommandResponse::Error(e.to_string()));
-                            return;
+                            return false;
                         }
 
                         let response = cmd_rx.await;
@@ -346,8 +366,10 @@ impl DeviceManager {
                     let error = format!("Device {} not found", serial);
                     let _ = tx.send(GoXLRCommandResponse::Error(error));
                 }
+                update = true;
             }
         }
+        update
     }
 }
 
@@ -376,7 +398,6 @@ struct DeviceState {
 pub enum RunnerMessage {
     UpdateState(USBLocation, RunnerState),
     Error(USBLocation),
-    StatusChange,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

@@ -1,7 +1,9 @@
-use goxlr_profile::{MicProfile, Profile};
+use std::collections::BTreeMap;
+
 use json_patch::Patch;
 use serde::{Deserialize, Serialize};
 
+use goxlr_profile::{MicProfile, Profile};
 use goxlr_shared::faders::FaderSources;
 
 use crate::commands::channels::ChannelCommand;
@@ -77,7 +79,7 @@ pub enum GoXLRCommandResponse {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct DaemonStatus {
-    pub devices: Vec<DeviceStatus>,
+    pub devices: BTreeMap<String, DeviceStatus>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

@@ -118,7 +118,7 @@ impl ExecutableGoXLR for GoXLRDevice {
     }
 
     async fn perform_recovery(&mut self) -> Result<()> {
-        todo!()
+        bail!("Recovery Not Implemented!");
     }
 
     async fn perform_stop(&mut self) {

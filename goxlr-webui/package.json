@@ -11,6 +11,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "fast-json-patch": "^3.1.1",
     "vue": "^3.3.11",
     "vue-router": "^4.2.5"
   },
