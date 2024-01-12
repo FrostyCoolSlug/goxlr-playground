@@ -10,6 +10,7 @@
 
 use enum_map::EnumMap;
 use enumset::EnumSet;
+use log::debug;
 use strum::IntoEnumIterator;
 use tokio::sync::mpsc;
 
@@ -25,6 +26,7 @@ pub(crate) struct StateTracker {
     sender: mpsc::Sender<InteractionEvent>,
 
     first_run: bool,
+    fader_last_seen: EnumMap<DeviceFader, u8>,
     button_states: EnumMap<DeviceButton, ButtonStates>,
     volume_map: EnumMap<DeviceFader, u8>,
     encoder_map: EnumMap<DeviceEncoder, i8>,
@@ -36,6 +38,7 @@ impl StateTracker {
             sender,
 
             first_run: true,
+            fader_last_seen: EnumMap::default(),
             button_states: EnumMap::default(),
             volume_map: EnumMap::default(),
             encoder_map: EnumMap::default(),
@@ -56,8 +59,15 @@ impl StateTracker {
         for fader in DeviceFader::iter() {
             let volume = volumes[fader as usize];
             if self.volume_map[fader] != volume || self.first_run {
-                self.volume_map[fader] = volumes[fader as usize];
+                // This helps deal with initial startup latching issues on the mini, prior to
+                // latching, it will report 0 as the volume, so we shouldn't tigger events until
+                // we've seen a change.
+                if volume == self.fader_last_seen[fader] {
+                    continue;
+                }
 
+                self.volume_map[fader] = volume;
+                self.fader_last_seen[fader] = volume;
                 let message = InteractionEvent::VolumeChange(fader.into(), volume);
                 let _ = self.sender.send(message).await;
             }

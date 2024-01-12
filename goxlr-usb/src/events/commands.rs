@@ -14,7 +14,7 @@ use goxlr_shared::states::ButtonDisplayStates;
 
 /// This is a helper enum for commands that will simply return a Result<()> with no additional
 /// data, it helps simplify wrapping these type of commands together.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum BasicResultCommand {
     SetColour(ColourScheme),
     SetVolume(ChannelSource, u8),
@@ -29,7 +29,7 @@ pub enum BasicResultCommand {
     SetMicGain(MicrophoneType, u8),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum ChannelSource {
     FromInputChannel(InputChannels),
     FromOutputChannel(OutputChannels),
@@ -37,6 +37,7 @@ pub enum ChannelSource {
     FromVolumeChannel(VolumeChannels),
 }
 
+#[derive(Debug)]
 pub enum CommandSender {
     GetButtonStates(oneshot::Sender<Result<CurrentStates>>),
     GetMicLevel(oneshot::Sender<Result<f64>>),

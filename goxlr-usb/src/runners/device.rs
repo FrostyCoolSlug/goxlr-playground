@@ -4,12 +4,16 @@
 */
 
 use std::cmp::Ordering;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering as AtomicOrder;
+use std::sync::Arc;
+use std::time::Duration;
 
 use anyhow::{bail, Result};
 use log::{debug, trace};
 use strum::IntoEnumIterator;
-use tokio::select;
 use tokio::sync::{mpsc, oneshot};
+use tokio::{select, time};
 
 use goxlr_shared::device::{DeviceInfo, DeviceType, GoXLRFeature};
 use goxlr_shared::interaction::{ButtonStates, CurrentStates};
@@ -70,6 +74,10 @@ impl GoXLRUSBDevice {
         // Once we get here, the device has setup, send back the message sender...
         let _ = ready.send(details);
 
+        // Simple ticker to check for updates..
+        let poll_millis = 20;
+        let mut ticker = time::interval(Duration::from_millis(poll_millis));
+
         loop {
             select! {
                 Some(event) = event_recv.recv() => {
@@ -79,23 +87,21 @@ impl GoXLRUSBDevice {
                         DeviceMessage::Error => {
                             bail!("Error in Message Handler, aborting");
                         },
-                        DeviceMessage::Event(message) => {
-                            if message == EventType::StatusChange {
-                                // Check to see if we're handling button states internally
-                                if let Some(tracker) = &mut tracker {
-                                    let buttons = device.get_button_states().await?;
-                                    tracker.update_states(buttons).await;
-                                    continue;
-                                }
-                            }
-
-                            // Send the Event Upstream
-                            self.config.device_event.send(event).await?;
-                        },
                     }
                 }
                 Some(command) = self.config.command_receiver.recv() => {
+                    debug!("Handling Command..");
                     self.handle_command(command, &mut device).await;
+                }
+                _ = ticker.tick() => {
+                    // If the user hasn't defined a tracker, we do nothing. It becomes entirely
+                    // their responsibility to manage it.
+                    if let Some(tracker) = &mut tracker {
+                        if !self.config.pause_interaction_poll.load(AtomicOrder::Relaxed) {
+                           let buttons = device.get_button_states().await?;
+                           tracker.update_states(buttons).await;
+                        }
+                    }
                 }
                 _ = &mut self.config.stop => {
                     debug!("[RUNNER]{} Told to Stop, breaking Loop..", self.config.device);
@@ -112,6 +118,7 @@ impl GoXLRUSBDevice {
     }
 
     async fn handle_command(&self, sender: CommandSender, device: &mut GoXLRDevice) {
+        trace!("Running: {:#?}", sender);
         match sender {
             CommandSender::BasicResultCommand(command, responder) => match command {
                 BasicResultCommand::SetColour(scheme) => {
@@ -243,6 +250,7 @@ pub async fn start_usb_device_runner(config: GoXLRUSBConfiguration, ready: Ready
 pub struct GoXLRUSBConfiguration {
     pub device: USBLocation,
     pub interaction_event: Option<mpsc::Sender<InteractionEvent>>,
+    pub pause_interaction_poll: Arc<AtomicBool>,
     pub device_event: mpsc::Sender<DeviceMessage>,
     pub command_receiver: mpsc::Receiver<CommandSender>,
     pub stop: oneshot::Receiver<()>,
@@ -251,14 +259,6 @@ pub struct GoXLRUSBConfiguration {
 #[derive(Debug, Copy, Clone)]
 pub enum DeviceMessage {
     Error,
-
-    // This is currently not used, but is created 'just in case'.
-    Event(EventType),
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum EventType {
-    StatusChange,
 }
 
 /// This allows you to compare firmware version numbers against another specified version and

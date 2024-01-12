@@ -14,7 +14,7 @@ pub(crate) trait ExecutableGoXLR {
                 // Attempt Recovery..
                 if let Err(error) = self.perform_recovery().await {
                     self.perform_stop().await;
-                    bail!("Unable to Recover Device: {}", error);
+                    return Err(error);
                 }
 
                 let result = self.perform_request(command, body).await;
@@ -22,7 +22,7 @@ pub(crate) trait ExecutableGoXLR {
                     Ok(result) => Ok(result),
                     Err(error) => {
                         self.perform_stop().await;
-                        bail!("Command failed after recovery: {}", error);
+                        return Err(error);
                     }
                 }
             }

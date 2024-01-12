@@ -97,11 +97,11 @@ impl DeviceManager {
                 Some(device) = device_recv.recv() => {
                     match device {
                         PnPDeviceMessage::Attached(device) => {
-                            info!("[DeviceManager] Received Device: {:?}", device);
+                            debug!("[DeviceManager] Received Device: {:?}", device);
                             self.add_device(device).await;
                         }
                         PnPDeviceMessage::Removed(device) => {
-                            info!("[DeviceManager] Device Removed: {:?}", device);
+                            debug!("[DeviceManager] Device Removed: {:?}", device);
                             self.remove_device(device).await;
                         },
                     }
@@ -115,6 +115,10 @@ impl DeviceManager {
                         RunnerMessage::Error(device) => {
                             self.handle_error(device);
                         },
+                        RunnerMessage::Disconnected(device) => {
+                            debug!("Received Disconnect Notification from Device");
+                            self.remove_device(device).await;
+                        }
                     }
                 },
                 Some(()) = self.update_receiver.recv() => {
@@ -144,6 +148,10 @@ impl DeviceManager {
                         RunnerMessage::Error(device) => {
                             self.handle_error(device);
                         },
+                        RunnerMessage::Disconnected(device) => {
+                            debug!("Received Disconnect Notification from Device");
+                            self.remove_device(device).await;
+                        }
                         _ => {}
                     }
                     if self.devices_stopped() {
@@ -158,6 +166,7 @@ impl DeviceManager {
     }
 
     async fn add_device(&mut self, device: USBLocation) {
+        debug!("[DeviceManager]{} New Device added..", device);
         let stop = Stop::new();
         let (manager_send, manager_recv) = mpsc::channel(64);
 
@@ -205,15 +214,21 @@ impl DeviceManager {
 
     async fn check_devices(&mut self) {
         let mut refresh = vec![];
+
         // We need to see if any of our devices are in an error state, if so, reset them..
         for (location, state) in &mut self.states {
             if state.state == RunnerState::Error {
+                debug!(
+                    "[DeviceManager]{} Device Errored, Beginning Recovery",
+                    location
+                );
                 refresh.push(*location);
             }
         }
 
         // Refresh any devices that are in an error state..
         for device in refresh {
+            debug!("Handling Device..");
             self.add_device(device).await;
         }
     }
@@ -233,6 +248,7 @@ impl DeviceManager {
         if let Some(current) = self.states.get_mut(&device) {
             if state == RunnerState::Stopped {
                 debug!("[DeviceManager]{} Device Terminated", device);
+
                 // If we get here, the device has stopped, we should clear it..
                 self.serials.retain(|_, dev| *dev != device);
 
@@ -241,10 +257,13 @@ impl DeviceManager {
                     self.states.remove(&device);
                 } else {
                     // We've stopped, but we're not supposed to, that's an error.
+                    debug!(
+                        "[DeviceManager]{} Unexpected Device Stop, attempting recovery",
+                        device
+                    );
                     current.state = RunnerState::Error;
                 }
 
-                debug!("Device Deactivated, Updating DaemonStatus state..");
                 self.update_status().await;
                 return;
             }
@@ -260,11 +279,13 @@ impl DeviceManager {
     }
 
     fn handle_error(&mut self, device: USBLocation) {
-        // Called if something has gone wrong with the device and it may need a reset..
-        // flag it as ERROR, and let the error handling catch it later.
+        // Called when somethings gone wrong with the device.. If it's been removed, hopefully
+        // the PnP handler has removed it's presence in the 'state' map to prevent awefulness..
         if let Some(current) = self.states.get_mut(&device) {
             // Errors should internally break loops, so we don't need to call stop..
             current.state = RunnerState::Error;
+        } else {
+            debug!("[DeviceManager]{} Device not in state map.", device);
         }
 
         // If we're tracking a serial for this device, we need to remove it from the list..
@@ -397,6 +418,7 @@ struct DeviceState {
 #[derive(Debug)]
 pub enum RunnerMessage {
     UpdateState(USBLocation, RunnerState),
+    Disconnected(USBLocation),
     Error(USBLocation),
 }
 

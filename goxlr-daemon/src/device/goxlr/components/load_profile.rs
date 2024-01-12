@@ -35,16 +35,19 @@ impl LoadProfile for GoXLR {
         self.setup_colours();
 
         // Go through the profile components and apply them to the GoXLR
-        self.load_volumes().await?;
         self.load_current_page(false).await?;
 
         // Load the Mute States..
         self.load_mute_states().await?;
 
+        // Apply the volumes..
+        self.load_volumes().await?;
+
         // Finalise things setup earlier
+        self.apply_button_states().await?;
+
         self.load_colours().await?;
         self.apply_routing().await?;
-        self.apply_button_states().await?;
 
         debug!("Completed Profile Load");
         Ok(())

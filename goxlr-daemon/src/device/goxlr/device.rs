@@ -1,9 +1,11 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use enum_map::EnumMap;
 use goxlr_ipc::commands::{GoXLRCommandResponse, Profiles};
-use log::{debug, error, warn};
+use log::{debug, error, trace, warn};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task, time};
 
@@ -32,6 +34,8 @@ pub(crate) struct GoXLR {
     pub device: Option<DeviceInfo>,
     command_sender: Option<mpsc::Sender<CommandSender>>,
 
+    pub pause_polling: Arc<AtomicBool>,
+
     pub profile: Profile,
     pub mic_profile: MicProfile,
 
@@ -55,6 +59,8 @@ impl GoXLR {
             device: None,
             command_sender: None,
 
+            pause_polling: Arc::new(AtomicBool::new(true)),
+
             colour_scheme: Default::default(),
             profile: Default::default(),
             mic_profile: Default::default(),
@@ -73,6 +79,7 @@ impl GoXLR {
     /// there's ultimately no need to have loads of set up / tear down code for the messaging
     /// system all over the place if we're not expecting to handle anything.
     pub(crate) async fn send_no_result(&self, command: BasicResultCommand) -> Result<()> {
+        trace!("Sending: {:#?}", command);
         let (msg_send, msg_receive) = oneshot::channel();
 
         let command_sender = self.command_sender.clone();
@@ -81,6 +88,8 @@ impl GoXLR {
         // Send the message..
         let command = CommandSender::BasicResultCommand(command, msg_send);
         let _ = sender.send(command).await;
+
+        trace!("Message sent, awaiting response..");
 
         // Return the Response..
         msg_receive.await?
@@ -117,6 +126,7 @@ impl GoXLR {
         let configuration = GoXLRUSBConfiguration {
             device: self.config.device,
             interaction_event: Some(interaction_send),
+            pause_interaction_poll: self.pause_polling.clone(),
             device_event: event_send,
             command_receiver: command_recv,
             stop: stop_recv,
@@ -151,6 +161,9 @@ impl GoXLR {
             warn!("Error while loading Mic Profile: {}", error);
             load_fail = true;
         }
+
+        // Permit the USB handler to poll for changes..
+        self.pause_polling.store(false, Ordering::Relaxed);
 
         // Only enter the loop if we were able to load the profile, otherwise immediately abort and
         // shut down the runners. We shouldn't just bail if there's an error above, as the USB
@@ -196,9 +209,6 @@ impl GoXLR {
                             DeviceMessage::Error => {
                                 warn!("[GoXLR]{} Error Sent back from Handler, bail!", self.config.device);
                                 break;
-                            }
-                            DeviceMessage::Event(event) => {
-                                debug!("[GoXLR]{} Event: {:?}", self.config.device, event);
                             }
                         }
                     }

@@ -14,7 +14,7 @@ use tokio::task::JoinHandle;
 use tokio::{select, task, time};
 
 use crate::common::executor::InitialisableGoXLR;
-use crate::runners::device::{DeviceMessage, EventType};
+use crate::runners::device::DeviceMessage;
 use crate::{USBLocation, PID_GOXLR_MINI};
 
 pub(crate) struct GoXLRDevice {
@@ -94,17 +94,12 @@ impl GoXLRDevice {
             loop {
                 select! {
                     _ = ticker.tick() => {
-                        // Under Linux we're not able to listen to INTERRUPTs from the USB Device
-                        // which would normally indicate the device 'state' has changed.
-
-                        // So we simply use this ticker and tell the parent to do the check.
+                        // We simply periodically check for whether we've been asked to stop.
+                        // TODO: Implement a better 'stopper' than a loop!
                         if stop.load(Ordering::Relaxed) {
                             debug!("[DEVICE]{} Stopping Event Loop..", device);
                             break;
                         }
-
-                        trace!("[DEVICE]{} Event Loop Tick..", device);
-                        let _ = events.send(DeviceMessage::Event(EventType::StatusChange)).await;
                     }
                 }
             }
