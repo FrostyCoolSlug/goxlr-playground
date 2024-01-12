@@ -1,4 +1,5 @@
 use goxlr_profile::{MicProfile, Profile};
+use json_patch::Patch;
 use serde::{Deserialize, Serialize};
 
 use goxlr_shared::faders::FaderSources;
@@ -12,7 +13,7 @@ pub mod pages;
 /// This is the base IPC request structure, it's async driven so each request will require a
 /// response 'oneshot' channel for receiving a reply, this allows us to better manage a request /  
 /// response queued
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DaemonRequest {
     /// Simple ping, will get an Ok / Error response
     Ping,
@@ -24,30 +25,43 @@ pub enum DaemonRequest {
     DeviceCommand(DeviceCommand),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebsocketRequest {
+    pub id: u64,
+    pub data: DaemonRequest,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DaemonResponse {
     Ok,
-    Error(String),
+    Err(String),
+    Patch(Patch),
     Status(DaemonStatus),
     Command(GoXLRCommandResponse),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebsocketResponse {
+    pub id: u64,
+    pub data: DaemonResponse,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeviceCommand {
     pub serial: String,
     pub command: GoXLRCommand,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DaemonCommand {}
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GoXLRCommand {
     Channels(Channels),
     Pages(PageCommand),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Channels {
     pub channel: FaderSources,
     pub command: ChannelCommand,
@@ -55,7 +69,7 @@ pub struct Channels {
 
 /// The GoXLR Command Response will contain command specific responses, generally not much more
 /// than 'Ok' in most cases, but if needed, we can provide more details messages.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GoXLRCommandResponse {
     Ok,
     Error(String),
@@ -76,4 +90,12 @@ pub struct DeviceStatus {
 pub struct Profiles {
     pub profile: Profile,
     pub mic_profile: MicProfile,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct HttpSettings {
+    pub enabled: bool,
+    pub bind_address: String,
+    pub cors_enabled: bool,
+    pub port: u16,
 }

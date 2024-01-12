@@ -1,10 +1,13 @@
+use actix_web::dev::ServerHandle;
 use anyhow::{bail, Context, Result};
+use goxlr_ipc::commands::HttpSettings;
 use log::{debug, error, LevelFilter};
 use simplelog::{ColorChoice, CombinedLogger, ConfigBuilder, TermLogger, TerminalMode};
-use tokio::sync::mpsc;
+use tokio::sync::{broadcast, mpsc};
 use tokio::{join, task};
 
 use crate::device::device_manager::start_device_manager;
+use crate::servers::http_server::spawn_http_server;
 use crate::servers::ipc_server::{bind_socket, spawn_ipc_server};
 use crate::stop::Stop;
 
@@ -35,9 +38,6 @@ async fn main() -> Result<()> {
         error!("Error Starting Daemon: ");
         bail!("{}", ipc_socket.err().unwrap());
     }
-
-    let task = task::spawn(start_device_manager(manager_recv, shutdown.clone()));
-
     let ipc_socket = ipc_socket.unwrap();
     let communications_handle = tokio::spawn(spawn_ipc_server(
         ipc_socket,
@@ -45,11 +45,34 @@ async fn main() -> Result<()> {
         shutdown.clone(),
     ));
 
+    // Prepare the HTTP Server..
+    let http_settings = HttpSettings {
+        enabled: true,
+        bind_address: "localhost".to_string(),
+        cors_enabled: false,
+        port: 14564,
+    };
+
+    let (httpd_tx, httpd_rx) = tokio::sync::oneshot::channel();
+    let (broadcast_tx, broadcast_rx) = broadcast::channel(16);
+    drop(broadcast_rx);
+
+    tokio::spawn(spawn_http_server(
+        manager_send.clone(),
+        httpd_tx,
+        broadcast_tx,
+        http_settings,
+    ));
+    let http_server = httpd_rx.await?;
+
     // We're going to go to sleep, then trigger the shutdown..
     // sleep(Duration::from_secs(5)).await;
     // shutdown.trigger();
 
+    let task = task::spawn(start_device_manager(manager_recv, shutdown.clone()));
     let _ = join!(task, communications_handle);
+
+    http_server.stop(true).await;
 
     debug!("Should be done!");
     Ok(())

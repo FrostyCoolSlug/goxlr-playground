@@ -7,7 +7,7 @@ use std::path::Path;
 
 use NameTypeSupport::*;
 
-use crate::device::packet::{handle_packet, Messanger};
+use crate::device::packet::{handle_packet, Messenger};
 use goxlr_ipc::clients::ipc::ipc_socket::Socket;
 use goxlr_ipc::commands::{DaemonRequest, DaemonResponse};
 
@@ -67,7 +67,7 @@ pub async fn bind_socket() -> Result<LocalSocketListener> {
 
 pub async fn spawn_ipc_server(
     listener: LocalSocketListener,
-    usb_tx: Messanger,
+    usb_tx: Messenger,
     mut shutdown_signal: Stop,
 ) {
     debug!("Running IPC Server..");
@@ -94,7 +94,7 @@ pub async fn spawn_ipc_server(
     }
 }
 
-async fn handle_connection(mut socket: Socket<DaemonRequest, DaemonResponse>, usb_tx: Messanger) {
+async fn handle_connection(mut socket: Socket<DaemonRequest, DaemonResponse>, usb_tx: Messenger) {
     while let Some(msg) = socket.read().await {
         match msg {
             Ok(msg) => match handle_packet(msg, usb_tx.clone()).await {
@@ -105,7 +105,7 @@ async fn handle_connection(mut socket: Socket<DaemonRequest, DaemonResponse>, us
                     }
                 }
                 Err(e) => {
-                    if let Err(e) = socket.send(DaemonResponse::Error(e.to_string())).await {
+                    if let Err(e) = socket.send(DaemonResponse::Err(e.to_string())).await {
                         warn!("Couldn't reply to {:?}: {}", socket.address(), e);
                         return;
                     }

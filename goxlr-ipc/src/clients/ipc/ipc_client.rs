@@ -57,7 +57,8 @@ impl Client for IPCClient {
                 Ok(())
             }
             DaemonResponse::Ok => Ok(()),
-            DaemonResponse::Error(error) => bail!("{}", error),
+            DaemonResponse::Err(error) => bail!("{}", error),
+            DaemonResponse::Patch(_) => bail!("Unexpected PATCH"),
             DaemonResponse::Command(response) => match response {
                 GoXLRCommandResponse::Ok => Ok(()),
                 GoXLRCommandResponse::Error(error) => Err(anyhow!("{}", error)),

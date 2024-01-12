@@ -6,11 +6,11 @@ use goxlr_ipc::commands::{DaemonRequest, DaemonResponse, DeviceCommand};
 
 use crate::device::messaging::DeviceMessage;
 
-pub type Messanger = Sender<DeviceMessage>;
+pub type Messenger = Sender<DeviceMessage>;
 type Response = Result<DaemonResponse>;
 
 /// This is pretty similar to the GoXLR Utility, as very little really needs to change here.
-pub async fn handle_packet(request: DaemonRequest, sender: Messanger) -> Response {
+pub async fn handle_packet(request: DaemonRequest, sender: Messenger) -> Response {
     // Ok, we just match the request, and send it off where it needs to go..
     match request {
         DaemonRequest::Ping => Ok(DaemonResponse::Ok),

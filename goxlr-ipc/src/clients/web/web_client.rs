@@ -1,4 +1,5 @@
 use crate::client::Client;
+use anyhow::Result;
 
 use crate::commands::{
     DaemonRequest, DaemonResponse, DaemonStatus, DeviceCommand, GoXLRCommand, GoXLRCommandResponse,
@@ -13,7 +14,11 @@ pub struct WebClient {
 }
 
 impl WebClient {
-    pub fn new(url: String) -> Self {
+    pub fn connect(url: String) -> Result<Self> {
+        return Ok(Self::new(url));
+    }
+
+    fn new(url: String) -> Self {
         Self {
             url,
             status: DaemonStatus::default(),
@@ -39,7 +44,8 @@ impl Client for WebClient {
                 Ok(())
             }
             DaemonResponse::Ok => Ok(()),
-            DaemonResponse::Error(error) => bail!("{}", error),
+            DaemonResponse::Err(error) => bail!("{}", error),
+            DaemonResponse::Patch(_) => bail!("Received PATCH!"),
             DaemonResponse::Command(response) => match response {
                 GoXLRCommandResponse::Ok => Ok(()),
                 GoXLRCommandResponse::Error(error) => bail!("{}", error),
