@@ -75,8 +75,7 @@ async fn main() -> Result<()> {
         broadcast_tx.clone(),
     ));
     let _ = join!(task, communications_handle);
-
-    join!(http_server.stop(true));
+    http_server.stop(false).await;
 
     debug!("Should be done!");
     Ok(())

@@ -45,7 +45,7 @@ impl GoXLRUSBDevice {
         debug!("[RUNNER]{} Starting Device Runner..", self.config.device);
 
         // Create an event receiver for the device..
-        let (event_send, mut event_recv) = mpsc::channel(128);
+        let (event_send, mut event_recv) = mpsc::channel(1);
         //let (msg_send, mut msg_recv) = mpsc::channel(128);
 
         // Create a state tracker to monitor for physical changes to the GoXLR..
@@ -74,34 +74,30 @@ impl GoXLRUSBDevice {
         // Once we get here, the device has setup, send back the message sender...
         let _ = ready.send(details);
 
-        // Simple ticker to check for updates..
-        let poll_millis = 20;
-        let mut ticker = time::interval(Duration::from_millis(poll_millis));
-
         loop {
             select! {
                 Some(event) = event_recv.recv() => {
                     trace!("[RUNNER]{} Event From Device: {:?}", self.config.device, event);
 
                     match event {
-                        DeviceMessage::Error => {
+                        InternalDeviceMessage::Error => {
                             bail!("Error in Message Handler, aborting");
                         },
+                        InternalDeviceMessage::Poll => {
+                            // If the user hasn't defined a tracker, we do nothing. It becomes entirely
+                            // their responsibility to manage it.
+                            if let Some(tracker) = &mut tracker {
+                                if !self.config.pause_interaction_poll.load(AtomicOrder::Relaxed) {
+                                    let buttons = device.get_button_states().await?;
+                                    tracker.update_states(buttons).await;
+                                }
+                            }
+                        }
                     }
                 }
                 Some(command) = self.config.command_receiver.recv() => {
                     debug!("Handling Command..");
                     self.handle_command(command, &mut device).await;
-                }
-                _ = ticker.tick() => {
-                    // If the user hasn't defined a tracker, we do nothing. It becomes entirely
-                    // their responsibility to manage it.
-                    if let Some(tracker) = &mut tracker {
-                        if !self.config.pause_interaction_poll.load(AtomicOrder::Relaxed) {
-                           let buttons = device.get_button_states().await?;
-                           tracker.update_states(buttons).await;
-                        }
-                    }
                 }
                 _ = &mut self.config.stop => {
                     debug!("[RUNNER]{} Told to Stop, breaking Loop..", self.config.device);
@@ -259,6 +255,11 @@ pub struct GoXLRUSBConfiguration {
 #[derive(Debug, Copy, Clone)]
 pub enum DeviceMessage {
     Error,
+}
+#[derive(Debug)]
+pub(crate) enum InternalDeviceMessage {
+    Error,
+    Poll,
 }
 
 /// This allows you to compare firmware version numbers against another specified version and

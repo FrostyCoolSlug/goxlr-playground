@@ -14,7 +14,7 @@ use tokio::task::JoinHandle;
 use tokio::{select, task, time};
 
 use crate::common::executor::InitialisableGoXLR;
-use crate::runners::device::DeviceMessage;
+use crate::runners::device::{DeviceMessage, InternalDeviceMessage};
 use crate::{USBLocation, PID_GOXLR_MINI};
 
 pub(crate) struct GoXLRDevice {
@@ -94,6 +94,13 @@ impl GoXLRDevice {
             loop {
                 select! {
                     _ = ticker.tick() => {
+                        // Using RUSB, we simple poll on the tick because we don't have access
+                        // to Driver Event Messages.. Make sure we only ever have 1 of these
+                        // queued up for processing at once.
+                        if events.capacity() > 0 {
+                            events.send(InternalDeviceMessage::Poll).await;
+                        }
+
                         // We simply periodically check for whether we've been asked to stop.
                         // TODO: Implement a better 'stopper' than a loop!
                         if stop.load(Ordering::Relaxed) {
@@ -192,5 +199,5 @@ pub(crate) struct ReadControl {
 
 pub struct GoXLRConfiguration {
     pub(crate) device: USBLocation,
-    pub(crate) events: mpsc::Sender<DeviceMessage>,
+    pub(crate) events: mpsc::Sender<InternalDeviceMessage>,
 }
