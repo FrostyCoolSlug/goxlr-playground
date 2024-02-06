@@ -1,33 +1,36 @@
+body {
+  background-color: #252927;
+  padding: 0;
+  margin: 0;
+}
+
+@font-face {
+  src: url('./LeagueMono-NarrowRegular.ttf');
+  font-family:'LeagueMonoNarrow';
+  font-style: normal;
+  font-stretch: 1% 500%; /* Required by Chrome */
+}
+
+@font-face {
+  src: url('./LeagueMono-Condensed.ttf');
+  font-family:'LeagueMonoCondensed';
+  font-style: normal;
+  font-stretch: 1% 500%; /* Required by Chrome */
+}
+
+@font-face {
+  src: url('./LeagueMono.ttf');
+  font-family:'LeagueMono';
+  font-style: normal;
+  font-stretch: 1% 500%; /* Required by Chrome */
+}
+
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
-}
+  font-family: LeagueMonoNarrow, sans-serif;
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2c3e50;
+  margin-top: 10px;
+  user-select: none;
 }
