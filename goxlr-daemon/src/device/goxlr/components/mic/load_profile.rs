@@ -11,7 +11,7 @@ pub trait LoadMicProfile {
 #[async_trait]
 impl LoadMicProfile for GoXLR {
     async fn load_mic_profile(&mut self) -> Result<()> {
-        self.apply_mic_gain().await?;
+        //self.apply_mic_gain().await?;
 
         Ok(())
     }

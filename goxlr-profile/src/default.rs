@@ -198,7 +198,7 @@ impl Default for Profile {
                 Fader::A => FaderSources::System,
                 Fader::B => FaderSources::Game,
                 Fader::C => FaderSources::LineIn,
-                Fader::D => FaderSources::LineOut
+                Fader::D => FaderSources::MicrophoneMonitor
             },
         };
         let page3 = FaderPage {
@@ -234,8 +234,10 @@ impl Default for Profile {
 
         // Mute Behaviours..
         channels[FaderSources::System].mute_actions[MuteAction::Press] =
-            vec![OutputChannels::Headphones];
+            vec![OutputChannels::Headphones, OutputChannels::LineOut];
         channels[FaderSources::System].mute_actions[MuteAction::Hold] =
+            vec![OutputChannels::Headphones, OutputChannels::StreamMix];
+        channels[FaderSources::Chat].mute_actions[MuteAction::Hold] =
             vec![OutputChannels::StreamMix];
 
         // General Configuration
