@@ -37,7 +37,9 @@ async fn main() -> Result<()> {
     if let Some(cli_serial) = cli.serial {
         serial = cli_serial;
     } else {
-        serial = client.status().devices[0].serial.clone();
+        // If we get here, we already check for an empty device list, so we should be
+        // fine to straight up unwrap the first key.
+        serial = client.status().devices.keys().next().unwrap().clone();
     }
 
     if let Some(command) = cli.command {
