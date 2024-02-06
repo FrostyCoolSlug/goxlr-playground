@@ -15,7 +15,11 @@ use crate::device::goxlr::components::mute_handler::MuteHandler;
 use crate::device::goxlr::components::profile::Profile;
 use crate::device::goxlr::device::GoXLR;
 
-const SUBMIX_MITIGATION: &[FaderSources] = &[FaderSources::Headphones, FaderSources::LineOut];
+const SUBMIX_MITIGATION: &[FaderSources] = &[
+    FaderSources::Headphones,
+    FaderSources::LineOut,
+    FaderSources::MicrophoneMonitor,
+];
 
 /// This trait is responsible for the management of faders, everything from the top of the
 /// scribble display, to the bottom of the mute button. Any changes which are to occur to them
