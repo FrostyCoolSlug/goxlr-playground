@@ -39,7 +39,7 @@ pub enum DaemonResponse {
     Err(String),
     Patch(Patch),
     Status(DaemonStatus),
-    Command(GoXLRCommandResponse),
+    DeviceCommand(GoXLRCommandResponse),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

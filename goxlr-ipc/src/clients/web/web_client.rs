@@ -44,7 +44,7 @@ impl Client for WebClient {
             DaemonResponse::Ok => Ok(()),
             DaemonResponse::Err(error) => bail!("{}", error),
             DaemonResponse::Patch(_) => bail!("Received PATCH!"),
-            DaemonResponse::Command(response) => match response {
+            DaemonResponse::DeviceCommand(response) => match response {
                 GoXLRCommandResponse::Ok => Ok(()),
                 GoXLRCommandResponse::MicLevel(_) => bail!("Unexpected MicLevel"),
                 GoXLRCommandResponse::Error(error) => bail!("{}", error),
