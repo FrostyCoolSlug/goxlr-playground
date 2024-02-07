@@ -32,7 +32,7 @@ use crate::stop::Stop;
 
 pub(crate) struct GoXLR {
     pub device: Option<DeviceInfo>,
-    command_sender: Option<mpsc::Sender<CommandSender>>,
+    pub(crate) command_sender: Option<mpsc::Sender<CommandSender>>,
 
     pub pause_polling: Arc<AtomicBool>,
 

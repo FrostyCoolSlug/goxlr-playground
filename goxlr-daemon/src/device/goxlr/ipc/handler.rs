@@ -5,6 +5,7 @@ use goxlr_ipc::commands::{Channels, GoXLRCommand, GoXLRCommandResponse};
 
 use crate::device::goxlr::device::GoXLR;
 use crate::device::goxlr::ipc::channels::IPCChannelHandler;
+use crate::device::goxlr::ipc::microphone::IPCMicrophoneHandler;
 use crate::device::goxlr::ipc::pages::IPCPageHandler;
 
 pub type Response = Result<GoXLRCommandResponse>;
@@ -23,6 +24,7 @@ impl IPCCommandHandler for GoXLR {
                 self.ipc_channel(channel, command).await
             }
             GoXLRCommand::Pages(command) => self.ipc_page(command).await,
+            GoXLRCommand::Microphone(command) => self.ipc_microphone(command).await,
         }
     }
 }

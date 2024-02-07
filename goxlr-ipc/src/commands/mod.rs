@@ -49,24 +49,19 @@ pub struct WebsocketResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DaemonCommand {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeviceCommand {
     pub serial: String,
     pub command: GoXLRCommand,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum DaemonCommand {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GoXLRCommand {
+    Microphone(MicrophoneCommand),
     Channels(Channels),
     Pages(PageCommand),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Channels {
-    pub channel: FaderSources,
-    pub command: ChannelCommand,
 }
 
 /// The GoXLR Command Response will contain command specific responses, generally not much more
@@ -74,7 +69,19 @@ pub struct Channels {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GoXLRCommandResponse {
     Ok,
+    MicLevel(f64),
     Error(String),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum MicrophoneCommand {
+    GetMicLevel,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Channels {
+    pub channel: FaderSources,
+    pub command: ChannelCommand,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

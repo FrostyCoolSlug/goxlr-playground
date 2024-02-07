@@ -61,6 +61,7 @@ impl Client for IPCClient {
             DaemonResponse::Patch(_) => bail!("Unexpected PATCH"),
             DaemonResponse::Command(response) => match response {
                 GoXLRCommandResponse::Ok => Ok(()),
+                GoXLRCommandResponse::MicLevel(_) => bail!("Unexpected MicLevel"),
                 GoXLRCommandResponse::Error(error) => Err(anyhow!("{}", error)),
             },
         }
