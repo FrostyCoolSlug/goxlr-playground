@@ -23,7 +23,8 @@ use tokio::sync::oneshot::Sender;
 use tokio::sync::Mutex;
 
 use goxlr_ipc::commands::{
-    DaemonRequest, DaemonResponse, DaemonStatus, HttpSettings, WebsocketRequest, WebsocketResponse,
+    DaemonRequest, DaemonResponse, DaemonStatus, GoXLRCommandResponse, HttpSettings,
+    WebsocketRequest, WebsocketResponse,
 };
 
 use crate::device::packet::{handle_packet, Messenger};
@@ -119,7 +120,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                                             data: DaemonResponse::Status(status),
                                         }));
                                     }
-                                    _ => {}
+                                    DaemonResponse::DeviceCommand(result) => {
+                                        recipient.do_send(WsResponse(WebsocketResponse {
+                                            id: request_id,
+                                            data: DaemonResponse::DeviceCommand(result),
+                                        }));
+                                    }
+                                    _ => {
+                                        panic!("Unexpected Response!");
+                                    }
                                 },
                                 Err(error) => {
                                     recipient.do_send(WsResponse(WebsocketResponse {
