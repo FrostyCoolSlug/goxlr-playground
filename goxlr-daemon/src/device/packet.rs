@@ -48,7 +48,7 @@ pub async fn handle_packet(request: DaemonRequest, sender: Messenger) -> Respons
                     .context("Failed to send message to device manager")?;
 
                 let result = rx.await.context("Error from Device Manager")?;
-                Ok(DaemonResponse::Command(result))
+                Ok(DaemonResponse::DeviceCommand(result))
             }
         }
     }
