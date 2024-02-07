@@ -1,5 +1,4 @@
 use anyhow::Result;
-use async_trait::async_trait;
 use log::{debug, warn};
 use strum::IntoEnumIterator;
 
@@ -22,7 +21,6 @@ use crate::device::goxlr::device::GoXLR;
 type Source = FaderSources;
 type Target = Vec<OutputChannels>;
 
-#[async_trait]
 pub(crate) trait MuteHandler {
     /// Used when loading profiles to set the initial state
     async fn set_mute_initial(&mut self, source: Source) -> Result<()>;
@@ -46,7 +44,6 @@ pub(crate) trait MuteHandler {
     fn get_cough_button_state(&self) -> State;
 }
 
-#[async_trait]
 impl MuteHandler for GoXLR {
     /// For this method, we assume that all the mute settings are incorrect, and we go through and
     /// update the routing table, and mute states to ensure they match the 'base' level.
@@ -256,7 +253,6 @@ impl MuteHandler for GoXLR {
     }
 }
 
-#[async_trait]
 trait MuteHandlerLocal {
     async fn mute_to_targets(&mut self, source: Source, targets: Target) -> Result<MuteChanges>;
     async fn mute_to_all(&mut self, source: Source) -> Result<MuteChanges>;
@@ -269,7 +265,6 @@ trait MuteHandlerLocal {
     fn restore_routing_from_profile(&mut self, source: Source) -> Result<MuteChanges>;
 }
 
-#[async_trait]
 impl MuteHandlerLocal for GoXLR {
     /// This is a general 'all encompassing' method for handling mute state changes, it verifies
     /// and returns changes to the routing table (where necessary) to match the target

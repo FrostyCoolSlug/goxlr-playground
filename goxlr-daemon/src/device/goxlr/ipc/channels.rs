@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use log::debug;
 
 use crate::device::goxlr::components::channel::Channels;
@@ -13,12 +12,10 @@ use crate::device::goxlr::ipc::handler::Response;
 type Source = FaderSources;
 type Command = ChannelCommand;
 
-#[async_trait]
 pub trait IPCChannelHandler {
     async fn ipc_channel(&mut self, channel: Source, command: Command) -> Response;
 }
 
-#[async_trait]
 impl IPCChannelHandler for GoXLR {
     async fn ipc_channel(&mut self, channel: Source, command: Command) -> Response {
         match command {

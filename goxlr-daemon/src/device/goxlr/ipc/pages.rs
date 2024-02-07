@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use goxlr_ipc::commands::GoXLRCommandResponse;
 
 use crate::device::goxlr::components::pages::FaderPages;
@@ -9,12 +8,10 @@ use crate::device::goxlr::ipc::handler::Response;
 
 type Command = PageCommand;
 
-#[async_trait]
 pub trait IPCPageHandler {
     async fn ipc_page(&mut self, command: Command) -> Response;
 }
 
-#[async_trait]
 impl IPCPageHandler for GoXLR {
     async fn ipc_page(&mut self, command: Command) -> Response {
         match command {

@@ -1,7 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
-use async_trait::async_trait;
 use goxlr_profile::CoughBehaviour;
 use log::debug;
 use strum::IntoEnumIterator;
@@ -18,7 +17,6 @@ use crate::device::goxlr::components::pages::FaderPages;
 use crate::device::goxlr::components::profile::Profile;
 use crate::device::goxlr::device::{ButtonState, GoXLR};
 
-#[async_trait]
 pub(crate) trait Interactions {
     async fn on_button_down(&mut self, button: Buttons) -> Result<()>;
     async fn on_button_up(&mut self, button: Buttons) -> Result<()>;
@@ -30,7 +28,6 @@ pub(crate) trait Interactions {
     async fn check_held(&mut self) -> Result<()>;
 }
 
-#[async_trait]
 impl Interactions for GoXLR {
     async fn on_button_down(&mut self, button: Buttons) -> Result<()> {
         let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
@@ -192,7 +189,6 @@ impl Interactions for GoXLR {
     }
 }
 
-#[async_trait]
 trait InteractionsLocal {
     fn is_held_handled(&self, button: Buttons) -> bool;
     fn get_page_paired_button(&mut self, button: Buttons) -> Buttons;
@@ -200,7 +196,6 @@ trait InteractionsLocal {
     async fn handle_page(&mut self, one: Buttons, two: Buttons, prev: bool) -> Result<()>;
 }
 
-#[async_trait]
 impl InteractionsLocal for GoXLR {
     fn is_held_handled(&self, button: Buttons) -> bool {
         if let Some(state) = self.button_down_states[button] {

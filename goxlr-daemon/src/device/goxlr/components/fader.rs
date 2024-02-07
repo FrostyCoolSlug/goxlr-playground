@@ -1,5 +1,4 @@
 use anyhow::Result;
-use async_trait::async_trait;
 use goxlr_scribbles::get_scribble;
 use log::debug;
 
@@ -24,13 +23,11 @@ const SUBMIX_MITIGATION: &[FaderSources] = &[
 /// This trait is responsible for the management of faders, everything from the top of the
 /// scribble display, to the bottom of the mute button. Any changes which are to occur to them
 /// should make their way through here.
-#[async_trait]
 pub(crate) trait DeviceFader {
     async fn assign_fader(&mut self, fader: Fader, source: FaderSources) -> Result<()>;
     async fn update_mute_state(&mut self, source: FaderSources, state: MuteState) -> Result<()>;
 }
 
-#[async_trait]
 impl DeviceFader for GoXLR {
     /// Ok, there are multiple steps when assigning a fader, we need to assign it, update the
     /// colours and the fader style, the scribble display, and the mute button state.

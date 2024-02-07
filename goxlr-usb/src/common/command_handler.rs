@@ -1,7 +1,6 @@
 use std::io::{Cursor, Write};
 
 use anyhow::Result;
-use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
 use enum_map::EnumMap;
 use enumset::EnumSet;
@@ -34,7 +33,6 @@ type EffectKeys = goxlr_shared::microphone::MicrophoneEffectKey;
 type ParamKeys = goxlr_shared::microphone::MicrophoneParamKeys;
 type MicType = goxlr_shared::microphone::MicrophoneType;
 
-#[async_trait]
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
 /// all the specific command executors.
 pub(crate) trait GoXLRCommands: ExecutableGoXLR {

@@ -5,7 +5,6 @@ use crate::commands::{
     DaemonRequest, DaemonResponse, DaemonStatus, DeviceCommand, GoXLRCommand, GoXLRCommandResponse,
 };
 use anyhow::bail;
-use async_trait::async_trait;
 
 #[derive(Debug)]
 pub struct WebClient {
@@ -26,7 +25,6 @@ impl WebClient {
     }
 }
 
-#[async_trait]
 impl Client for WebClient {
     async fn send(&mut self, request: DaemonRequest) -> anyhow::Result<()> {
         let resp = reqwest::Client::new()

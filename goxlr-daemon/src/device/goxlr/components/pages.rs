@@ -1,5 +1,4 @@
 use anyhow::{bail, Result};
-use async_trait::async_trait;
 use goxlr_profile::FaderPage;
 use log::{debug, warn};
 use strum::IntoEnumIterator;
@@ -12,7 +11,6 @@ use crate::device::goxlr::device::GoXLR;
 
 /// This trait is responsible for fader paging, anything that need to happen (including changing
 /// the page) should be sent through methods here.
-#[async_trait]
 pub(crate) trait FaderPages {
     async fn load_current_page(&mut self, apply_states: bool) -> Result<()>;
 
@@ -32,7 +30,6 @@ pub(crate) trait FaderPages {
     ) -> Result<()>;
 }
 
-#[async_trait]
 impl FaderPages for GoXLR {
     /// Loads the current page based on the profile settings, this can be called after the page
     /// has been changed. 'apply_states' indicates whether we should immediately apply the colour

@@ -1,5 +1,4 @@
 use anyhow::Result;
-use async_trait::async_trait;
 use goxlr_profile::CoughBehaviour;
 use log::{debug, warn};
 use strum::IntoEnumIterator;
@@ -20,12 +19,10 @@ use crate::device::goxlr::device::GoXLR;
 
 /// This trait contains all public methods needed to successfully load a profile, and are implemented
 /// for the GoXLR type immediately after. This code assumes that self.profile is accurate.
-#[async_trait]
 pub(crate) trait LoadProfile {
     async fn load_profile(&mut self) -> Result<()>;
 }
 
-#[async_trait]
 impl LoadProfile for GoXLR {
     async fn load_profile(&mut self) -> Result<()> {
         debug!("Beginning Profile Load");
@@ -57,7 +54,6 @@ impl LoadProfile for GoXLR {
 /// This trait contains methods which are local to this mod. Traits require an attached scope to
 /// make functions available to other classes, but we should limit that level of communication only
 /// to things which should be exposed.
-#[async_trait]
 trait LoadProfileLocal {
     /// These first three functions are for base setup, creating the scheme or the settings
     /// prior to actually doing any of the loading.
@@ -74,7 +70,6 @@ trait LoadProfileLocal {
     async fn apply_routing(&self) -> Result<()>;
 }
 
-#[async_trait]
 impl LoadProfileLocal for GoXLR {
     fn setup_routing(&mut self) {
         debug!("Loading Routing from Profile: ");

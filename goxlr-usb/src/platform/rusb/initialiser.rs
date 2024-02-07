@@ -1,13 +1,11 @@
 use crate::common::executor::InitialisableGoXLR;
 use crate::platform::rusb::device::{GoXLRDevice, ReadControl, WriteControl};
 use anyhow::bail;
-use async_trait::async_trait;
 use log::{debug, info};
 use rusb::Error::Pipe;
 use std::time::Duration;
 use tokio::time::sleep;
 
-#[async_trait]
 impl InitialisableGoXLR for GoXLRDevice {
     async fn initialise(&mut self) -> anyhow::Result<()> {
         // This command 'resets' the GoXLR to a clean state..

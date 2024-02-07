@@ -1,16 +1,13 @@
 use crate::device::goxlr::device::GoXLR;
 use anyhow::Result;
-use async_trait::async_trait;
 use goxlr_shared::microphone::MicrophoneType;
 use goxlr_usb::events::commands::BasicResultCommand;
 
-#[async_trait]
 pub trait MicType {
     async fn set_mic_type(&mut self, mic_type: MicrophoneType) -> Result<()>;
     async fn set_mic_gain(&mut self, gain: u8) -> Result<()>;
 }
 
-#[async_trait]
 impl MicType for GoXLR {
     async fn set_mic_type(&mut self, mic_type: MicrophoneType) -> Result<()> {
         // This is relatively straight forward, send a Gain command for the new Mic type..

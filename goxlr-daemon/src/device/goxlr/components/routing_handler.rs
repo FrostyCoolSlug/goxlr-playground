@@ -1,5 +1,4 @@
 use anyhow::{bail, Result};
-use async_trait::async_trait;
 use enum_map::EnumMap;
 use log::debug;
 use strum::IntoEnumIterator;
@@ -19,7 +18,6 @@ type Row = EnumMap<RoutingOutput, RouteValue>;
 
 /// Commands responsible for manipulating the Routing Table, these functions
 /// will return 'true' if a change has actually occurred.
-#[async_trait]
 pub(crate) trait RoutingHandler {
     fn enable_route(&mut self, input: In, out: Out) -> Result<bool>;
     fn disable_route(&mut self, input: In, out: Out) -> Result<bool>;
@@ -35,7 +33,6 @@ pub(crate) trait RoutingHandler {
     fn is_valid_routing_target(channel: FaderSources) -> bool;
 }
 
-#[async_trait]
 impl RoutingHandler for GoXLR {
     fn enable_route(&mut self, input: In, out: Out) -> Result<bool> {
         self.set_route(input, out, Value::On)

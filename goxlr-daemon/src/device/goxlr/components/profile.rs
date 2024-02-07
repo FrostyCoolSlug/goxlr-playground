@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons;
@@ -6,7 +5,6 @@ use goxlr_shared::faders::{Fader, FaderSources};
 
 use crate::device::goxlr::device::GoXLR;
 
-#[async_trait]
 pub(crate) trait Profile {
     fn get_channel_for_button(&self, button: Buttons) -> FaderSources;
     fn get_button_for_channel(&self, channel: FaderSources) -> Option<Buttons>;

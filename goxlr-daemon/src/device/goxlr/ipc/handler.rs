@@ -1,5 +1,4 @@
 use anyhow::Result;
-use async_trait::async_trait;
 
 use goxlr_ipc::commands::{Channels, GoXLRCommand, GoXLRCommandResponse};
 
@@ -10,12 +9,10 @@ use crate::device::goxlr::ipc::pages::IPCPageHandler;
 
 pub type Response = Result<GoXLRCommandResponse>;
 
-#[async_trait]
 pub trait IPCCommandHandler {
     async fn handle_ipc_command(&mut self, command: GoXLRCommand) -> Response;
 }
 
-#[async_trait]
 impl IPCCommandHandler for GoXLR {
     async fn handle_ipc_command(&mut self, command: GoXLRCommand) -> Response {
         match command {

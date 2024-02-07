@@ -4,7 +4,6 @@ use crate::commands::{
     DaemonRequest, DaemonResponse, DaemonStatus, DeviceCommand, GoXLRCommand, GoXLRCommandResponse,
 };
 use anyhow::{anyhow, bail, Context, Result};
-use async_trait::async_trait;
 use interprocess::local_socket::tokio::LocalSocketStream;
 use interprocess::local_socket::NameTypeSupport;
 
@@ -37,7 +36,6 @@ impl IPCClient {
     }
 }
 
-#[async_trait]
 impl Client for IPCClient {
     async fn send(&mut self, request: DaemonRequest) -> Result<()> {
         self.socket
