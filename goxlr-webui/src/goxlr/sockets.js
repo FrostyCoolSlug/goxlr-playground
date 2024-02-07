@@ -55,9 +55,7 @@ export class Websocket {
       } else if (message_data['Patch'] !== undefined) {
         // Nothing ever requests patch data, so we can ignore this.
         store.patchData(message_data)
-      } else if (message_data['MicLevel'] !== undefined) {
-        self.#fulfill_promise(message_id, message_data, true)
-      } else if (message_data === 'Ok') {
+      } else if (message_data === 'Ok' || message_data['DeviceCommand'] !== undefined) {
         self.#fulfill_promise(message_id, message_data, true)
       } else {
         self.#fulfill_promise(message_id, message_data, false)
@@ -131,7 +129,7 @@ export class Websocket {
 
   send_command(serial, command) {
     let request = {
-      Command: [serial, command]
+      DeviceCommand: [serial, command]
     }
     return this.#sendRequest(request)
   }

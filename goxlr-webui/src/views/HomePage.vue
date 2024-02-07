@@ -1,6 +1,7 @@
 <script setup>
 import ChannelRow from '@/components/channels/ChannelRow.vue'
 import Pages from '@/components/Pages.vue'
+import Meter from '@/components/Meter.vue'
 </script>
 
 <template>
@@ -17,6 +18,8 @@ import Pages from '@/components/Pages.vue'
   <ChannelRow title="Mic Monitor" channel="MicrophoneMonitor" colour1="#ff0000" colour2="#500000" />
 
   <Pages />
+
+  <Meter />
 </template>
 
 <style scoped></style>
