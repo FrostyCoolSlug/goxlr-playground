@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use anyhow::bail;
 use anyhow::Result;
+use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian};
 use log::debug;
 use rusb::Error::Pipe;
@@ -22,6 +23,7 @@ use crate::PID_GOXLR_MINI;
     This approach ultimately makes this code a lot simpler..
 */
 
+#[async_trait]
 impl ExecutableGoXLR for GoXLRDevice {
     async fn perform_request(&mut self, command: Command, body: &[u8]) -> Result<Vec<u8>> {
         if command == Command::ResetCommandIndex {

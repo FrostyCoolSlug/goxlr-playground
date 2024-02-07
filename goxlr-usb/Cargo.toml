@@ -11,6 +11,7 @@ goxlr-shared = { path = "../goxlr-shared" }
 
 # Logging
 log = "0.4.19"
+async-trait = "0.1.77"
 
 # Runtime Dependencies
 tokio = { version = "1.29.1", features = ["full"] }

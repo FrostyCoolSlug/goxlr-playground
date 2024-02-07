@@ -1,6 +1,7 @@
 use std::io::{Cursor, Write};
 
 use anyhow::Result;
+use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
 use enum_map::EnumMap;
 use enumset::EnumSet;
@@ -35,6 +36,7 @@ type MicType = goxlr_shared::microphone::MicrophoneType;
 
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
 /// all the specific command executors.
+#[async_trait]
 pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     async fn get_serial_data(&mut self) -> Result<(String, String)> {
         let result = self

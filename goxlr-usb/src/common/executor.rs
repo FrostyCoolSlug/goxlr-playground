@@ -1,7 +1,9 @@
 use crate::goxlr::commands::Command;
 use anyhow::{bail, Result};
+use async_trait::async_trait;
 use log::warn;
 
+#[async_trait]
 pub(crate) trait ExecutableGoXLR {
     async fn request_data(&mut self, command: Command, body: &[u8]) -> Result<Vec<u8>> {
         match self.perform_request(command, body).await {
