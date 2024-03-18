@@ -4,13 +4,32 @@ use std::process::Command;
 
 fn main() {
     // This could probably use some work, but for now it does the job
-    Command::new("npm")
+    let mut command = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+    } else {
+        Command::new("npm")
+    };
+
+    if cfg!(target_os = "windows") {
+        command.args(&["/C", "npm"]);
+    }
+
+    command
         .arg("install")
         .current_dir("../goxlr-webui")
         .output()
         .expect("Failed to Run npm install");
 
-    Command::new("npm")
+    let mut command = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+    } else {
+        Command::new("npm")
+    };
+
+    if cfg!(target_os = "windows") {
+        command.args(&["/C", "npm"]);
+    }
+    command
         .arg("run")
         .arg("build")
         .current_dir("../goxlr-webui")
@@ -21,7 +40,9 @@ fn main() {
     if content.exists() {
         fs::remove_dir_all(content).expect("Error Deleting Directory!");
     } else {
-        fs::create_dir(content).expect("Er?");
+        if cfg!(not(target_os = "windows")) {
+            fs::create_dir(content).expect("Er?");
+        }
     }
     fs::rename("../goxlr-webui/dist/", content).expect("BLARP");
 }
