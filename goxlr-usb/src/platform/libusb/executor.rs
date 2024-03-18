@@ -10,7 +10,7 @@ use tokio::time::sleep;
 
 use crate::common::executor::ExecutableGoXLR;
 use crate::goxlr::commands::Command;
-use crate::platform::rusb::device::{GoXLRDevice, ReadControl, WriteControl};
+use crate::platform::libusb::device::{GoXLRDevice, ReadControl, WriteControl};
 use crate::PID_GOXLR_MINI;
 
 /**

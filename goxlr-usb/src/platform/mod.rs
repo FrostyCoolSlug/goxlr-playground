@@ -1,1 +1,1 @@
-pub mod rusb;
+pub mod libusb;

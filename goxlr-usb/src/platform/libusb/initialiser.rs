@@ -1,5 +1,5 @@
 use crate::common::executor::InitialisableGoXLR;
-use crate::platform::rusb::device::{GoXLRDevice, ReadControl, WriteControl};
+use crate::platform::libusb::device::{GoXLRDevice, ReadControl, WriteControl};
 use anyhow::bail;
 use log::{debug, info};
 use rusb::Error::Pipe;

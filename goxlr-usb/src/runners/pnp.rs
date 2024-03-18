@@ -10,7 +10,7 @@ use log::{info, warn};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{select, time};
 
-use crate::platform::rusb::pnp::get_devices;
+use crate::platform::libusb::pnp::get_devices;
 use crate::USBLocation;
 
 struct PnPRunner {

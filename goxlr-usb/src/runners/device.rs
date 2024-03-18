@@ -22,7 +22,7 @@ use crate::common::command_handler::GoXLRCommands;
 use crate::events::commands::{BasicResultCommand, ChannelSource, CommandSender};
 use crate::events::interaction::InteractionEvent;
 use crate::handlers::state_tracker::StateTracker;
-use crate::platform::rusb::device::{GoXLRConfiguration, GoXLRDevice};
+use crate::platform::libusb::device::{GoXLRConfiguration, GoXLRDevice};
 use crate::types::channels::AssignableChannel;
 use crate::types::encoders::DeviceEncoder;
 use crate::types::faders::DeviceFader;
