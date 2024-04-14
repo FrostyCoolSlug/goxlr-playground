@@ -37,3 +37,7 @@ impl MicTypeCrate for GoXLR {
         Ok(())
     }
 }
+
+trait MicTypeLocal {}
+
+impl MicTypeLocal for GoXLR {}

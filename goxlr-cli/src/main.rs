@@ -1,5 +1,4 @@
-use anyhow::Result;
-use anyhow::{bail, Context};
+use anyhow::{bail, Result};
 use clap::Parser;
 
 use goxlr_ipc::client::Client;
