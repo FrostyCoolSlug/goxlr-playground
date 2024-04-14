@@ -1,10 +1,12 @@
 pub mod buttons;
 pub mod channels;
 pub mod colours;
+pub mod compressor;
 pub mod device;
 pub mod encoders;
 pub mod eq_frequencies;
 pub mod faders;
+pub mod gate;
 pub mod interaction;
 pub mod microphone;
 pub mod routing;
