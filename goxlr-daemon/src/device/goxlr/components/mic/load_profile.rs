@@ -1,5 +1,5 @@
-use crate::device::goxlr::components::mic::mic_eq::MicEqCrate;
-use crate::device::goxlr::components::mic::mic_type::MicTypeCrate;
+use crate::device::goxlr::components::mic::eq::MicEqCrate;
+use crate::device::goxlr::components::mic::r#type::MicTypeCrate;
 use anyhow::Result;
 use goxlr_shared::device::DeviceType;
 use goxlr_usb::events::commands::BasicResultCommand;
@@ -13,37 +13,20 @@ pub trait LoadMicProfile {
 
 impl LoadMicProfile for GoXLR {
     async fn load_mic_profile(&mut self) -> Result<()> {
-        let device_type = if let Some(device) = &self.device {
-            device.device_type
-        } else {
-            DeviceType::Mini
-        };
         self.apply_mic_gain().await?;
 
         let mut mic_params = LinkedHashMap::new();
         let mut mic_effects = LinkedHashMap::new();
 
-        if device_type == DeviceType::Mini {
-            self.get_mini_eq_keys().iter().for_each(|(key, value)| {
-                mic_params.insert(*key, *value);
-            });
-        } else {
-            self.get_eq_keys().iter().for_each(|(key, value)| {
-                mic_effects.insert(*key, *value);
-            })
-        }
+        // Load the Equaliser...
+        mic_params.extend(self.get_mini_eq_keys());
+        mic_effects.extend(self.get_eq_keys());
 
-        if !mic_params.is_empty() {
-            let command = BasicResultCommand::SetMicParams(mic_params);
-            self.send_no_result(command).await?;
-        }
+        let command = BasicResultCommand::SetMicParams(mic_params);
+        self.send_no_result(command).await?;
 
-        if !mic_effects.is_empty() {
-            let command = BasicResultCommand::SetMicEffects(mic_effects);
-            self.send_no_result(command).await?;
-        }
-
-        //self.apply_mic_gain().await?;
+        let command = BasicResultCommand::SetMicEffects(mic_effects);
+        self.send_no_result(command).await?;
 
         Ok(())
     }
