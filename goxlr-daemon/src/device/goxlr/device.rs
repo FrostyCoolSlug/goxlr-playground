@@ -91,7 +91,7 @@ impl GoXLR {
 
         trace!("Message sent, awaiting response..");
 
-        // Return the Response..
+        // Return the Response...
         msg_receive.await?
     }
 

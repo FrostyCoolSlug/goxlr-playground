@@ -23,6 +23,7 @@ pub struct Profile {
     /// Configuration for the Swear Button
     pub swear: SwearSettings,
 
+    /// Configuration for the Cough button
     pub cough: CoughSettings,
 
     /// The Routing Configuration
