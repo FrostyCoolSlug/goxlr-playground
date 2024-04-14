@@ -67,12 +67,12 @@ impl MicEq for GoXLR {
 }
 
 pub(crate) trait MicEqCrate {
-    fn get_eq_keys(&self) -> LinkedHashMap<MicEffectKeys, i32>;
-    fn get_mini_eq_keys(&self) -> LinkedHashMap<MicParamKeys, f32>;
+    fn get_eq_values(&self) -> LinkedHashMap<MicEffectKeys, i32>;
+    fn get_eq_mini_values(&self) -> LinkedHashMap<MicParamKeys, f32>;
 }
 
 impl MicEqCrate for GoXLR {
-    fn get_eq_keys(&self) -> LinkedHashMap<MicEffectKeys, i32> {
+    fn get_eq_values(&self) -> LinkedHashMap<MicEffectKeys, i32> {
         let mut map = LinkedHashMap::new();
         for freq in Frequencies::iter() {
             map.insert(
@@ -87,7 +87,7 @@ impl MicEqCrate for GoXLR {
         map
     }
 
-    fn get_mini_eq_keys(&self) -> LinkedHashMap<MicParamKeys, f32> {
+    fn get_eq_mini_values(&self) -> LinkedHashMap<MicParamKeys, f32> {
         let mut map = LinkedHashMap::new();
         for freq in MiniFrequencies::iter() {
             map.insert(
