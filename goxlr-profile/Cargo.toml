@@ -5,14 +5,14 @@ edition = "2021"
 
 [dependencies]
 # We'll borrow 'goxlr-shared' for some common structures that sit between USB, the daemon and the profile.
-goxlr-shared = { path="../goxlr-shared", features = ["serde"] }
+goxlr-shared = { path = "../goxlr-shared", features = ["serde"] }
 
 # Various things for enhancing Enums..
 enum-map = { version = "2.5.0", features = ["serde"] }
-strum = { version = "0.25", features = ["derive"] }
+strum = { version = "0.26.2", features = ["derive"] }
 
 # Used for Serialisation / Deserialisation
 serde = { version = "1.0.164", features = ["derive"] }
 
 # Dependency for 'classic' GoXLR Profile Formats
-goxlr-profile-loader = { git="https://github.com/goxlr-on-linux/goxlr-utility" }
+goxlr-profile-loader = { git = "https://github.com/goxlr-on-linux/goxlr-utility" }

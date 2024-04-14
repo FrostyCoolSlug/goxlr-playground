@@ -8,7 +8,7 @@ edition = "2021"
 default = []
 
 [dependencies]
-strum = { version = "0.25", features = ["derive"] }
+strum = { version = "0.26.2", features = ["derive"] }
 enum-map = { version = "2.6.0", features = ["serde"] }
 
 # Optional Features

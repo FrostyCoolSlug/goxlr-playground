@@ -15,7 +15,7 @@ goxlr-ipc = { path = "../goxlr-ipc" }
 goxlr-scribbles = { git = "https://github.com/GoXLR-on-Linux/goxlr-utility.git", rev = "d6a556396c56f756c4bf5c0acec11c554069351f" }
 
 # For handling the Enum Maps and sets inside the profile..
-strum = { version = "0.25", features = ["derive"] }
+strum = { version = "0.26.2", features = ["derive"] }
 enum-map = { version = "2.5.0", features = ["serde"] }
 
 # For handling button states
@@ -37,6 +37,9 @@ log = "0.4.19"
 
 # IPC Server Support
 interprocess = { version = "1.2.1", features = ["tokio_support"] }
+
+# LinkedHashMaps and LinkedHashSets
+ritelinked = "0.3.2"
 
 ##### HTTP Server Dependencies #####
 actix = "0.13.1"

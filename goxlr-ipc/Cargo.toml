@@ -14,11 +14,14 @@ tokio = { version = "1.32.0", features = ["sync", "net"] }
 anyhow = "1.0.75"
 
 serde = { version = "1.0.152", features = ["derive"] }
-tokio-util = { version = "0.7.4", features=["codec", "compat"]}
-tokio-serde = { version = "0.8.0", features=["bincode", "json"] }
-interprocess = { version = "1.2.1", features=["tokio_support"]}
+tokio-util = { version = "0.7.4", features = ["codec", "compat"] }
+tokio-serde = { version = "0.8.0", features = ["bincode", "json"] }
+interprocess = { version = "1.2.1", features = ["tokio_support"] }
 serde_repr = "0.1.10"
 futures = "0.3.25"
+
+# Async Traits
+async-trait = "0.1.80"
 
 # Used for Web Requests
 reqwest = { version = "0.11", default-features = false, features = ["json"] }
