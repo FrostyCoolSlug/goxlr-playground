@@ -24,9 +24,10 @@ impl MicEq for GoXLR {
         }
         self.mic_profile.equalizer[freq].frequency = value;
 
-        let mut map = LinkedHashMap::new();
-        map.insert(MicEffectKeys::from_eq_freq(freq), Self::freq_as_i32(value));
-
+        let map = LinkedHashMap::from_iter([(
+            MicEffectKeys::from_eq_freq(freq),
+            Self::freq_as_i32(value),
+        )]);
         let command = BasicResultCommand::SetMicEffects(map);
         self.send_no_result(command).await
     }
@@ -37,9 +38,7 @@ impl MicEq for GoXLR {
         }
         self.mic_profile.equalizer[freq].gain = gain;
 
-        let mut map = LinkedHashMap::new();
-        map.insert(MicEffectKeys::from_eq_gain(freq), gain as i32);
-
+        let map = LinkedHashMap::from_iter([(MicEffectKeys::from_eq_gain(freq), gain as i32)]);
         let command = BasicResultCommand::SetMicEffects(map);
         self.send_no_result(command).await
     }
@@ -50,12 +49,9 @@ impl MicEq for GoXLR {
         if !(min..=max).contains(&value) {
             bail!("Invalid Value {}, expected: {} - {}", value, min, max);
         }
-
         self.mic_profile.equalizer_mini[freq].frequency = value;
 
-        let mut map = LinkedHashMap::new();
-        map.insert(MicParamKeys::from_eq_freq(freq), value);
-
+        let map = LinkedHashMap::from_iter([(MicParamKeys::from_eq_freq(freq), value)]);
         let command = BasicResultCommand::SetMicParams(map);
         self.send_no_result(command).await
     }
@@ -66,9 +62,7 @@ impl MicEq for GoXLR {
         }
         self.mic_profile.equalizer_mini[freq].gain = gain;
 
-        let mut map = LinkedHashMap::new();
-        map.insert(MicParamKeys::from_eq_gain(freq), gain as f32);
-
+        let map = LinkedHashMap::from_iter([(MicParamKeys::from_eq_gain(freq), gain as f32)]);
         let command = BasicResultCommand::SetMicParams(map);
         self.send_no_result(command).await
     }
