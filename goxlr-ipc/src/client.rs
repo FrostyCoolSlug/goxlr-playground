@@ -1,6 +1,8 @@
 use crate::commands::{DaemonRequest, DaemonStatus, GoXLRCommand};
 use anyhow::Result;
+use async_trait::async_trait;
 
+#[async_trait]
 pub trait Client {
     async fn send(&mut self, request: DaemonRequest) -> Result<()>;
     async fn poll_status(&mut self) -> Result<()>;
