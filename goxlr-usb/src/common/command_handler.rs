@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::{Cursor, Write};
 
 use anyhow::Result;
@@ -5,6 +6,8 @@ use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
 use enum_map::EnumMap;
 use enumset::EnumSet;
+use log::debug;
+use ritelinked::LinkedHashMap;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons;
@@ -21,7 +24,7 @@ use crate::types::buttons::{CurrentButtonStates, DeviceButton};
 use crate::types::channels::{AssignableChannel, ChannelState};
 use crate::types::colours::ColourStruct;
 use crate::types::faders::DeviceFader;
-use crate::types::mic_keys::MicrophoneParamKeys;
+use crate::types::mic_keys::{MicEffectKeys, MicParamKeys};
 use crate::types::microphone::MicrophoneType;
 use crate::types::routing::RoutingChannel::{Left, Right};
 use crate::types::routing::{RoutingInputChannel, RoutingOutputDevice};
@@ -30,8 +33,8 @@ use crate::types::states::ButtonDisplay;
 type RoutingValues = EnumMap<RoutingOutput, RouteValue>;
 type Channel = AssignableChannel;
 
-type EffectKeys = goxlr_shared::microphone::MicrophoneEffectKey;
-type ParamKeys = goxlr_shared::microphone::MicrophoneParamKeys;
+type EffectKeys = goxlr_shared::microphone::MicEffectKeys;
+type ParamKeys = goxlr_shared::microphone::MicParamKeys;
 type MicType = goxlr_shared::microphone::MicrophoneType;
 
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
@@ -154,12 +157,12 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     }
 
     async fn apply_routing(&mut self, input: InputChannels, values: RoutingValues) -> Result<()> {
-        // We need to take the values map, iterate it, and create the routing structure..
+        // We need to take the values map, iterate it, and create the routing structure...
         let mut l_data = [0; 22];
         let mut r_data = [0; 22];
 
         for output in RoutingOutput::iter() {
-            // We need to check the mapping of this value, and apply it..
+            // We need to check the mapping of this value, and apply it...
             let left = RoutingOutputDevice::from(output, Left).position();
             let right = RoutingOutputDevice::from(output, Right).position();
 
@@ -196,7 +199,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     }
 
     async fn set_fader_style(&mut self, fader: Fader, style: Vec<FaderDisplayMode>) -> Result<()> {
-        // We can cast these straight from bools to u8s..
+        // We can cast these straight from bools to u8s...
         let gradient = style.contains(&FaderDisplayMode::Gradient) as u8;
         let meter = style.contains(&FaderDisplayMode::Meter) as u8;
 
@@ -242,38 +245,54 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         Ok(decibels.clamp(-72.2, 0.))
     }
 
-    /// Microphone Stuff..
+    /// Microphone Stuff...
     async fn set_microphone_gain(&mut self, mic_type: MicType, gain: u8) -> Result<()> {
         let mic_type = MicrophoneType::from(mic_type);
 
-        let mut gain_value = [0; 4];
-        LittleEndian::write_u32(&mut gain_value, gain as u32);
+        // We're going to do this 'RAW' here, because these parameters require 32bit unsigned ints,
+        // whereas all others are 32bit floats...
+        let mut data = Vec::with_capacity(16);
+        let mut cursor = Cursor::new(&mut data);
 
-        self.set_mic_param(&[
-            (
-                ParamKeys::MicType,
-                match mic_type.has_phantom() {
-                    true => [0x01, 0x00, 0x00, 0x00],
-                    false => [0x00, 0x00, 0x00, 0x00],
-                },
-            ),
-            (mic_type.get_gain_param(), gain_value),
-        ])
-        .await?;
+        let has_phantom = mic_type.has_phantom() as u32;
+        cursor.write_u32::<LittleEndian>(MicParamKeys::MicType as u32)?;
+        cursor.write_u32::<LittleEndian>(has_phantom)?;
+
+        // Now write the Gain...
+        cursor.write_u32::<LittleEndian>(mic_type.get_gain_param() as u32)?;
+        cursor.write_u32::<LittleEndian>(gain as u32 * 65536)?;
 
         Ok(())
     }
 
-    async fn set_mic_param(&mut self, params: &[(ParamKeys, [u8; 4])]) -> Result<()> {
+    async fn set_mic_params(&mut self, params: LinkedHashMap<ParamKeys, f32>) -> Result<()> {
         let mut data = Vec::with_capacity(params.len() * 8);
         let mut cursor = Cursor::new(&mut data);
         for (key, value) in params {
-            let key = MicrophoneParamKeys::from(*key);
+            let key = MicParamKeys::from(key);
             cursor.write_u32::<LittleEndian>(key as u32)?;
-            cursor.write_all(value)?;
+            debug!("{}", value);
+            cursor.write_f32::<LittleEndian>(value)?;
         }
-        self.request_data(Command::SetMicrophoneParameters, &data)
-            .await?;
+
+        let command = Command::SetMicrophoneParameters;
+        self.request_data(command, &data).await?;
+
+        Ok(())
+    }
+
+    async fn set_mic_effects(&mut self, effects: LinkedHashMap<EffectKeys, i32>) -> Result<()> {
+        let mut data = Vec::with_capacity(effects.len() * 8);
+        let mut cursor = Cursor::new(&mut data);
+        for (key, value) in effects {
+            let key = MicEffectKeys::from(key);
+            cursor.write_u32::<LittleEndian>(key as u32)?;
+            cursor.write_i32::<LittleEndian>(value)?;
+        }
+        debug!("Writing: {:?}", &data);
+
+        let command = Command::SetMicrophoneParameters;
+        self.request_data(command, &data).await?;
 
         Ok(())
     }
