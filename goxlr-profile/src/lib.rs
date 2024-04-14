@@ -6,8 +6,10 @@ use serde::{Deserialize, Serialize};
 use goxlr_shared::buttons::InactiveButtonBehaviour;
 use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels};
 use goxlr_shared::colours::{Colour, FaderColour, FaderDisplayMode, TwoColour};
+use goxlr_shared::compressor::{CompressorAttackTime, CompressorRatio, CompressorReleaseTime};
 use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
 use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::gate::GateTimes;
 use goxlr_shared::microphone::MicrophoneType;
 
 mod default;
@@ -233,12 +235,12 @@ pub struct EqualizerValue {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Compressor {
-    select: u8, // Always '1' in official app..
+    select: u8, // Always '1' in official app...
 
     threshold: i8,
-    ratio: u8,
-    attack: u8,
-    release: u8,
+    ratio: CompressorRatio,
+    attack: CompressorAttackTime,
+    release: CompressorReleaseTime,
     makeup_gain: i8,
 }
 
@@ -249,7 +251,7 @@ pub struct Gate {
 
     amount: u8,
     threshold: i8,
-    attack: u8,
-    release: u8,
+    attack: GateTimes,
+    release: GateTimes,
     attenuation: u8,
 }
