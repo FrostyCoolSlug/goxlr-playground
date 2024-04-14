@@ -21,11 +21,13 @@ pub enum MicParamKeys {
     GateAttack,
     GateRelease,
     GateAttenuation,
+
     CompressorThreshold,
     CompressorRatio,
     CompressorAttack,
     CompressorRelease,
     CompressorMakeUpGain,
+
     BleepLevel,
 
     /*
@@ -74,13 +76,22 @@ impl MicParamKeys {
 pub enum MicEffectKeys {
     MicInputMute,
     BleepLevel,
+
     GateMode,
     GateThreshold,
     GateEnabled,
     GateAttenuation,
     GateAttack,
     GateRelease,
+
     MicCompSelect,
+    CompressorRatio,
+    CompressorAttack,
+    CompressorRelease,
+    CompressorMakeUpGain,
+
+    DeEsser,
+
     Equalizer31HzFrequency,
     Equalizer31HzGain,
     Equalizer63HzFrequency,
@@ -102,11 +113,7 @@ pub enum MicEffectKeys {
     Equalizer16KHzFrequency,
     Equalizer16KHzGain,
     CompressorThreshold,
-    CompressorRatio,
-    CompressorAttack,
-    CompressorRelease,
-    CompressorMakeUpGain,
-    DeEsser,
+
     ReverbAmount,
     ReverbDecay,
     ReverbEarlyLevel,
@@ -119,6 +126,7 @@ pub enum MicEffectKeys {
     ReverbModSpeed,
     ReverbModDepth,
     ReverbType,
+
     EchoAmount,
     EchoFeedback,
     EchoTempo,
@@ -132,10 +140,13 @@ pub enum MicEffectKeys {
     EchoDivL,
     EchoDivR,
     EchoFilterStyle,
+
     PitchAmount,
     PitchCharacter,
     PitchThreshold,
+
     GenderAmount,
+
     MegaphoneAmount,
     MegaphonePostGain,
     MegaphoneStyle,
@@ -151,6 +162,7 @@ pub enum MicEffectKeys {
     MegaphoneFilter,
     MegaphoneDrivePotGainCompMid,
     MegaphoneDrivePotGainCompMax,
+
     RobotLowGain,
     RobotLowFreq,
     RobotLowWidth,
@@ -165,6 +177,7 @@ pub enum MicEffectKeys {
     RobotThreshold,
     RobotDryMix,
     RobotStyle,
+
     HardTuneKeySource, // Always sent as 0.
     HardTuneAmount,
     HardTuneRate,
