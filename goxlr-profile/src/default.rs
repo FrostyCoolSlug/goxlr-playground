@@ -391,7 +391,6 @@ impl Default for MicProfile {
             gate: Gate {
                 mode: 2,
                 enabled: true,
-                amount: 0,
                 threshold: -30,
                 attack: GateTimes::Time10ms,
                 release: GateTimes::Time200ms,

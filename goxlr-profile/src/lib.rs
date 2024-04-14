@@ -249,7 +249,6 @@ pub struct Gate {
     mode: u8, // Always 2 in official App
     enabled: bool,
 
-    amount: u8,
     threshold: i8,
     attack: GateTimes,
     release: GateTimes,
