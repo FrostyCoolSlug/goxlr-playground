@@ -1,16 +1,18 @@
-type SharedParams = goxlr_shared::microphone::MicrophoneParamKeys;
+use crate::types::mic_keys::MicParamKeys;
+
+type SharedParams = goxlr_shared::microphone::MicParamKeys;
 pub(crate) enum MicrophoneType {
     XLR = 0x01,
     Phantom = 0x02,
-    TRS = 0x03,
+    Jack = 0x03,
 }
 
 impl MicrophoneType {
-    pub fn get_gain_param(&self) -> SharedParams {
+    pub fn get_gain_param(&self) -> MicParamKeys {
         match self {
-            MicrophoneType::XLR => SharedParams::XLRGain,
-            MicrophoneType::Phantom => SharedParams::PhantomGain,
-            MicrophoneType::TRS => SharedParams::TRSGain,
+            MicrophoneType::XLR => MicParamKeys::XLRGain,
+            MicrophoneType::Phantom => MicParamKeys::PhantomGain,
+            MicrophoneType::Jack => MicParamKeys::JackGain,
         }
     }
 
@@ -26,7 +28,7 @@ impl From<MicType> for MicrophoneType {
         match value {
             MicType::XLR => MicrophoneType::XLR,
             MicType::Phantom => MicrophoneType::Phantom,
-            MicType::TRS => MicrophoneType::TRS,
+            MicType::Jack => MicrophoneType::Jack,
         }
     }
 }
