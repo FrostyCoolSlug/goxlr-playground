@@ -5,17 +5,18 @@ use strum::IntoEnumIterator;
 use crate::device::goxlr::device::GoXLR;
 use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
 use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys};
+use goxlr_usb::events::commands::BasicResultCommand;
 
 pub trait MicEq {
-    fn set_full_mic_eq_freq(&mut self, freq: Frequencies, value: f32) -> Result<()>;
-    fn set_full_mic_eq_gain(&mut self, freq: Frequencies, gain: i8) -> Result<()>;
+    async fn set_full_mic_eq_freq(&mut self, freq: Frequencies, value: f32) -> Result<()>;
+    async fn set_full_mic_eq_gain(&mut self, freq: Frequencies, gain: i8) -> Result<()>;
 
-    fn set_mini_mic_eq_freq(&mut self, freq: MiniFrequencies, value: f32) -> Result<()>;
-    fn set_mini_mic_eq_gain(&mut self, freq: MiniFrequencies, gain: i8) -> Result<()>;
+    async fn set_mini_mic_eq_freq(&mut self, freq: MiniFrequencies, value: f32) -> Result<()>;
+    async fn set_mini_mic_eq_gain(&mut self, freq: MiniFrequencies, gain: i8) -> Result<()>;
 }
 
 impl MicEq for GoXLR {
-    fn set_full_mic_eq_freq(&mut self, freq: Frequencies, value: f32) -> Result<()> {
+    async fn set_full_mic_eq_freq(&mut self, freq: Frequencies, value: f32) -> Result<()> {
         let min = self.get_frequency_min(freq);
         let max = self.get_frequency_max(freq);
         if !(min..=max).contains(&value) {
@@ -23,21 +24,27 @@ impl MicEq for GoXLR {
         }
         self.mic_profile.equalizer[freq].frequency = value;
 
-        // TODO: Send to GoXLR
-        Ok(())
+        let mut map = LinkedHashMap::new();
+        map.insert(MicEffectKeys::from_eq_freq(freq), Self::freq_as_i32(value));
+
+        let command = BasicResultCommand::SetMicEffects(map);
+        self.send_no_result(command).await
     }
 
-    fn set_full_mic_eq_gain(&mut self, freq: Frequencies, gain: i8) -> Result<()> {
+    async fn set_full_mic_eq_gain(&mut self, freq: Frequencies, gain: i8) -> Result<()> {
         if !(-9..=9).contains(&gain) {
             bail!("EQ Gain should be between -9 and 9");
         }
         self.mic_profile.equalizer[freq].gain = gain;
 
-        // TODO: Send to GoXLR
-        Ok(())
+        let mut map = LinkedHashMap::new();
+        map.insert(MicEffectKeys::from_eq_gain(freq), gain as i32);
+
+        let command = BasicResultCommand::SetMicEffects(map);
+        self.send_no_result(command).await
     }
 
-    fn set_mini_mic_eq_freq(&mut self, freq: MiniFrequencies, value: f32) -> Result<()> {
+    async fn set_mini_mic_eq_freq(&mut self, freq: MiniFrequencies, value: f32) -> Result<()> {
         let min = self.get_mini_frequency_min(freq);
         let max = self.get_mini_frequency_max(freq);
         if !(min..=max).contains(&value) {
@@ -46,18 +53,24 @@ impl MicEq for GoXLR {
 
         self.mic_profile.equalizer_mini[freq].frequency = value;
 
-        // TODO: Send to GoXLR
-        Ok(())
+        let mut map = LinkedHashMap::new();
+        map.insert(MicParamKeys::from_eq_freq(freq), value);
+
+        let command = BasicResultCommand::SetMicParams(map);
+        self.send_no_result(command).await
     }
 
-    fn set_mini_mic_eq_gain(&mut self, freq: MiniFrequencies, gain: i8) -> Result<()> {
+    async fn set_mini_mic_eq_gain(&mut self, freq: MiniFrequencies, gain: i8) -> Result<()> {
         if !(-9..=9).contains(&gain) {
             bail!("EQ Gain should be between -9 and 9");
         }
         self.mic_profile.equalizer_mini[freq].gain = gain;
 
-        // TODO: Send to GoXLR
-        Ok(())
+        let mut map = LinkedHashMap::new();
+        map.insert(MicParamKeys::from_eq_gain(freq), gain as f32);
+
+        let command = BasicResultCommand::SetMicParams(map);
+        self.send_no_result(command).await
     }
 }
 
