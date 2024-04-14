@@ -1,5 +1,6 @@
 use anyhow::Result;
 use enum_map::EnumMap;
+use ritelinked::LinkedHashMap;
 use tokio::sync::oneshot;
 
 use goxlr_shared::channels::{
@@ -8,7 +9,7 @@ use goxlr_shared::channels::{
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::interaction::CurrentStates;
-use goxlr_shared::microphone::MicrophoneType;
+use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys, MicrophoneType};
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::ButtonDisplayStates;
 
@@ -27,6 +28,8 @@ pub enum BasicResultCommand {
 
     /// Mic Stuff
     SetMicGain(MicrophoneType, u8),
+    SetMicParams(LinkedHashMap<MicParamKeys, f32>),
+    SetMicEffects(LinkedHashMap<MicEffectKeys, i32>),
 }
 
 #[derive(Debug, Copy, Clone)]
