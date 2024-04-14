@@ -227,8 +227,8 @@ pub struct Microphone {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct EqualizerValue {
-    gain: i8,
-    frequency: f32,
+    pub gain: i8,
+    pub frequency: f32,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
