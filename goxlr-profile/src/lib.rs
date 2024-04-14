@@ -246,11 +246,11 @@ pub struct Compressor {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Gate {
-    mode: u8, // Always 2 in official App
-    enabled: bool,
+    pub mode: u8, // Always 2 in official App
+    pub enabled: bool,
 
-    threshold: i8,
-    attack: GateTimes,
-    release: GateTimes,
-    attenuation: u8,
+    pub threshold: i8,
+    pub attack: GateTimes,
+    pub release: GateTimes,
+    pub attenuation: u8,
 }
