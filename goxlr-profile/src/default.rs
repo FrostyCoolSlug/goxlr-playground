@@ -365,14 +365,14 @@ impl Default for MicProfile {
         };
 
         let gains = enum_map! {
-            MicrophoneType::XLR => 40,
-            MicrophoneType::Phantom => 40,
-            MicrophoneType::TRS => 40,
+            MicrophoneType::XLR => 55,
+            MicrophoneType::Phantom => 35,
+            MicrophoneType::Jack => 40,
         };
 
         MicProfile {
             microphone: Microphone {
-                mic_type: MicrophoneType::Phantom,
+                mic_type: MicrophoneType::XLR,
                 mic_gains: gains,
             },
             equalizer: eq,
