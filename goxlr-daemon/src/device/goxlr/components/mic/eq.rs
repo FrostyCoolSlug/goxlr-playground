@@ -24,10 +24,8 @@ impl MicEq for GoXLR {
         }
         self.mic_profile.equalizer[freq].frequency = value;
 
-        let map = LinkedHashMap::from_iter([(
-            MicEffectKeys::from_eq_freq(freq),
-            Self::freq_as_i32(value),
-        )]);
+        let key = MicEffectKeys::from_eq_freq(freq);
+        let map = LinkedHashMap::from_iter([(key, Self::freq_as_i32(value))]);
         let command = BasicResultCommand::SetMicEffects(map);
         self.send_no_result(command).await
     }
