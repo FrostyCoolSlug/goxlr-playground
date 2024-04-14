@@ -76,6 +76,7 @@ impl MicParamKeys {
 pub enum MicEffectKeys {
     MicInputMute,
     BleepLevel,
+    DeEsser,
 
     GateMode,
     GateThreshold,
@@ -89,8 +90,6 @@ pub enum MicEffectKeys {
     CompressorAttack,
     CompressorRelease,
     CompressorMakeUpGain,
-
-    DeEsser,
 
     Equalizer31HzFrequency,
     Equalizer31HzGain,
