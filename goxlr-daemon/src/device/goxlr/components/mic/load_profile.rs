@@ -19,8 +19,8 @@ impl LoadMicProfile for GoXLR {
         let mut mic_effects = LinkedHashMap::new();
 
         // Load the Equaliser...
-        mic_params.extend(self.get_mini_eq_keys());
-        mic_effects.extend(self.get_eq_keys());
+        mic_params.extend(self.get_eq_mini_values());
+        mic_effects.extend(self.get_eq_values());
 
         let command = BasicResultCommand::SetMicParams(mic_params);
         self.send_no_result(command).await?;
