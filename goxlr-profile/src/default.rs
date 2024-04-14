@@ -3,8 +3,10 @@ use strum::IntoEnumIterator;
 
 use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels};
 use goxlr_shared::colours::Colour;
+use goxlr_shared::compressor::{CompressorAttackTime, CompressorRatio, CompressorReleaseTime};
 use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
 use goxlr_shared::faders::FaderSources;
+use goxlr_shared::gate::GateTimes;
 
 use crate::{
     ButtonColourSet, Compressor, CoughBehaviour, CoughSettings, EqualizerValue, FaderChannel,
@@ -380,9 +382,9 @@ impl Default for MicProfile {
             compressor: Compressor {
                 select: 1,
                 threshold: 0,
-                ratio: 9,
-                attack: 1,
-                release: 9,
+                ratio: CompressorRatio::Ratio3_2,
+                attack: CompressorAttackTime::Comp2ms,
+                release: CompressorReleaseTime::Comp100ms,
                 makeup_gain: 0,
             },
             deess: 0,
@@ -391,8 +393,8 @@ impl Default for MicProfile {
                 enabled: true,
                 amount: 0,
                 threshold: -30,
-                attack: 0,
-                release: 19,
+                attack: GateTimes::Gate10ms,
+                release: GateTimes::Gate200ms,
                 attenuation: 100,
             },
             bleep_volume: -10,
