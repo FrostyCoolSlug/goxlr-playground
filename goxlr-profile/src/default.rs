@@ -380,7 +380,6 @@ impl Default for MicProfile {
             equalizer: eq,
             equalizer_mini: eq_mini,
             compressor: Compressor {
-                select: 1,
                 threshold: 0,
                 ratio: CompressorRatio::Ratio3_2,
                 attack: CompressorAttackTime::Attack2ms,
@@ -389,7 +388,6 @@ impl Default for MicProfile {
             },
             deess: 0,
             gate: Gate {
-                mode: 2,
                 enabled: true,
                 threshold: -30,
                 attack: GateTimes::Time10ms,

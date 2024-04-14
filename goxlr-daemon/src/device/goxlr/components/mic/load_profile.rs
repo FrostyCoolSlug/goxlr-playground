@@ -1,3 +1,4 @@
+use crate::device::goxlr::components::mic::compressor::CompressorCrate;
 use crate::device::goxlr::components::mic::eq::MicEqCrate;
 use crate::device::goxlr::components::mic::gate::GateCrate;
 use crate::device::goxlr::components::mic::r#type::MicTypeCrate;
@@ -22,9 +23,13 @@ impl LoadMicProfile for GoXLR {
         mic_params.extend(self.get_eq_mini_values());
         mic_effects.extend(self.get_eq_values());
 
-        // Load the Configured Gate..
+        // Load the Configured Gate...
         mic_params.extend(self.get_gate_mini_values());
         mic_effects.extend(self.get_gate_values());
+
+        // Load the Configured Compressor...
+        mic_params.extend(self.get_compressor_mini_values());
+        mic_effects.extend(self.get_compressor_values());
 
         let command = BasicResultCommand::SetMicParams(mic_params);
         self.send_no_result(command).await?;

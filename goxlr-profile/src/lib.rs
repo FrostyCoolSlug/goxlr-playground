@@ -235,18 +235,15 @@ pub struct EqualizerValue {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Compressor {
-    select: u8, // Always '1' in official app...
-
-    threshold: i8,
-    ratio: CompressorRatio,
-    attack: CompressorAttackTime,
-    release: CompressorReleaseTime,
-    makeup_gain: i8,
+    pub threshold: i8,
+    pub ratio: CompressorRatio,
+    pub attack: CompressorAttackTime,
+    pub release: CompressorReleaseTime,
+    pub makeup_gain: i8,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Gate {
-    pub mode: u8, // Always 2 in official App
     pub enabled: bool,
 
     pub threshold: i8,
