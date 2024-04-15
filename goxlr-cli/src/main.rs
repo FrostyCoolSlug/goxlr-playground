@@ -6,6 +6,7 @@ use goxlr_ipc::clients::ipc::ipc_client::IPCClient;
 
 use crate::cli::{Cli, SubCommands};
 use crate::processors::channel::handle_channels;
+use crate::processors::microphone::handle_microphone;
 use crate::processors::pages::handle_pages;
 
 mod cli;
@@ -43,6 +44,10 @@ async fn main() -> Result<()> {
 
     if let Some(command) = cli.command {
         match command {
+            SubCommands::Microphone { command } => {
+                handle_microphone(serial, client, command).await?;
+            }
+
             SubCommands::Channels { channel, command } => {
                 handle_channels(serial, client, channel, command).await?;
             }

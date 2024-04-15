@@ -1,6 +1,12 @@
+#[cfg(feature = "clap")]
+use clap::ValueEnum;
+
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum CompressorAttackTime {
     // Note: 0ms is technically 0.001ms
     Attack0ms,
@@ -25,7 +31,9 @@ pub enum CompressorAttackTime {
     Attack40ms,
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum CompressorReleaseTime {
     // Note: 0 is technically 15 :)
     Release0ms,
@@ -50,7 +58,9 @@ pub enum CompressorReleaseTime {
     Release3000ms,
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum CompressorRatio {
     Ratio1_0,
     Ratio1_1,

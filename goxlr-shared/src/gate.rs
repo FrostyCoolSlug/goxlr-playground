@@ -1,6 +1,12 @@
+#[cfg(feature = "clap")]
+use clap::ValueEnum;
+
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum GateTimes {
     Time10ms,
     Time20ms,

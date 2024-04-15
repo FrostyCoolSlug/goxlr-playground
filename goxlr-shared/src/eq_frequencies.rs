@@ -1,8 +1,15 @@
-use enum_map::Enum;
+#[cfg(feature = "clap")]
+use clap::ValueEnum;
+
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+
+use enum_map::Enum;
 use strum::EnumIter;
 
-#[derive(Debug, Copy, Clone, Enum, EnumIter, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Enum, EnumIter)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum Frequencies {
     Eq31h,
     Eq63h,
@@ -16,7 +23,9 @@ pub enum Frequencies {
     Eq16kh,
 }
 
-#[derive(Debug, Copy, Clone, Enum, EnumIter, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Enum, EnumIter)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum MiniFrequencies {
     Eq90h,
     Eq250h,

@@ -1,8 +1,15 @@
 use crate::eq_frequencies::{Frequencies, MiniFrequencies};
 use enum_map::Enum;
+
+#[cfg(feature = "clap")]
+use clap::ValueEnum;
+
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, Enum, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Enum)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum MicrophoneType {
     XLR,
     Phantom,

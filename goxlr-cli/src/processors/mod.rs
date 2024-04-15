@@ -1,3 +1,3 @@
 pub(crate) mod channel;
-mod mic;
+pub(crate) mod microphone;
 pub(crate) mod pages;
