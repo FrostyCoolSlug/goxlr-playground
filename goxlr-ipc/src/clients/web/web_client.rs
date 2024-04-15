@@ -15,7 +15,7 @@ pub struct WebClient {
 
 impl WebClient {
     pub fn connect(url: String) -> Result<Self> {
-        return Ok(Self::new(url));
+        Ok(Self::new(url))
     }
 
     fn new(url: String) -> Self {

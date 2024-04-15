@@ -170,7 +170,7 @@ pub async fn handle_mic_gate_command(
 
 pub async fn handle_mic_eq_command(
     serial: String,
-    mut client: Box<dyn Client>,
+    client: Box<dyn Client>,
     command: MicrophoneEqCommands,
 ) -> Result<()> {
     match command {

@@ -263,6 +263,6 @@ impl InteractionsLocal for GoXLR {
             // button already exists
             panic!("Button State Mismatch for paging!");
         }
-        return Ok(());
+        Ok(())
     }
 }

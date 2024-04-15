@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::{anyhow, bail, Result};
 use goxlr_shared::device::DeviceType;
-use log::{debug, info, trace};
+use log::{debug, info};
 use rusb::{
     Device, DeviceDescriptor, DeviceHandle, Direction, GlobalContext, Language, Recipient,
     RequestType,
@@ -14,7 +14,7 @@ use tokio::task::JoinHandle;
 use tokio::{select, task, time};
 
 use crate::common::executor::InitialisableGoXLR;
-use crate::runners::device::{DeviceMessage, InternalDeviceMessage};
+use crate::runners::device::InternalDeviceMessage;
 use crate::{USBLocation, PID_GOXLR_MINI};
 
 pub(crate) struct GoXLRDevice {
@@ -43,7 +43,7 @@ impl GoXLRDevice {
         let timeout = Duration::from_secs(1);
         let languages = handle.read_languages(timeout)?;
         let language = languages
-            .get(0)
+            .first()
             .ok_or_else(|| anyhow!("Not GoXLR?"))?
             .to_owned();
 
@@ -98,7 +98,7 @@ impl GoXLRDevice {
                         // to Driver Event Messages.. Make sure we only ever have 1 of these
                         // queued up for processing at once.
                         if events.capacity() > 0 {
-                            events.send(InternalDeviceMessage::Poll).await;
+                            let _ = events.send(InternalDeviceMessage::Poll).await;
                         }
 
                         // We simply periodically check for whether we've been asked to stop.

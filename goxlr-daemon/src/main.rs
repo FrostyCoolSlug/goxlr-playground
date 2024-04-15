@@ -1,4 +1,3 @@
-use actix_web::dev::ServerHandle;
 use anyhow::{bail, Context, Result};
 use goxlr_ipc::commands::HttpSettings;
 use log::{debug, error, LevelFilter};

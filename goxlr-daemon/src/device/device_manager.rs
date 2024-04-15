@@ -150,7 +150,6 @@ impl DeviceManager {
                         RunnerMessage::Error(device) => {
                             self.handle_error(device);
                         },
-                        _ => {}
                     }
                     if self.devices_stopped() {
                         break;

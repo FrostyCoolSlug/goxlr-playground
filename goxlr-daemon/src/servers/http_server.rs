@@ -23,8 +23,7 @@ use tokio::sync::oneshot::Sender;
 use tokio::sync::Mutex;
 
 use goxlr_ipc::commands::{
-    DaemonRequest, DaemonResponse, DaemonStatus, GoXLRCommandResponse, HttpSettings,
-    WebsocketRequest, WebsocketResponse,
+    DaemonRequest, DaemonResponse, DaemonStatus, HttpSettings, WebsocketRequest, WebsocketResponse,
 };
 
 use crate::device::packet::{handle_packet, Messenger};

@@ -1,5 +1,5 @@
 use crate::goxlr::commands::Command;
-use anyhow::{bail, Result};
+use anyhow::Result;
 use async_trait::async_trait;
 use log::warn;
 

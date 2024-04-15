@@ -1,6 +1,5 @@
 use crate::types::mic_keys::MicParamKeys;
 
-type SharedParams = goxlr_shared::microphone::MicParamKeys;
 pub(crate) enum MicrophoneType {
     XLR = 0x01,
     Phantom = 0x02,

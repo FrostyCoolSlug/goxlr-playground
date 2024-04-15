@@ -7,13 +7,12 @@ use std::cmp::Ordering;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering as AtomicOrder;
 use std::sync::Arc;
-use std::time::Duration;
 
 use anyhow::{bail, Result};
 use log::{debug, trace};
 use strum::IntoEnumIterator;
+use tokio::select;
 use tokio::sync::{mpsc, oneshot};
-use tokio::{select, time};
 
 use goxlr_shared::device::{DeviceInfo, DeviceType, GoXLRFeature};
 use goxlr_shared::interaction::{ButtonStates, CurrentStates};

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::{debug, warn};
+use log::debug;
 use ritelinked::LinkedHashMap;
 use strum::IntoEnumIterator;
 
@@ -11,7 +11,7 @@ use goxlr_shared::channels::{
     ChannelMuteState, InputChannels, MuteState, OutputChannels, RoutingOutput,
 };
 use goxlr_shared::faders::FaderSources;
-use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys};
+use goxlr_shared::microphone::MicEffectKeys;
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::State;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
@@ -26,7 +26,7 @@ type Target = Vec<OutputChannels>;
 pub(crate) trait MuteHandler {
     /// Programmatically Setting the mute states..
     async fn set_mute_state(&mut self, source: Source, state: MuteState) -> Result<()>;
-    async fn sync_mute_state(&mut self, source: Source) -> Result<()>;
+    //async fn sync_mute_state(&mut self, source: Source) -> Result<()>;
 
     /// Used for button handling..
     async fn handle_mute_press(&mut self, source: Source) -> Result<()>;
@@ -46,7 +46,7 @@ pub(crate) trait MuteHandler {
 impl MuteHandler for GoXLR {
     /// This updates / changes the mute state depending on what value was passed in.
     async fn set_mute_state(&mut self, source: Source, state: MuteState) -> Result<()> {
-        let current = self.profile.channels[source].mute_state;
+        //let current = self.profile.channels[source].mute_state;
 
         // Are we simply unmuting this channel?
         if state == MuteState::Unmuted {
@@ -98,9 +98,9 @@ impl MuteHandler for GoXLR {
 
     /// This is generally called when either a channels mute target list changes, or there's some
     /// other change to the transient routing. It's goal is to resync the state.
-    async fn sync_mute_state(&mut self, source: FaderSources) -> Result<()> {
-        todo!()
-    }
+    // async fn sync_mute_state(&mut self, source: FaderSources) -> Result<()> {
+    //     todo!()
+    // }
 
     /// Code which triggers when a channel is changed to a 'Pressed' state, primarily it'll
     /// either unmute the channel if it's muted, or will mute to targets in the base state.
@@ -127,7 +127,7 @@ impl MuteHandler for GoXLR {
         let changes = self.mute_to_targets(source, targets).await?;
 
         self.apply_mute_changes(changes).await?;
-        return self.update_mute_state(source, MuteState::Pressed).await;
+        self.update_mute_state(source, MuteState::Pressed).await
     }
 
     /// This is now simple, grab our new targets, and send it.
@@ -143,13 +143,13 @@ impl MuteHandler for GoXLR {
         let change = self.mute_to_targets(source, targets).await?;
 
         self.apply_mute_changes(change).await?;
-        return self.update_mute_state(source, MuteState::Held).await;
+        self.update_mute_state(source, MuteState::Held).await
     }
 
     async fn handle_unmute(&mut self, source: Source) -> Result<()> {
         let changes = self.unmute(source).await?;
         self.apply_mute_changes(changes).await?;
-        return self.update_mute_state(source, MuteState::Unmuted).await;
+        self.update_mute_state(source, MuteState::Unmuted).await
     }
 
     async fn handle_cough_press(&mut self, hold: bool) -> Result<()> {
@@ -314,7 +314,7 @@ impl MuteHandlerLocal for GoXLR {
             restore.routing.push(source);
         }
 
-        return Ok(restore);
+        Ok(restore)
     }
 
     async fn mute_to_all(&mut self, source: Source) -> Result<MuteChanges> {
