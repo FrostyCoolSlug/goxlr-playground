@@ -187,13 +187,10 @@ impl GoXLR {
                                 debug!("Handling IPC Command: {:?}", command);
 
                                 let result = self.handle_ipc_command(command).await;
-                                let message = match result {
-                                    Ok(res) => res,
-                                    Err(e) => {
+                                let message = result.unwrap_or_else(|e| {
                                         warn!("Execution Error: {}", e.to_string());
                                         GoXLRCommandResponse::Error(e.to_string())
-                                    }
-                                };
+                                    });
                                 let _ = tx.send(message);
 
                                 // There's a high probability that a GoXLR Command has changed the state,

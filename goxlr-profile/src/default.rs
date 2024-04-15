@@ -118,6 +118,8 @@ impl Default for Profile {
 
         // Bump headphones volume to 100%..
         channels[FaderSources::Headphones].volume = 255;
+        channels[FaderSources::Microphone].volume = 255;
+        channels[FaderSources::MicrophoneMonitor].volume = 255 / 100 * 70;
 
         let base_colour: EnumMap<FaderSources, Colour> = enum_map! {
                 FaderSources::Microphone => Colour {
@@ -389,7 +391,7 @@ impl Default for MicProfile {
             deess: 0,
             gate: Gate {
                 enabled: true,
-                threshold: -30,
+                threshold: -40,
                 attack: GateTimes::Time10ms,
                 release: GateTimes::Time200ms,
                 attenuation: 100,
