@@ -202,16 +202,16 @@ impl GoXLRUSBDevice {
         let version = firmware.firmware;
         let (vod, animation, submix) = if device_type == DeviceType::Mini {
             // Mini Firmware Versions for Features..
-            let vod = VersionNumber(1, 1, 10, 45);
-            let animation = VersionNumber(1, 1, 8, 0);
-            let submix = VersionNumber(1, 2, 0, 46);
+            let vod = VersionNumber(1, 1, Some(10), Some(45));
+            let animation = VersionNumber(1, 1, Some(8), Some(0));
+            let submix = VersionNumber(1, 2, Some(0), Some(46));
 
             (vod, animation, submix)
         } else {
             // Full firmware versions for features..
-            let vod = VersionNumber(1, 3, 43, 104);
-            let animation = VersionNumber(1, 3, 40, 0);
-            let submix = VersionNumber(1, 4, 2, 107);
+            let vod = VersionNumber(1, 3, Some(43), Some(104));
+            let animation = VersionNumber(1, 3, Some(40), Some(0));
+            let submix = VersionNumber(1, 4, Some(2), Some(107));
 
             (vod, animation, submix)
         };
@@ -269,7 +269,7 @@ pub(crate) enum InternalDeviceMessage {
 
 /// This allows you to compare firmware version numbers against another specified version and
 /// will return whether it's newer or equal to.
-fn version_newer_or_equal_to(version: &VersionNumber, comparison: VersionNumber) -> bool {
+pub fn version_newer_or_equal_to(version: &VersionNumber, comparison: VersionNumber) -> bool {
     match version.0.cmp(&comparison.0) {
         Ordering::Greater => return true,
         Ordering::Less => return false,
@@ -282,15 +282,31 @@ fn version_newer_or_equal_to(version: &VersionNumber, comparison: VersionNumber)
         Ordering::Equal => {}
     }
 
-    match version.2.cmp(&comparison.2) {
-        Ordering::Greater => return true,
-        Ordering::Less => return false,
-        Ordering::Equal => {}
+    if let Some(patch) = version.2 {
+        if let Some(comparison) = comparison.2 {
+            match patch.cmp(&comparison) {
+                Ordering::Greater => return true,
+                Ordering::Less => return false,
+                Ordering::Equal => {}
+            }
+        } else {
+            return true;
+        }
+    } else if comparison.2.is_some() {
+        return false;
     }
 
-    if version.3 >= comparison.3 {
-        return true;
+    if let Some(build) = version.3 {
+        if let Some(comparison) = comparison.3 {
+            if build >= comparison {
+                return true;
+            }
+        } else {
+            return true;
+        }
+    } else if comparison.3.is_some() {
+        return false;
     }
 
-    false
+    true
 }

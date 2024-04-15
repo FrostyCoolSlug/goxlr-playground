@@ -1,4 +1,4 @@
-use std::fmt::Formatter;
+use std::fmt::{Debug, Display, Formatter};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -13,16 +13,23 @@ pub struct FirmwareVersions {
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct VersionNumber(pub u32, pub u32, pub u32, pub u32);
+pub struct VersionNumber(pub u32, pub u32, pub Option<u32>, pub Option<u32>);
 
-impl std::fmt::Display for VersionNumber {
+impl Display for VersionNumber {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}.{}.{}.{}", self.0, self.1, self.2, self.3)
+        if let Some(patch) = self.2 {
+            if let Some(build) = self.3 {
+                return write!(f, "{}.{}.{}.{}", self.0, self.1, patch, build);
+            }
+            return write!(f, "{}.{}.{}", self.0, self.1, patch);
+        }
+
+        write!(f, "{}.{}", self.0, self.1)
     }
 }
 
-impl std::fmt::Debug for VersionNumber {
+impl Debug for VersionNumber {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}.{}.{}.{}", self.0, self.1, self.2, self.3)
+        Display::fmt(self, f)
     }
 }
