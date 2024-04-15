@@ -1,5 +1,6 @@
 use anyhow::Result;
 use log::{debug, warn};
+use ritelinked::LinkedHashMap;
 use strum::IntoEnumIterator;
 
 use crate::device::goxlr::components::buttons::ButtonHandlers;
@@ -10,6 +11,7 @@ use goxlr_shared::channels::{
     ChannelMuteState, InputChannels, MuteState, OutputChannels, RoutingOutput,
 };
 use goxlr_shared::faders::FaderSources;
+use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys};
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::State;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
@@ -211,13 +213,11 @@ impl MuteHandlerCrate for GoXLR {
         let state = self.profile.channels[source].mute_state;
         match state {
             MuteState::Unmuted => {
+                // Our channel is directly unmuted, check the Cough button to see if it's involved
                 if let Some(target) = self.add_cough_mute(source, None) {
-                    // If the target list is empty, we're going to trigger a hard mute on the channel,
-                    // so we don't need to unmute first!
-
+                    // If the target list isn't blank, we're muting to 'some', but not all.
+                    // Force a channel unmute to the device before applying the settings
                     if !target.is_empty() {
-                        // However, if the target list isn't empty, we're doing a transient mute,
-                        // so need to make sure the channel isn't muted.
                         self.unmute(source).await?;
                     }
 
@@ -263,6 +263,7 @@ trait MuteHandlerLocal {
     async fn unmute(&mut self, source: Source) -> Result<MuteChanges>;
 
     async fn send_mute_state(&mut self, source: Source, state: ChannelMuteState) -> Result<()>;
+    async fn send_mic_mute_state(&self, muted: bool) -> Result<()>;
     async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()>;
 
     fn add_cough_mute(&mut self, source: Source, current: Option<Target>) -> Option<Target>;
@@ -318,6 +319,12 @@ impl MuteHandlerLocal for GoXLR {
 
     async fn mute_to_all(&mut self, source: Source) -> Result<MuteChanges> {
         debug!("Muting Channel {:?} to All", source);
+
+        // The Microphone also has an 'Effect' which needs to be set when muting / unmuting
+        if source == FaderSources::Microphone {
+            self.send_mic_mute_state(true).await?;
+        }
+
         self.send_mute_state(source, Muted).await?;
         Ok(Default::default())
     }
@@ -330,6 +337,11 @@ impl MuteHandlerLocal for GoXLR {
         // Outputs need to be unmuted, but they also can't be routed.
         if GoXLR::is_valid_routing_target(source) {
             updated_routes = self.restore_routing_from_profile(source)?.routing;
+        }
+
+        // The Microphone also has an 'Effect' which needs to be set when muting / unmuting
+        if source == FaderSources::Microphone {
+            self.send_mic_mute_state(false).await?;
         }
 
         // Don't unmute on a channel which isn't flagged as muted..
@@ -364,6 +376,12 @@ impl MuteHandlerLocal for GoXLR {
         // Either way, replace the mute state in the struct with our new state.
         self.mute_state[source].replace(state);
         Ok(())
+    }
+
+    async fn send_mic_mute_state(&self, muted: bool) -> Result<()> {
+        let map = LinkedHashMap::from_iter([(MicEffectKeys::MicInputMute, muted as i32)]);
+        let command = BasicResultCommand::SetMicEffects(map);
+        self.send_no_result(command).await
     }
 
     async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()> {
