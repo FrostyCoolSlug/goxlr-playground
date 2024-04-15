@@ -39,8 +39,6 @@ pub async fn handle_microphone(
     Ok(())
 }
 
-//pub async fn handle_microphone_eq(serial, client: Box<dyn Client>, command: Micr)
-
 pub async fn handle_mic_setup_command(
     serial: String,
     mut client: Box<dyn Client>,
