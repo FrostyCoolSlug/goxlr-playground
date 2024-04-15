@@ -32,7 +32,7 @@ pub enum MicParamKeys {
 
     /*
      These are the values for the GoXLR mini, it seems there's a difference in how the two
-     are setup, The Mini does EQ via mic parameters, where as the full does it via effects.
+     are setup, The Mini does EQ via microphone parameters, where as the full does it via effects.
     */
     Equalizer90HzFrequency,
     Equalizer90HzGain,

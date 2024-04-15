@@ -12,7 +12,7 @@ use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::components::buttons::ButtonHandlers;
 use crate::device::goxlr::components::channel::Channels;
-use crate::device::goxlr::components::mute_handler::MuteHandler;
+use crate::device::goxlr::components::mute_handler::{MuteHandler, MuteHandlerCrate};
 use crate::device::goxlr::components::pages::FaderPages;
 use crate::device::goxlr::components::routing_handler::RoutingHandler;
 use crate::device::goxlr::device::GoXLR;

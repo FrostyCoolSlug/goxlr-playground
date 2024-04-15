@@ -4,14 +4,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PageCommand {
     AddPage,
-    LoadPage(PageNumber),
-    RemovePage(PageNumber),
+    LoadPage(u8),
+    RemovePage(u8),
     SetFader(SetFader),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PageNumber {
-    pub page_number: u8,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

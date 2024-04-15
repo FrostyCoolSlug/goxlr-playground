@@ -1,7 +1,7 @@
 use crate::cli::PageCommands;
 use anyhow::Result;
 use goxlr_ipc::client::Client;
-use goxlr_ipc::commands::pages::{PageCommand, PageNumber, SetFader};
+use goxlr_ipc::commands::pages::{PageCommand, SetFader};
 use goxlr_ipc::commands::{DaemonRequest, DeviceCommand, GoXLRCommand};
 
 pub async fn handle_pages(
@@ -11,7 +11,7 @@ pub async fn handle_pages(
 ) -> Result<()> {
     match command {
         PageCommands::SetPage { page_number } => {
-            let command = PageCommand::LoadPage(PageNumber { page_number });
+            let command = PageCommand::LoadPage(page_number);
             let command = GoXLRCommand::Pages(command);
             let command = DaemonRequest::DeviceCommand(DeviceCommand { serial, command });
             client.send(command).await?;
@@ -23,7 +23,7 @@ pub async fn handle_pages(
             client.send(command).await?;
         }
         PageCommands::RemovePage { page_number } => {
-            let command = PageCommand::RemovePage(PageNumber { page_number });
+            let command = PageCommand::RemovePage(page_number);
             let command = GoXLRCommand::Pages(command);
             let command = DaemonRequest::DeviceCommand(DeviceCommand { serial, command });
             client.send(command).await?;

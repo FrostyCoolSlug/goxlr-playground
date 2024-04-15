@@ -1,7 +1,7 @@
 use crate::device::goxlr::components::mic::compressor::CompressorCrate;
 use crate::device::goxlr::components::mic::eq::MicEqCrate;
 use crate::device::goxlr::components::mic::gate::GateCrate;
-use crate::device::goxlr::components::mic::r#type::MicTypeCrate;
+use crate::device::goxlr::components::mic::mic_type::MicTypeCrate;
 use anyhow::Result;
 use goxlr_usb::events::commands::BasicResultCommand;
 use ritelinked::LinkedHashMap;

@@ -15,13 +15,9 @@ pub trait IPCPageHandler {
 impl IPCPageHandler for GoXLR {
     async fn ipc_page(&mut self, command: Command) -> Response {
         match command {
-            Command::LoadPage(page_number) => {
-                self.set_page(page_number.page_number as usize).await?
-            }
+            Command::LoadPage(page_number) => self.set_page(page_number as usize).await?,
             Command::AddPage => self.add_page().await?,
-            Command::RemovePage(page_number) => {
-                self.remove_page(page_number.page_number as usize).await?
-            }
+            Command::RemovePage(page_number) => self.remove_page(page_number as usize).await?,
             Command::SetFader(set_fader) => {
                 self.set_page_fader_source(
                     set_fader.page_number as usize,

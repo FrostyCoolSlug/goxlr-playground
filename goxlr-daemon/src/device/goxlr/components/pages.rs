@@ -21,10 +21,10 @@ pub(crate) trait FaderPages {
 
     // IPC Related Commands
     async fn add_page(&mut self) -> Result<()>;
-    async fn remove_page(&mut self, page_number: usize) -> Result<()>;
+    async fn remove_page(&mut self, page: usize) -> Result<()>;
     async fn set_page_fader_source(
         &mut self,
-        page_number: usize,
+        page: usize,
         fader: Fader,
         channel: FaderSources,
     ) -> Result<()>;
@@ -140,19 +140,19 @@ impl FaderPages for GoXLR {
 
     async fn set_page_fader_source(
         &mut self,
-        page_number: usize,
+        page: usize,
         fader: Fader,
         channel: FaderSources,
     ) -> Result<()> {
         let current_page_number = self.profile.pages.current;
         let page_count = self.profile.pages.page_list.len();
 
-        if page_number > page_count - 1 {
-            bail!("Invalid Page Number: {}, Max: {}", page_number, page_count);
+        if page > page_count - 1 {
+            bail!("Invalid Page Number: {}, Max: {}", page, page_count);
         }
 
         // Is this channel already assigned to this page?
-        let fader_page = &mut self.profile.pages.page_list[page_number].faders;
+        let fader_page = &mut self.profile.pages.page_list[page].faders;
         for fader_iter in Fader::iter() {
             if fader_page[fader_iter] == channel {
                 // We need to perform a swap with whatever is at the target fader..
@@ -164,7 +164,7 @@ impl FaderPages for GoXLR {
         fader_page[fader] = channel;
         debug!("{:?}", fader_page);
 
-        if current_page_number == page_number {
+        if current_page_number == page {
             debug!("Reloading current page..");
             self.load_current_page(true).await?;
         }

@@ -40,6 +40,7 @@ impl IPCClient {
 #[async_trait]
 impl Client for IPCClient {
     async fn send(&mut self, request: DaemonRequest) -> Result<()> {
+        println!("Sending: {:?}", serde_json::to_string(&request));
         self.socket
             .send(request)
             .await

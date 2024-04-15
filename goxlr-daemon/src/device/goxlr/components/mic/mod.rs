@@ -1,6 +1,6 @@
-mod compressor;
-mod eq;
-mod extra;
-mod gate;
+pub mod compressor;
+pub mod eq;
+pub mod extra;
+pub mod gate;
 pub mod load_profile;
-pub(crate) mod r#type;
+pub mod mic_type;
