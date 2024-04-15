@@ -2,10 +2,10 @@
 resolver = "2"
 
 members = [
-	"goxlr-cli",
-	"goxlr-daemon",
-	"goxlr-ipc",
-	"goxlr-profile",
-	"goxlr-shared",
-	"goxlr-usb",
+    "goxlr-client",
+    "goxlr-daemon",
+    "goxlr-ipc",
+    "goxlr-profile",
+    "goxlr-shared",
+    "goxlr-usb",
 ]
