@@ -33,7 +33,7 @@ pub(crate) struct GoXLRDevice {
 
 impl GoXLRDevice {
     pub async fn from(config: GoXLRConfiguration) -> Result<Self> {
-        let (device, descriptor) = Self::find_device(config.device)?;
+        let (device, descriptor) = Self::find_device(config.device.clone())?;
         let handle = device.open()?;
 
         let device = handle.device();
@@ -64,11 +64,13 @@ impl GoXLRDevice {
     fn find_device(goxlr: USBLocation) -> Result<(Device<GlobalContext>, DeviceDescriptor)> {
         if let Ok(devices) = rusb::devices() {
             for usb_device in devices.iter() {
-                if usb_device.bus_number() == goxlr.bus_number
-                    && usb_device.address() == goxlr.address
-                {
-                    if let Ok(descriptor) = usb_device.device_descriptor() {
-                        return Ok((usb_device, descriptor));
+                if let Some(lib_usb) = &goxlr.lib_usb {
+                    if usb_device.bus_number() == lib_usb.bus_number
+                        && usb_device.address() == lib_usb.address
+                    {
+                        if let Ok(descriptor) = usb_device.device_descriptor() {
+                            return Ok((usb_device, descriptor));
+                        }
                     }
                 }
             }
@@ -84,7 +86,7 @@ impl GoXLRDevice {
 
         self.initialise().await?;
 
-        let device = self.config.device;
+        let device = self.config.device.clone();
         let stop = self.stop.clone();
         let events = self.config.events.clone();
         // Once we're done with that, spawn an event handler..
@@ -197,6 +199,7 @@ pub(crate) struct ReadControl {
     pub(crate) length: usize,
 }
 
+#[derive(Clone)]
 pub struct GoXLRConfiguration {
     pub(crate) device: USBLocation,
     pub(crate) events: mpsc::Sender<InternalDeviceMessage>,

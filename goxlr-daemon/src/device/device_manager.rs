@@ -101,9 +101,9 @@ impl DeviceManager {
                 Some(device) = device_recv.recv() => {
                     match device {
                         PnPDeviceMessage::Attached(device) => {
-                            self.devices.push(device);
                             debug!("[DeviceManager] Received Device: {:?}", device);
-                            self.add_device(device).await;
+                            self.devices.push(device.clone());
+                            self.add_device(device.clone()).await;
                         }
                         PnPDeviceMessage::Removed(device) => {
                             self.devices.retain(|d| d != &device);
@@ -171,6 +171,7 @@ impl DeviceManager {
         }
 
         let stop = Stop::new();
+        let location = device.clone();
         let (manager_send, manager_recv) = mpsc::channel(64);
 
         // Ok, we have a new device, we need to add it and set it up..
@@ -188,7 +189,7 @@ impl DeviceManager {
             messanger: manager_send,
         };
 
-        self.states.insert(device, state);
+        self.states.insert(location, state);
         task::spawn(start_goxlr(config, self.shutdown.clone()));
     }
 
@@ -227,7 +228,7 @@ impl DeviceManager {
                             "[DeviceManager]{} Attempting Recovery on Device..",
                             location
                         );
-                        refresh.push(*location);
+                        refresh.push(location.clone());
                     }
                 }
             }
@@ -246,7 +247,7 @@ impl DeviceManager {
                 "[DeviceManager]{} Serial {} entered Running State",
                 device, serial
             );
-            self.serials.insert(serial.to_owned(), device);
+            self.serials.insert(serial.to_owned(), device.clone());
 
             debug!("Device Active, Updating DaemonStatus state..");
             self.update_status().await;

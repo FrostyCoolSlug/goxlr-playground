@@ -124,7 +124,7 @@ impl GoXLR {
 
         // Build the configuration for the USB Runner, with the relevant messaging queues
         let configuration = GoXLRUSBConfiguration {
-            device: self.config.device,
+            device: self.config.device.clone(),
             interaction_event: Some(interaction_send),
             pause_interaction_poll: self.pause_polling.clone(),
             device_event: event_send,
@@ -147,7 +147,7 @@ impl GoXLR {
         self.command_sender = Some(command_send);
 
         // Let the device runner know we're up and running
-        let run_msg = RunnerMessage::UpdateState(self.config.device, RunnerState::Running(serial));
+        let run_msg = RunnerMessage::UpdateState(self.config.device.clone(), RunnerState::Running(serial));
         let _ = self.config.manager_sender.send(run_msg).await;
 
         // Load the profile.
@@ -260,7 +260,7 @@ impl GoXLR {
         }
 
         // Our loop has been broken (or never started), let the device know we're done..
-        let device = self.config.device;
+        let device = &self.config.device;
 
         let _ = stop_send.send(());
         debug!("[GoXLR]{} Event Loop Ended", device);
@@ -269,7 +269,7 @@ impl GoXLR {
         let _ = join!(runner);
 
         debug!("[GoXLR]{} Runner Stopped", self.config.device);
-        let run_msg = RunnerMessage::UpdateState(self.config.device, RunnerState::Stopped);
+        let run_msg = RunnerMessage::UpdateState(self.config.device.clone(), RunnerState::Stopped);
         let _ = self.config.manager_sender.send(run_msg).await;
         debug!("[GoXLR]{} Device Runtime Ended..", self.config.device);
 
@@ -280,7 +280,7 @@ impl GoXLR {
 pub async fn start_goxlr(config: GoXLRDeviceConfiguration, shutdown: Stop) {
     // Prepare an error handler, in case something goes wrong during init / runtime..
     let sender = config.manager_sender.clone();
-    let error_msg = RunnerMessage::Error(config.device);
+    let error_msg = RunnerMessage::Error(config.device.clone());
 
     let mut device = GoXLR::new(config, shutdown);
     if let Err(error) = device.run().await {

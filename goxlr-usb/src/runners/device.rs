@@ -54,7 +54,7 @@ impl GoXLRUSBDevice {
         }
 
         let config = GoXLRConfiguration {
-            device: self.config.device,
+            device: self.config.device.clone(),
             events: event_send.clone(),
         };
 

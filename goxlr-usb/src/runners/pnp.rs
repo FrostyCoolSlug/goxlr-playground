@@ -60,8 +60,8 @@ impl PnPRunner {
             if !self.device_list.contains(device) {
                 // New device found, send a message to the device sender..
                 info!("[PnP] New GoXLR Device found: {:?}", device);
-                let _ = sender.send(PnPDeviceMessage::Attached(*device)).await;
-                self.device_list.push(*device);
+                let _ = sender.send(PnPDeviceMessage::Attached(device.clone())).await;
+                self.device_list.push(device.clone());
             }
         }
 
@@ -72,7 +72,7 @@ impl PnPRunner {
             if !devices.contains(device) {
                 // Device has been removed, send out the event.
                 info!("[PnP] GoXLR Device has been removed: {:?}", device);
-                let _ = sender.send(PnPDeviceMessage::Removed(*device)).await;
+                let _ = sender.send(PnPDeviceMessage::Removed(device.clone())).await;
                 device_removed = true;
             }
         }

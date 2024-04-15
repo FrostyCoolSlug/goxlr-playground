@@ -4,7 +4,7 @@
    and Linux
 */
 
-use crate::{USBLocation, PID_GOXLR_FULL, PID_GOXLR_MINI, VID_GOXLR};
+use crate::{USBLocation, PID_GOXLR_FULL, PID_GOXLR_MINI, VID_GOXLR, LibUSB};
 
 pub async fn get_devices() -> Vec<USBLocation> {
     let mut list = vec![];
@@ -19,8 +19,11 @@ pub async fn get_devices() -> Vec<USBLocation> {
 
                 if vid == VID_GOXLR && (pid == PID_GOXLR_FULL || pid == PID_GOXLR_MINI) {
                     let device = USBLocation {
-                        bus_number,
-                        address,
+                        lib_usb: Some(LibUSB {
+                            bus_number,
+                            address,
+                        }),
+                        windows_usb: None,
                     };
 
                     list.push(device);
