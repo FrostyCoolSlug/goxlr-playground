@@ -6,6 +6,7 @@ use tokio::sync::{broadcast, mpsc};
 use tokio::{join, task};
 
 use crate::device::device_manager::start_device_manager;
+use crate::platform::spawn_runtime;
 use crate::servers::http_server::spawn_http_server;
 use crate::servers::ipc_server::{bind_socket, spawn_ipc_server};
 use crate::stop::Stop;
@@ -14,6 +15,7 @@ mod device;
 mod servers;
 mod settings;
 mod stop;
+mod platform;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -73,7 +75,10 @@ async fn main() -> Result<()> {
         shutdown.clone(),
         broadcast_tx.clone(),
     ));
-    let _ = join!(task, communications_handle);
+    
+    let runtime = task::spawn(spawn_runtime(shutdown.clone()));
+    
+    let _ = join!(task, communications_handle, runtime);
     http_server.stop(false).await;
 
     debug!("Should be done!");
