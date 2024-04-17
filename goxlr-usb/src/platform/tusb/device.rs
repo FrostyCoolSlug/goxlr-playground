@@ -7,7 +7,7 @@ use crate::platform::tusb::tusbaudio::{
 use crate::platform::FullGoXLRDevice;
 use crate::runners::device::InternalDeviceMessage;
 use crate::util::stop::Stop;
-use crate::{USBLocation, PID_GOXLR_MINI};
+use crate::{USBLocation, PID_GOXLR_MINI, PID_GOXLR_FULL};
 use anyhow::Result;
 use anyhow::{anyhow, bail};
 use async_trait::async_trait;
@@ -151,13 +151,14 @@ impl GoXLRDevice for TUSBAudioGoXLR {
     }
 
     fn get_device_type(&self) -> DeviceType {
-        let properties = self.handle.get_properties()?;
-        let product_id = properties.product_id() as u16;
+        if let Ok(properties) = self.handle.get_properties() {
+            let product_id = properties.product_id() as u16;
 
-        if product_id == PID_GOXLR_MINI {
-            return DeviceType::Mini;
+            if product_id == PID_GOXLR_FULL {
+                return DeviceType::Full;
+            }
         }
-        DeviceType::Full
+        DeviceType::Mini
     }
 }
 
