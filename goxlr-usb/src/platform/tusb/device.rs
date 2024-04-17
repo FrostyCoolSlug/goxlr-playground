@@ -1,25 +1,27 @@
-use anyhow::Result;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::thread;
-use std::time::{Duration, Instant};
-use anyhow::{anyhow, bail};
-use async_trait::async_trait;
-use log::{debug, error, info};
-use rusb::{Device, DeviceDescriptor, Direction, GlobalContext, Language, Recipient, RequestType};
-use tokio::{join, select, task, time};
-use tokio::sync::{mpsc, oneshot};
-use tokio::sync::mpsc::error::TryRecvError;
-use tokio::sync::mpsc::Receiver;
-use goxlr_shared::device::DeviceType;
-use crate::{PID_GOXLR_MINI, USBLocation};
 use crate::common::command_handler::GoXLRCommands;
 use crate::platform::common::device::{GoXLRConfiguration, GoXLRDevice};
 use crate::platform::common::initialiser::InitialisableGoXLR;
+use crate::platform::tusb::tusbaudio::{
+    DeviceHandle, EventChannelReceiver, EventChannelSender, TUSB_INTERFACE,
+};
 use crate::platform::FullGoXLRDevice;
-use crate::platform::tusb::tusbaudio::{DeviceHandle, EventChannelReceiver, EventChannelSender, TUSB_INTERFACE};
 use crate::runners::device::InternalDeviceMessage;
 use crate::util::stop::Stop;
+use crate::{USBLocation, PID_GOXLR_MINI};
+use anyhow::Result;
+use anyhow::{anyhow, bail};
+use async_trait::async_trait;
+use goxlr_shared::device::DeviceType;
+use log::{debug, error, info};
+use rusb::{Device, DeviceDescriptor, Direction, GlobalContext, Language, Recipient, RequestType};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread;
+use std::time::{Duration, Instant};
+use tokio::sync::mpsc::error::TryRecvError;
+use tokio::sync::mpsc::Receiver;
+use tokio::sync::{mpsc, oneshot};
+use tokio::{join, select, task, time};
 
 pub(crate) struct TUSBAudioGoXLR {
     config: GoXLRConfiguration,
@@ -36,7 +38,10 @@ pub(crate) struct TUSBAudioGoXLR {
 
 #[async_trait]
 impl GoXLRDevice for TUSBAudioGoXLR {
-    async fn from_config(config: GoXLRConfiguration) -> Result<Box<dyn FullGoXLRDevice>> where Self: Sized {
+    async fn from_config(config: GoXLRConfiguration) -> Result<Box<dyn FullGoXLRDevice>>
+    where
+        Self: Sized,
+    {
         // Similarly to the libUSB version, we grab a handle to the GoXLR here which will be used
         // going forwards.
         let handle = if let Some(win_usb) = &config.device.windows_usb {
@@ -69,7 +74,6 @@ impl GoXLRDevice for TUSBAudioGoXLR {
             bail!("USB Device Identifier Not Defined!")
         };
 
-
         let device = self.config.device.clone();
         let mut stop = self.stop.clone();
         let events = self.config.events.clone();
@@ -95,11 +99,7 @@ impl GoXLRDevice for TUSBAudioGoXLR {
                 device_event: event_sender,
             };
 
-            let _ = TUSB_INTERFACE.event_loop(
-                identifier,
-                sender,
-                device_stop
-            );
+            let _ = TUSB_INTERFACE.event_loop(identifier, sender, device_stop);
         }));
 
         // Wait for the Handler to be ready...
@@ -151,13 +151,15 @@ impl GoXLRDevice for TUSBAudioGoXLR {
     }
 
     fn get_device_type(&self) -> DeviceType {
-        // TODO: Fix this..
-        return DeviceType::Full;
+        let properties = self.handle.get_properties()?;
+        let product_id = properties.product_id() as u16;
+
+        if product_id == PID_GOXLR_MINI {
+            return DeviceType::Mini;
+        }
+        DeviceType::Full
     }
 }
 
-
-
 impl GoXLRCommands for TUSBAudioGoXLR {}
 impl FullGoXLRDevice for TUSBAudioGoXLR {}
-
