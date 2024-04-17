@@ -28,3 +28,17 @@ ritelinked = "0.3.2"
 rusb = "0.9.2"
 anyhow = "1.0.72"
 byteorder = "1.4.3"
+cfg-if = "1.0.0"
+
+# Windows Specific Dependencies..
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52.0"
+libloading = "0.8.1"
+widestring = "1.0.2"
+lazy_static = "1.4.0"
+windows = { version = "0.56.0", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_Threading",
+    "Win32_UI_WindowsAndMessaging",
+] }

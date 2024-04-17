@@ -9,8 +9,8 @@ use std::time::Duration;
 use log::{info, warn};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{select, time};
+use crate::platform::find_devices;
 
-use crate::platform::libusb::pnp::get_devices;
 use crate::USBLocation;
 
 struct PnPRunner {
@@ -45,7 +45,7 @@ impl PnPRunner {
                 },
 
                 _ = ticker.tick() => {
-                    let devices = get_devices().await;
+                    let devices = find_devices().await;
                     self.handle_devices(devices).await;
                 }
             }

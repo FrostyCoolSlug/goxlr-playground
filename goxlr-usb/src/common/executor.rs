@@ -34,6 +34,4 @@ pub(crate) trait ExecutableGoXLR {
     async fn perform_stop(&mut self);
 }
 
-pub(crate) trait InitialisableGoXLR {
-    async fn initialise(&mut self) -> Result<()>;
-}
+

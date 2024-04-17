@@ -22,7 +22,8 @@ use crate::common::command_handler::GoXLRCommands;
 use crate::events::commands::{BasicResultCommand, ChannelSource, CommandSender};
 use crate::events::interaction::InteractionEvent;
 use crate::handlers::state_tracker::StateTracker;
-use crate::platform::libusb::device::{GoXLRConfiguration, GoXLRDevice};
+use crate::platform::common::device::{GoXLRConfiguration, GoXLRDevice};
+use crate::platform::{from_device, FullGoXLRDevice}; 
 use crate::types::channels::AssignableChannel;
 use crate::types::encoders::DeviceEncoder;
 use crate::types::faders::DeviceFader;
@@ -60,7 +61,7 @@ impl GoXLRUSBDevice {
 
         // Ok, firstly, we need to create a GoXLR device from our Location..
         debug!("[RUNNER]{} Initialising Device..", self.config.device);
-        let mut device = GoXLRDevice::from(config).await?;
+        let mut device = from_device(config).await?;
         device.run().await?;
 
         debug!(
@@ -112,7 +113,7 @@ impl GoXLRUSBDevice {
         Ok(())
     }
 
-    async fn handle_command(&self, sender: CommandSender, device: &mut GoXLRDevice) {
+    async fn handle_command(&self, sender: CommandSender, device: &mut Box<dyn FullGoXLRDevice>) {
         trace!("Running: {:#?}", sender);
         match sender {
             CommandSender::BasicResultCommand(command, responder) => match command {
@@ -192,7 +193,7 @@ impl GoXLRUSBDevice {
         }
     }
 
-    pub async fn get_device_info(&self, device: &mut GoXLRDevice) -> Result<DeviceInfo> {
+    pub async fn get_device_info(&self, device: &mut Box<dyn FullGoXLRDevice>) -> Result<DeviceInfo> {
         // Ok, lets start pulling data..
         let (serial, manufacture_date) = device.get_serial_data().await?;
         let device_type = device.get_device_type();
@@ -235,9 +236,6 @@ impl GoXLRUSBDevice {
         })
     }
 }
-
-// Add all the executable Command handlers..
-impl GoXLRCommands for GoXLRDevice {}
 
 pub async fn start_usb_device_runner(config: GoXLRUSBConfiguration, ready: Ready) {
     let sender = config.device_event.clone();

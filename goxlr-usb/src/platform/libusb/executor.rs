@@ -98,16 +98,7 @@ impl ExecutableGoXLR for GoXLRDevice {
             let response_command_index = LittleEndian::read_u16(&response_header[6..8]);
 
             if response_command_index != command_index {
-                debug!("Mismatched Command Indexes..");
-                debug!(
-                    "Expected {}, received: {}",
-                    command_index, response_command_index
-                );
-                debug!("Full Request: {:?}", full_request);
-                debug!("Response Header: {:?}", response_header);
-                debug!("Response Body: {:?}", response);
-
-                bail!("Response doesn't match request");
+                bail!("Command Index Mismatch, Expected: {}, Received: {}", command_index, response_command_index);
             }
 
             debug_assert!(response.len() == response_length as usize);

@@ -10,6 +10,7 @@ pub mod events;
 pub mod handlers;
 pub mod requests;
 pub mod runners;
+mod util;
 
 /// GoXLR USB Vendor ID
 pub const VID_GOXLR: u16 = 0x1220;
