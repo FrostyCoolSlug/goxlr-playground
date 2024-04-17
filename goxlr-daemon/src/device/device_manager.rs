@@ -261,7 +261,7 @@ impl DeviceManager {
                 self.serials.retain(|_, dev| *dev != device);
 
                 // If we're in a 'Stopping' state, we're prepping for removal..
-                if current.state == RunnerState::Stopping && self.stopping {
+                if current.state == RunnerState::Stopping || self.stopping {
                     self.states.remove(&device);
                 } else {
                     // We've stopped, but we're not supposed to, that's an error.
