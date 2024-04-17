@@ -109,7 +109,7 @@ impl GoXLRDevice for TUSBAudioGoXLR {
         }
 
         self.initialise().await?;
-        
+
         // Event Sender..
         let internal_sender = self.config.events.clone();
 
@@ -119,7 +119,6 @@ impl GoXLRDevice for TUSBAudioGoXLR {
             loop {
                 select! {
                     Some(()) = event_recv.recv() => {
-                        debug!("[DEVICE]{} Event Notification Received..", device);
                         let _ = internal_sender.send(InternalDeviceMessage::Poll).await;
                     }
                     _ = stop.recv() => {

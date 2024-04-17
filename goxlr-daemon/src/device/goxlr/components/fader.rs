@@ -100,8 +100,6 @@ impl DeviceFader for GoXLR {
         mute_colours.colour1 = details.display.mute_colours.active_colour;
         mute_colours.colour2 = details.display.mute_colours.inactive_colour;
 
-        debug!("{:#?}", mute_colours);
-
         if let Some(device) = &self.device {
             if device.device_type != DeviceType::Mini {
                 let text = format!("{:?}", source);

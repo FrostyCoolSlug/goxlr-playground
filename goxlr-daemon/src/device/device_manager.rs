@@ -312,7 +312,6 @@ impl DeviceManager {
     }
 
     async fn update_status(&mut self) {
-        debug!("Updating Status..");
         let mut status = DaemonStatus::default();
 
         for (serial, usb) in &self.serials {
@@ -352,7 +351,6 @@ impl DeviceManager {
         let patch = diff(&previous, &new);
         if !patch.0.is_empty() {
             // Broadcast Patch..
-            debug!("Patch To Send: {:#?}", patch);
             let _ = self.patch_broadcast.send(PatchEvent { data: patch });
         }
 

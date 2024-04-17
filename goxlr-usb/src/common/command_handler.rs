@@ -270,7 +270,6 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         for (key, value) in params {
             let key = MicParamKeys::from(key);
             cursor.write_u32::<LittleEndian>(key as u32)?;
-            debug!("{}", value);
             cursor.write_f32::<LittleEndian>(value)?;
         }
 
@@ -288,8 +287,6 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
             cursor.write_u32::<LittleEndian>(key as u32)?;
             cursor.write_i32::<LittleEndian>(value)?;
         }
-        debug!("Writing: {:?}", &data);
-
         let command = Command::SetMicrophoneParameters;
         self.request_data(command, &data).await?;
 

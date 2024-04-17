@@ -96,7 +96,6 @@ impl GoXLRUSBDevice {
                     }
                 }
                 Some(command) = self.config.command_receiver.recv() => {
-                    debug!("Handling Command..");
                     self.handle_command(command, &mut device).await;
                 }
                 _ = &mut self.config.stop => {

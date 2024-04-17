@@ -175,7 +175,6 @@ impl GoXLR {
                     Some(event) = self.config.manager_recv.recv() => {
                         match event {
                             ManagerMessage::GetConfig(tx) => {
-                                debug!("Returning Config for Device");
                                 let profiles = Profiles {
                                     profile: self.profile.clone(),
                                     mic_profile: self.mic_profile
