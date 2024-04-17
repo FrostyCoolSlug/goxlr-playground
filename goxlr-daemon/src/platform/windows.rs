@@ -8,18 +8,14 @@ use tokio::signal::windows::{ctrl_break, ctrl_c, ctrl_close, ctrl_logoff, ctrl_s
 
 use crate::stop::Stop;
 
-pub async fn spawn_platform_runtime(
-    mut stop: Stop,
-) -> Result<()> {
-    
-    
+pub async fn spawn_platform_runtime(mut stop: Stop) -> Result<()> {
     // Grab an async shutdown event..
     let mut ctrl_break = ctrl_break()?;
     let mut ctrl_close = ctrl_close()?;
     let mut ctrl_shutdown = ctrl_shutdown()?;
     let mut ctrl_logoff = ctrl_logoff()?;
     let mut ctrl_c = ctrl_c()?;
-    
+
     loop {
         select! {
             Some(_) = ctrl_c.recv() => {
