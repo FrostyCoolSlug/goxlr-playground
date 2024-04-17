@@ -10,7 +10,9 @@ use tokio::time::sleep;
 
 use crate::common::executor::ExecutableGoXLR;
 use crate::goxlr::commands::Command;
-use crate::platform::libusb::device::{GoXLRDevice, ReadControl, WriteControl};
+use crate::platform::common::device::GoXLRDevice;
+use crate::platform::libusb::device::LibUSBGoXLR;
+use crate::platform::libusb::local::{ReadControl, WriteControl};
 use crate::PID_GOXLR_MINI;
 
 /**
@@ -24,7 +26,7 @@ use crate::PID_GOXLR_MINI;
 */
 
 #[async_trait]
-impl ExecutableGoXLR for GoXLRDevice {
+impl ExecutableGoXLR for LibUSBGoXLR {
     async fn perform_request(&mut self, command: Command, body: &[u8]) -> Result<Vec<u8>> {
         if command == Command::ResetCommandIndex {
             self.command_count = 0;
@@ -98,7 +100,11 @@ impl ExecutableGoXLR for GoXLRDevice {
             let response_command_index = LittleEndian::read_u16(&response_header[6..8]);
 
             if response_command_index != command_index {
-                bail!("Command Index Mismatch, Expected: {}, Received: {}", command_index, response_command_index);
+                bail!(
+                    "Command Index Mismatch, Expected: {}, Received: {}",
+                    command_index,
+                    response_command_index
+                );
             }
 
             debug_assert!(response.len() == response_length as usize);

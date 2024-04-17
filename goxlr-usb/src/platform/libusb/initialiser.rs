@@ -1,12 +1,13 @@
-use crate::platform::libusb::device::{GoXLRDevice, ReadControl, WriteControl};
+use crate::platform::common::initialiser::InitialisableGoXLR;
+use crate::platform::libusb::device::LibUSBGoXLR;
+use crate::platform::libusb::local::{ReadControl, WriteControl};
 use anyhow::bail;
 use log::{debug, info};
 use rusb::Error::Pipe;
 use std::time::Duration;
 use tokio::time::sleep;
-use crate::platform::common::initialiser::InitialisableGoXLR;
 
-impl InitialisableGoXLR for GoXLRDevice {
+impl InitialisableGoXLR for LibUSBGoXLR {
     async fn initialise(&mut self) -> anyhow::Result<()> {
         // This command 'resets' the GoXLR to a clean state..
         let reset_control = WriteControl {
