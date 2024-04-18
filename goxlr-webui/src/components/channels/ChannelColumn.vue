@@ -1,13 +1,13 @@
 <script>
 import ScribbleImage from '@/components/channels/ScribbleImage.vue'
-import ChannelVolume from '@/components/channels/ChannelVolume.vue'
+import ChannelColumnVolume from '@/components/channels/ChannelColumnVolume.vue'
 import MuteState from '@/components/channels/MuteState.vue'
 import ColourSettings from '@/components/channels/ColourSettings.vue'
 import { store } from '@/goxlr/store.js'
 
 export default {
-  name: 'ChannelRow',
-  components: { ColourSettings, MuteState, ChannelVolume, ScribbleImage },
+  name: 'ChannelColumn',
+  components: { ColourSettings, MuteState, ChannelColumnVolume, ScribbleImage },
   props: {
     channel: { type: String, required: false },
     title: { type: String, required: true },
@@ -69,7 +69,7 @@ export default {
     <div style="width: 120px; color: #fff">
       {{ title }}
     </div>
-    <ChannelVolume
+    <ChannelColumnVolume
       :current-value="getValue()"
       :colour1="getColourOne()"
       :colour2="getColourTwo()"
