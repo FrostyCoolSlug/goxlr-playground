@@ -5,7 +5,7 @@
 import RangeSelector from '@/components/slider/RangeSelector.vue'
 
 export default {
-  name: 'ChannelColumnVolume',
+  name: 'ChannelRowVolume',
   components: { RangeSelector },
   data() {
     return {
