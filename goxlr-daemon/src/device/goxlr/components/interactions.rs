@@ -151,7 +151,7 @@ impl Interactions for GoXLR {
         let channel = self.profile.pages.page_list[current].faders[fader];
 
         debug!("Fader Moved: {:?} to {:?}", channel, value);
-        self.profile.channels[channel].volume = value;
+        self.profile.channels[channel].volume.mix_a = value;
 
         Ok(())
     }

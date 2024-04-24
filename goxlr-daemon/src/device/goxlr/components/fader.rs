@@ -69,7 +69,7 @@ impl DeviceFader for GoXLR {
         if SUBMIX_MITIGATION.contains(&source) {
             if let Some(device) = &self.device {
                 if device.features.contains(&GoXLRFeature::Submix) {
-                    let volume = details.volume;
+                    let volume = details.volume.mix_a;
                     debug!("Mitigating, Setting Volume of {:?} to {:?}", source, volume);
                     let command = BasicResultCommand::SetVolume(command_source, volume);
                     self.send_no_result(command).await?;

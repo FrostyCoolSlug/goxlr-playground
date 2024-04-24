@@ -10,8 +10,8 @@ use goxlr_shared::gate::GateTimes;
 
 use crate::{
     ButtonColourSet, Compressor, CoughBehaviour, CoughSettings, EqualizerValue, FaderChannel,
-    FaderColourSet, FaderDisplay, FaderPage, FaderPages, Gate, InactiveButtonBehaviour, MicProfile,
-    Microphone, MicrophoneType, Profile, Screen,
+    FaderColourSet, FaderDisplay, FaderPage, FaderPages, FaderVolumes, Gate,
+    InactiveButtonBehaviour, MicProfile, Microphone, MicrophoneType, Profile, Screen,
 };
 use crate::{Configuration, Fader};
 use crate::{MuteAction, SwearSettings};
@@ -64,37 +64,61 @@ impl Default for Profile {
         };
 
         let channel = FaderChannel {
-            volume: 182,
+            volume: FaderVolumes {
+                mix_a: 182,
+                mix_b: 182,
+                linked: Some(1.),
+            },
             mute_state: MuteState::Unmuted,
             mute_actions: mute_action.clone(),
             display: fader_display.clone(),
         };
         let channel2 = FaderChannel {
-            volume: 220,
+            volume: FaderVolumes {
+                mix_a: 220,
+                mix_b: 220,
+                linked: Some(1.),
+            },
             mute_state: MuteState::Unmuted,
             mute_actions: mute_action.clone(),
             display: fader_display.clone(),
         };
         let channel3 = FaderChannel {
-            volume: 126,
+            volume: FaderVolumes {
+                mix_a: 126,
+                mix_b: 126,
+                linked: Some(1.),
+            },
             mute_state: MuteState::Unmuted,
             mute_actions: mute_action.clone(),
             display: fader_display.clone(),
         };
         let channel4 = FaderChannel {
-            volume: 70,
+            volume: FaderVolumes {
+                mix_a: 70,
+                mix_b: 70,
+                linked: Some(1.),
+            },
             mute_state: MuteState::Unmuted,
             mute_actions: mute_action.clone(),
             display: fader_display.clone(),
         };
         let channel5 = FaderChannel {
-            volume: 120,
+            volume: FaderVolumes {
+                mix_a: 120,
+                mix_b: 120,
+                linked: Some(1.),
+            },
             mute_state: MuteState::Unmuted,
             mute_actions: mute_action.clone(),
             display: fader_display.clone(),
         };
         let channel6 = FaderChannel {
-            volume: 212,
+            volume: FaderVolumes {
+                mix_a: 212,
+                mix_b: 212,
+                linked: Some(1.),
+            },
             mute_state: MuteState::Unmuted,
             mute_actions: mute_action.clone(),
             display: fader_display.clone(),
@@ -117,9 +141,9 @@ impl Default for Profile {
         };
 
         // Bump headphones volume to 100%..
-        channels[FaderSources::Headphones].volume = 255;
-        channels[FaderSources::Microphone].volume = 255;
-        channels[FaderSources::MicrophoneMonitor].volume = 255 / 100 * 70;
+        channels[FaderSources::Headphones].volume.mix_a = 255;
+        channels[FaderSources::Microphone].volume.mix_a = 255;
+        channels[FaderSources::MicrophoneMonitor].volume.mix_a = 255 / 100 * 70;
 
         let base_colour: EnumMap<FaderSources, Colour> = enum_map! {
                 FaderSources::Microphone => Colour {
@@ -246,6 +270,7 @@ impl Default for Profile {
 
         // General Configuration
         let configuration = Configuration {
+            submix_enabled: false,
             change_page_with_buttons: true,
             button_hold_time: 1000,
         };
@@ -285,8 +310,12 @@ impl Default for Profile {
             },
         };
 
+        // Set all the Output Mixes to A
+        let outputs = Default::default();
+
         Profile {
             channels,
+            outputs,
             pages,
             routing,
             swear,

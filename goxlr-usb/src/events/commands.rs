@@ -26,6 +26,10 @@ pub enum BasicResultCommand {
     SetButtonStates(ButtonDisplayStates),
     SetScribble(Fader, [u8; 1024]),
 
+    /// SubMix Stuff
+    SetSubMixVolume(ChannelSource, u8),
+    SetSubMixMix(Vec<OutputChannels>, Vec<OutputChannels>),
+
     /// Mic Stuff
     SetMicGain(MicrophoneType, u8),
     SetMicParams(LinkedHashMap<MicParamKeys, f32>),
@@ -38,6 +42,11 @@ pub enum ChannelSource {
     FromOutputChannel(OutputChannels),
     FromFaderSource(FaderSources),
     FromVolumeChannel(VolumeChannels),
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum MixOutputChannels {
+    FromOutputChannel(OutputChannels),
 }
 
 #[derive(Debug)]

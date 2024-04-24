@@ -26,7 +26,7 @@ pub(crate) enum Command {
 
     SetAnimationMode,
 
-    SetSubChannelVolume(SubMixChannelName),
+    SetSubChannelVolume(AssignableChannel),
     SetChannelMixes,
     SetMonitoredMix,
 
@@ -59,8 +59,8 @@ impl Command {
             // Animation Related Commands
             Command::SetAnimationMode => 0x816 << 12,
 
-            // I'm doing a +16 here, because there appears to be a bit reset going on..
-            Command::SetSubChannelVolume(channel) => (0x806 << 12) | *channel as u32,
+            // I'm doing a +0x0F here, because there appears to be a bit reset going on..
+            Command::SetSubChannelVolume(channel) => (0x806 << 12) | *channel as u32 + 0x0f,
             Command::SetChannelMixes => 0x817 << 12,
             Command::SetMonitoredMix => 0x818 << 12,
 

@@ -11,16 +11,20 @@ use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::gate::GateTimes;
 use goxlr_shared::microphone::MicrophoneType;
+use goxlr_shared::submix::Mix;
 
 mod default;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Profile {
+    /// Fader Paging Configuration
+    pub pages: FaderPages,
+
     /// All the Assignable Channels, and their settings..
     pub channels: EnumMap<FaderSources, FaderChannel>,
 
-    /// Fader Paging Configuration
-    pub pages: FaderPages,
+    /// Configuration for the Output Settings..
+    pub outputs: EnumMap<OutputChannels, Outputs>,
 
     /// Configuration for the Swear Button
     pub swear: SwearSettings,
@@ -37,6 +41,11 @@ pub struct Profile {
     /// The General 'Configuration' of the device, this holds various settings such as (hold time)
     /// and any other settings that don't really fit anywhere else.
     pub configuration: Configuration,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct Outputs {
+    pub mix_assignment: Mix,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,7 +77,7 @@ impl Default for FaderPage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FaderChannel {
     /// The current channel volume
-    pub volume: u8,
+    pub volume: FaderVolumes,
 
     /// The current channel Mute State
     pub mute_state: MuteState,
@@ -78,6 +87,18 @@ pub struct FaderChannel {
 
     /// A struct detailing how a fader is displayed on the GoXLR
     pub display: FaderDisplay,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FaderVolumes {
+    /// The Mix A Volume
+    pub mix_a: u8,
+
+    /// The Mix B Volumes
+    pub mix_b: u8,
+
+    /// The linked Ratio of mix_a:mix_b
+    pub linked: Option<f32>,
 }
 
 /// A struct that defines top to bottom how a fader is displayed on the Device
@@ -206,6 +227,7 @@ pub enum CoughBehaviour {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Configuration {
+    pub submix_enabled: bool,
     pub button_hold_time: u16,
     pub change_page_with_buttons: bool,
 }

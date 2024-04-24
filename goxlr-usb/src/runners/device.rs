@@ -9,6 +9,7 @@ use std::sync::atomic::Ordering as AtomicOrder;
 use std::sync::Arc;
 
 use anyhow::{bail, Result};
+use goxlr_shared::channels::OutputChannels;
 use log::{debug, trace};
 use strum::IntoEnumIterator;
 use tokio::select;
@@ -23,8 +24,8 @@ use crate::events::commands::{BasicResultCommand, ChannelSource, CommandSender};
 use crate::events::interaction::InteractionEvent;
 use crate::handlers::state_tracker::StateTracker;
 use crate::platform::common::device::{GoXLRConfiguration, GoXLRDevice};
-use crate::platform::{from_device, FullGoXLRDevice}; 
-use crate::types::channels::AssignableChannel;
+use crate::platform::{from_device, FullGoXLRDevice};
+use crate::types::channels::{AssignableChannel, MixOutputChannel};
 use crate::types::encoders::DeviceEncoder;
 use crate::types::faders::DeviceFader;
 use crate::USBLocation;
@@ -143,6 +144,24 @@ impl GoXLRUSBDevice {
                 BasicResultCommand::SetScribble(fader, data) => {
                     let _ = responder.send(device.set_scribble(fader, data).await);
                 }
+                BasicResultCommand::SetSubMixVolume(source, volume) => {
+                    let source = self.source_to_channel(source);
+                    let _ = responder.send(device.set_submix_volume(source, volume).await);
+                }
+                BasicResultCommand::SetSubMixMix(mix_a, mix_b) => {
+                    // We need to map the outputs defined into MixOutputs...
+                    let mut a = vec![];
+                    mix_a
+                        .iter()
+                        .for_each(|value| a.push(MixOutputChannel::from(*value)));
+
+                    let mut b = vec![];
+                    mix_b
+                        .iter()
+                        .for_each(|value| b.push(MixOutputChannel::from(*value)));
+
+                    let _ = responder.send(device.set_submix_mix(a, b).await);
+                }
                 BasicResultCommand::SetMicGain(mic_type, gain) => {
                     let _ = responder.send(device.set_microphone_gain(mic_type, gain).await);
                 }
@@ -192,7 +211,14 @@ impl GoXLRUSBDevice {
         }
     }
 
-    pub async fn get_device_info(&self, device: &mut Box<dyn FullGoXLRDevice>) -> Result<DeviceInfo> {
+    fn output_source_to_mix(&self, source: OutputChannels) -> MixOutputChannel {
+        source.into()
+    }
+
+    pub async fn get_device_info(
+        &self,
+        device: &mut Box<dyn FullGoXLRDevice>,
+    ) -> Result<DeviceInfo> {
         // Ok, lets start pulling data..
         let (serial, manufacture_date) = device.get_serial_data().await?;
         let device_type = device.get_device_type();

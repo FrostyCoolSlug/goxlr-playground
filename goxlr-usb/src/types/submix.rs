@@ -31,6 +31,7 @@ impl From<InputChannels> for SubMixChannelName {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum DeviceMix {
     A = 0x00,
     B = 0x01,

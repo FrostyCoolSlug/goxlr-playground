@@ -12,15 +12,16 @@ use strum::IntoEnumIterator;
 use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::{InputChannels, RoutingOutput};
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
-use goxlr_shared::faders::Fader;
+use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::ButtonDisplayStates;
+use goxlr_shared::submix::Mix;
 use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 
 use crate::common::executor::ExecutableGoXLR;
 use crate::goxlr::commands::{Command, HardwareInfoCommand};
 use crate::types::buttons::{CurrentButtonStates, DeviceButton};
-use crate::types::channels::{AssignableChannel, ChannelState};
+use crate::types::channels::{AssignableChannel, ChannelState, MixOutputChannel};
 use crate::types::colours::ColourStruct;
 use crate::types::faders::DeviceFader;
 use crate::types::mic_keys::{MicEffectKeys, MicParamKeys};
@@ -28,6 +29,7 @@ use crate::types::microphone::MicrophoneType;
 use crate::types::routing::RoutingChannel::{Left, Right};
 use crate::types::routing::{RoutingInputChannel, RoutingOutputDevice};
 use crate::types::states::ButtonDisplay;
+use crate::types::submix::DeviceMix;
 
 type RoutingValues = EnumMap<RoutingOutput, RouteValue>;
 type Channel = AssignableChannel;
@@ -35,6 +37,7 @@ type Channel = AssignableChannel;
 type EffectKeys = goxlr_shared::microphone::MicEffectKeys;
 type ParamKeys = goxlr_shared::microphone::MicParamKeys;
 type MicType = goxlr_shared::microphone::MicrophoneType;
+type OutMix = Vec<MixOutputChannel>;
 
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
 /// all the specific command executors.
@@ -233,6 +236,39 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         self.request_data(command, &data).await?;
 
         Ok(())
+    }
+
+    async fn set_submix_volume(&mut self, channel: Channel, volume: u8) -> Result<()> {
+        let command = Command::SetSubChannelVolume(channel);
+        self.request_data(command, &[volume]).await?;
+
+        Ok(())
+    }
+
+    async fn set_monitor_mix(&mut self, mix: DeviceMix) -> Result<()> {
+        Ok(())
+    }
+
+    async fn set_submix_mix(&mut self, mix_a: OutMix, mix_b: OutMix) -> Result<()> {
+        let mut a: [u8; 4] = self.build_mix_array(mix_a, DeviceMix::A).await?;
+        let mut b: [u8; 4] = self.build_mix_array(mix_b, DeviceMix::B).await?;
+
+        let mix = [a, b].concat();
+        let command = Command::SetChannelMixes;
+        self.request_data(command, &mix).await?;
+
+        Ok(())
+    }
+
+    async fn build_mix_array(&mut self, mix: OutMix, headphones: DeviceMix) -> Result<[u8; 4]> {
+        let mut mix_array: [u8; 4] = [0x0c; 4];
+        for channel in mix {
+            if channel == MixOutputChannel::Headphones {
+                self.set_monitor_mix(headphones).await?;
+            }
+            mix_array[channel as usize] = channel as u8 * 2;
+        }
+        Ok(mix_array)
     }
 
     async fn get_microphone_level(&mut self) -> Result<f64> {

@@ -20,7 +20,7 @@ impl IPCChannelHandler for GoXLR {
     async fn ipc_channel(&mut self, channel: Source, command: Command) -> Response {
         match command {
             Command::SetVolume(volume) => {
-                self.profile.channels[channel].volume = volume;
+                self.profile.channels[channel].volume.mix_a = volume;
                 self.set_channel_volume(channel, volume).await?;
 
                 Ok(GoXLRCommandResponse::Ok)

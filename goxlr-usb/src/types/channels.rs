@@ -88,3 +88,24 @@ impl From<ChannelMuteState> for ChannelState {
         }
     }
 }
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub(crate) enum MixOutputChannel {
+    Headphones = 0x00,
+    StreamMix = 0x01,
+    LineOut = 0x02,
+    ChatMic = 0x03,
+    Sampler = 0x04,
+}
+
+impl From<OutputChannels> for MixOutputChannel {
+    fn from(value: OutputChannels) -> Self {
+        match value {
+            OutputChannels::Headphones => MixOutputChannel::Headphones,
+            OutputChannels::StreamMix => MixOutputChannel::StreamMix,
+            OutputChannels::LineOut => MixOutputChannel::LineOut,
+            OutputChannels::ChatMic => MixOutputChannel::ChatMic,
+            OutputChannels::Sampler => MixOutputChannel::Sampler,
+        }
+    }
+}
