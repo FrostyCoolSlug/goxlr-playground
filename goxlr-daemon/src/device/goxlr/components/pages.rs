@@ -28,6 +28,7 @@ pub(crate) trait FaderPages {
         fader: Fader,
         channel: FaderSources,
     ) -> Result<()>;
+    async fn set_change_page_with_buttons(&mut self, enabled: bool) -> Result<()>;
 }
 
 impl FaderPages for GoXLR {
@@ -169,6 +170,12 @@ impl FaderPages for GoXLR {
             self.load_current_page(true).await?;
         }
 
+        Ok(())
+    }
+
+    async fn set_change_page_with_buttons(&mut self, enabled: bool) -> Result<()> {
+        self.profile.configuration.change_page_with_buttons = enabled;
+        
         Ok(())
     }
 }

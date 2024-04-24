@@ -8,4 +8,4 @@ pub(crate) mod mute_handler;
 pub(crate) mod pages;
 pub(crate) mod profile;
 pub(crate) mod routing_handler;
-mod submix;
+pub(crate) mod submix;

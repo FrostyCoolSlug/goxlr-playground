@@ -7,15 +7,17 @@ use goxlr_profile::{MicProfile, Profile};
 use goxlr_shared::faders::FaderSources;
 
 use crate::commands::channels::ChannelCommand;
+use crate::commands::configuration::ConfigurationCommand;
 use crate::commands::mic::MicrophoneCommand;
 use crate::commands::pages::PageCommand;
 
 pub mod channels;
 pub mod mic;
 pub mod pages;
+pub mod configuration;
 
 /// This is the base IPC request structure, it's async driven so each request will require a
-/// response 'oneshot' channel for receiving a reply, this allows us to better manage a request /  
+/// response 'oneshot' channel for receiving a reply, this allows us to better manage a request /
 /// response queued
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DaemonRequest {
@@ -61,6 +63,7 @@ pub struct DeviceCommand {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GoXLRCommand {
+    Configuration(ConfigurationCommand),
     Microphone(MicrophoneCommand),
     Channels(Channels),
     Pages(PageCommand),

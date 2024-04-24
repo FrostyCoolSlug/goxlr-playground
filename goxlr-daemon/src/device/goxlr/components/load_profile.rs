@@ -62,7 +62,7 @@ trait LoadProfileLocal {
     fn setup_button_states(&mut self);
 
     /// The next three are responsible for loading the various components of the device..
-    async fn load_volumes(&self) -> Result<()>;
+    async fn load_volumes(&mut self) -> Result<()>;
     async fn load_mute_states(&mut self) -> Result<()>;
     async fn load_colours(&mut self) -> Result<()>;
 
@@ -118,7 +118,7 @@ impl LoadProfileLocal for GoXLR {
         self.button_states.set_state(CoughButton, cough_state);
     }
 
-    async fn load_volumes(&self) -> Result<()> {
+    async fn load_volumes(&mut self) -> Result<()> {
         debug!("Loading Volumes..");
 
         for source in FaderSources::iter() {
