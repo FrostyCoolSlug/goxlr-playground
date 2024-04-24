@@ -98,7 +98,7 @@ pub struct FaderVolumes {
     pub mix_b: u8,
 
     /// The linked Ratio of mix_a:mix_b
-    pub linked: Option<f32>,
+    pub linked: Option<f64>,
 }
 
 /// A struct that defines top to bottom how a fader is displayed on the Device

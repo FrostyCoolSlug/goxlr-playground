@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use goxlr_scribbles::get_scribble;
 use log::debug;
 
@@ -67,13 +67,12 @@ impl DeviceFader for GoXLR {
         // Submix mitigation code, assigning output channels to faders can cause their volume to
         // spike to 100%, the code here immediately resets their volume back to where it should be.
         if SUBMIX_MITIGATION.contains(&source) {
-            if let Some(device) = &self.device {
-                if device.features.contains(&GoXLRFeature::Submix) {
-                    let volume = details.volume.mix_a;
-                    debug!("Mitigating, Setting Volume of {:?} to {:?}", source, volume);
-                    let command = BasicResultCommand::SetVolume(command_source, volume);
-                    self.send_no_result(command).await?;
-                }
+            let device = self.device.as_ref().context("Device Not Found!")?;
+            if device.features.contains(&GoXLRFeature::Submix) {
+                let volume = details.volume.mix_a;
+                debug!("Mitigating, Setting Volume of {:?} to {:?}", source, volume);
+                let command = BasicResultCommand::SetVolume(command_source, volume);
+                self.send_no_result(command).await?;
             }
         }
 
@@ -100,14 +99,13 @@ impl DeviceFader for GoXLR {
         mute_colours.colour1 = details.display.mute_colours.active_colour;
         mute_colours.colour2 = details.display.mute_colours.inactive_colour;
 
-        if let Some(device) = &self.device {
-            if device.device_type != DeviceType::Mini {
-                let text = format!("{:?}", source);
-                debug!("Setting Screen Text to {:?}", text);
-                let scribble = get_scribble(None, Some(text), None, false);
-                let command = BasicResultCommand::SetScribble(fader, scribble);
-                self.send_no_result(command).await?;
-            }
+        let device = self.device.as_ref().context("Device Not Found!")?;
+        if device.device_type != DeviceType::Mini {
+            let text = format!("{:?}", source);
+            debug!("Setting Screen Text to {:?}", text);
+            let scribble = get_scribble(None, Some(text), None, false);
+            let command = BasicResultCommand::SetScribble(fader, scribble);
+            self.send_no_result(command).await?;
         }
 
         // Get the button mute state for this channel..

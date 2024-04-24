@@ -15,6 +15,7 @@ use crate::device::goxlr::components::buttons::ButtonHandlers;
 use crate::device::goxlr::components::mute_handler::MuteHandler;
 use crate::device::goxlr::components::pages::FaderPages;
 use crate::device::goxlr::components::profile::Profile;
+use crate::device::goxlr::components::submix::SubMix;
 use crate::device::goxlr::device::{ButtonState, GoXLR};
 
 pub(crate) trait Interactions {
@@ -152,6 +153,9 @@ impl Interactions for GoXLR {
 
         debug!("Fader Moved: {:?} to {:?}", channel, value);
         self.profile.channels[channel].volume.mix_a = value;
+
+        // Sync the Sub Mix Volume..
+        self.sync_sub_mix_volume(channel).await?;
 
         Ok(())
     }

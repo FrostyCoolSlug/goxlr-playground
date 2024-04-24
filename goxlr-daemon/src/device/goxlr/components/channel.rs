@@ -1,21 +1,49 @@
+use crate::device::goxlr::components::submix::SubMix;
 use crate::device::goxlr::device::GoXLR;
-use anyhow::Result;
+use anyhow::{bail, Context, Result};
+use goxlr_shared::device::GoXLRFeature;
 use goxlr_shared::faders::FaderSources;
 use goxlr_usb::events::commands::BasicResultCommand;
 use goxlr_usb::events::commands::ChannelSource;
 use log::debug;
 
 pub(crate) trait Channels {
-    async fn set_channel_volume(&self, source: FaderSources, volume: u8) -> Result<()>;
+    async fn set_channel_volume(&mut self, source: FaderSources, volume: u8) -> Result<()>;
+    async fn sync_channel_volume(&self, source: FaderSources) -> Result<()>;
 }
 
 impl Channels for GoXLR {
-    async fn set_channel_volume(&self, source: FaderSources, volume: u8) -> Result<()> {
+    async fn set_channel_volume(&mut self, source: FaderSources, volume: u8) -> Result<()> {
         let target = ChannelSource::FromFaderSource(source);
 
         debug!("Setting Volume for {:?} from to {:?}", source, volume);
 
         let command = BasicResultCommand::SetVolume(target, volume);
-        self.send_no_result(command).await
+        self.send_no_result(command).await?;
+
+        self.sync_sub_mix_volume(source).await
+    }
+
+    async fn sync_channel_volume(&self, source: FaderSources) -> Result<()> {
+        // Make sure submixes are even available on this device...
+        let device = self.device.as_ref().context("Device not Set!")?;
+        if !device.features.contains(&GoXLRFeature::Submix) {
+            // We return OK here, because there's nothing to do in this case
+            return Ok(());
+        }
+
+        // Grab the linked ratio (If we're None, ignore)
+        if let Some(linked) = self.profile.channels[source].volume.linked {
+            // Because we're SubMix to Volume, we need to divide by the linked value
+            let mix_volume = self.profile.channels[source].volume.mix_b;
+            let linked_volume = (mix_volume as f64 / linked) as u8;
+
+            let target = ChannelSource::FromFaderSource(source);
+            let command = BasicResultCommand::SetVolume(target, linked_volume);
+            return self.send_no_result(command).await;
+        }
+
+        // Volumes aren't linked, do nothing :)
+        Ok(())
     }
 }
