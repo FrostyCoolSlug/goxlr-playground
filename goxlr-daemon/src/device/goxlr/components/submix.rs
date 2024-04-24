@@ -7,6 +7,7 @@ use goxlr_shared::faders::FaderSources;
 use goxlr_shared::submix::Mix;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 use log::warn;
+use std::cmp;
 use strum::IntoEnumIterator;
 
 /*
@@ -34,6 +35,7 @@ pub trait SubMix {
     async fn set_sub_mix_enabled(&mut self, enabled: bool) -> Result<()>;
     async fn set_sub_mix_mix(&mut self, channel: OutputChannels, mix: Mix) -> Result<()>;
     async fn set_sub_mix_volume(&mut self, channel: FaderSources, volume: u8) -> Result<()>;
+    async fn set_sub_mix_linked(&mut self, channel: FaderSources, linked: bool) -> Result<()>;
 
     async fn sync_sub_mix_volume(&mut self, channel: FaderSources) -> Result<()>;
     async fn load_sub_mix_assignments(&mut self) -> Result<()>;
@@ -62,6 +64,22 @@ impl SubMix for GoXLR {
 
         // Now sync the Mix::A volume
         self.sync_channel_volume(channel).await
+    }
+
+    async fn set_sub_mix_linked(&mut self, channel: FaderSources, linked: bool) -> Result<()> {
+        if !linked {
+            self.profile.channels[channel].volume.linked = None;
+            return Ok(());
+        }
+
+        // Ok, grab the mix volumes, but force them both to be > 0..
+        let a_volume = cmp::max(self.profile.channels[channel].volume.mix_a, 1);
+        let b_volume = cmp::max(self.profile.channels[channel].volume.mix_b, 1);
+        let ratio = b_volume as f64 / a_volume as f64;
+
+        // Disable the link between the channels..
+        self.profile.channels[channel].volume.linked = Some(ratio);
+        Ok(())
     }
 
     async fn sync_sub_mix_volume(&mut self, channel: FaderSources) -> Result<()> {
