@@ -26,6 +26,8 @@ use strum::IntoEnumIterator;
     It should be noted, that the 'SetMixAssignment' command requires a Vec of Mix::A, and Mix::B,
     so we can shortcut a lot of things here by simply calling the load_sub_mix_assignments function
     whenever anything changes.
+
+    All these things are now properly handled in the USB crate, here we just send data :)
 */
 
 pub trait SubMix {
