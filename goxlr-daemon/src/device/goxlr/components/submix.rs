@@ -66,16 +66,20 @@ impl SubMix for GoXLR {
 
     async fn sync_sub_mix_volume(&mut self, channel: FaderSources) -> Result<()> {
         let device = self.device.as_ref().context("Device not Set!")?;
-        if !device.features.contains(&GoXLRFeature::Submix) {
-            // We return OK here, because there's nothing to do if Sub Mixes aren't available
-            return Ok(());
-        }
 
         // Grab the linked ratio (If we're None, ignore)
         if let Some(linked) = self.profile.channels[channel].volume.linked {
             // We're syncing against the main volume, so multiply by ratio
             let mix_volume = self.profile.channels[channel].volume.mix_a;
             let linked_volume = (mix_volume as f64 * linked) as u8;
+
+            // Set the new volume in the profile..
+            self.profile.channels[channel].volume.mix_b = linked_volume;
+
+            // If submixes aren't supported, simply bail.
+            if !device.features.contains(&GoXLRFeature::Submix) {
+                return Ok(());
+            }
 
             let target = ChannelSource::FromFaderSource(channel);
             let command = BasicResultCommand::SetSubMixVolume(target, linked_volume);
