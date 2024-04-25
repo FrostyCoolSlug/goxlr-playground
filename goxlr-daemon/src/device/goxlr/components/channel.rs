@@ -9,12 +9,19 @@ use log::debug;
 
 pub(crate) trait Channels {
     async fn set_channel_volume(&mut self, source: FaderSources, volume: u8) -> Result<()>;
+    async fn apply_channel_volume(&mut self, source: FaderSources) -> Result<()>;
     async fn sync_channel_volume(&mut self, source: FaderSources) -> Result<()>;
 }
 
 impl Channels for GoXLR {
     async fn set_channel_volume(&mut self, source: FaderSources, volume: u8) -> Result<()> {
+        self.profile.channels[source].volume.mix_a = volume;
+        self.apply_channel_volume(source).await
+    }
+
+    async fn apply_channel_volume(&mut self, source: FaderSources) -> Result<()> {
         let target = ChannelSource::FromFaderSource(source);
+        let volume = self.profile.channels[source].volume.mix_a;
 
         debug!("Setting Volume for {:?} from to {:?}", source, volume);
 
@@ -50,3 +57,5 @@ impl Channels for GoXLR {
         Ok(())
     }
 }
+
+pub(crate) trait ChannelsCrate {}

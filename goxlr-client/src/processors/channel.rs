@@ -16,14 +16,14 @@ pub async fn handle_channels(
     match command {
         ChannelCommands::Volume { volume } => {
             // Build the Command..
-            let command = ChannelCommand::SetVolume(volume);
+            let command = ChannelCommand::Volume(volume);
             let command = GoXLRCommand::Channels(Channels { channel, command });
             let command = DaemonRequest::DeviceCommand(DeviceCommand { serial, command });
 
             client.send(command).await?;
         }
         ChannelCommands::Mute { mute_state } => {
-            let command = ChannelCommand::SetMute(mute_state);
+            let command = ChannelCommand::Mute(mute_state);
             let command = GoXLRCommand::Channels(Channels { channel, command });
             let command = DaemonRequest::DeviceCommand(DeviceCommand { serial, command });
 

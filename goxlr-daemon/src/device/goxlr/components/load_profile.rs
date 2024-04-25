@@ -122,8 +122,7 @@ impl LoadProfileLocal for GoXLR {
         debug!("Loading Volumes..");
 
         for source in FaderSources::iter() {
-            let volume = self.profile.channels[source].volume.mix_a;
-            self.set_channel_volume(source, volume).await?;
+            self.apply_channel_volume(source).await?;
         }
 
         Ok(())
