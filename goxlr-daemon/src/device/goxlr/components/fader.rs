@@ -133,8 +133,11 @@ impl DeviceFader for GoXLR {
 trait DeviceFaderLocal {
     /// Gets the assigned fader for a source
     fn get_fader_for_channel(&mut self, source: FaderSources) -> Option<Fader>;
+
+    /// Updates colours for a fader if they don't match provided colours (true on change)
     fn update_colours(&mut self, c1: Colour, c2: Colour, current: Fader) -> bool;
 
+    /// Applies fader colours based on config
     async fn set_fader_colours(&mut self, source: FaderSources, apply: bool) -> Result<()>;
 }
 
