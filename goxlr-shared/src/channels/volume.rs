@@ -4,6 +4,7 @@ use strum::EnumIter;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+use crate::channels::fader::FaderChannels;
 #[cfg(feature = "clap")]
 use clap::ValueEnum;
 
@@ -23,4 +24,21 @@ pub enum VolumeChannels {
     Headphones,
     LineOut,
     MicrophoneMonitor,
+}
+
+impl From<FaderChannels> for VolumeChannels {
+    fn from(value: FaderChannels) -> Self {
+        match value {
+            FaderChannels::Microphone => VolumeChannels::Microphone,
+            FaderChannels::Chat => VolumeChannels::Chat,
+            FaderChannels::Music => VolumeChannels::Music,
+            FaderChannels::Game => VolumeChannels::Game,
+            FaderChannels::Console => VolumeChannels::Console,
+            FaderChannels::LineIn => VolumeChannels::LineIn,
+            FaderChannels::System => VolumeChannels::System,
+            FaderChannels::Sample => VolumeChannels::Sample,
+            FaderChannels::Headphones => VolumeChannels::Headphones,
+            FaderChannels::LineOut => VolumeChannels::LineOut,
+        }
+    }
 }

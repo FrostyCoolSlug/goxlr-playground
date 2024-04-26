@@ -24,20 +24,3 @@ pub enum FaderChannels {
     Headphones,
     LineOut,
 }
-
-impl Into<VolumeChannels> for FaderChannels {
-    fn into(self) -> VolumeChannels {
-        match self {
-            FaderChannels::Microphone => VolumeChannels::Microphone,
-            FaderChannels::Chat => VolumeChannels::Chat,
-            FaderChannels::Music => VolumeChannels::Music,
-            FaderChannels::Game => VolumeChannels::Game,
-            FaderChannels::Console => VolumeChannels::Console,
-            FaderChannels::LineIn => VolumeChannels::LineIn,
-            FaderChannels::System => VolumeChannels::System,
-            FaderChannels::Sample => VolumeChannels::Sample,
-            FaderChannels::Headphones => VolumeChannels::Headphones,
-            FaderChannels::LineOut => VolumeChannels::LineOut,
-        }
-    }
-}
