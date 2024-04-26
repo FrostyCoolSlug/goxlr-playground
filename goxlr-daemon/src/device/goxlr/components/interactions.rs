@@ -1,10 +1,10 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
-use goxlr_profile::CoughBehaviour;
 use log::debug;
 use strum::IntoEnumIterator;
 
+use goxlr_profile::CoughBehaviour;
 use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::MuteState;
 use goxlr_shared::encoders::Encoders;

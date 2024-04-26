@@ -1,8 +1,8 @@
 use anyhow::Result;
-use goxlr_profile::CoughBehaviour;
 use log::{debug, warn};
 use strum::IntoEnumIterator;
 
+use goxlr_profile::CoughBehaviour;
 use goxlr_shared::buttons::Buttons::CoughButton;
 use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels, RoutingOutput};
 use goxlr_shared::colours::TwoColourTargets;

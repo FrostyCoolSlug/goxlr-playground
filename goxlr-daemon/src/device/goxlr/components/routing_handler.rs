@@ -10,7 +10,7 @@ use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::device::GoXLR;
 
-// These just help keep the function definitions slightly tidier..
+// These just help keep the function definitions slightly tidier...
 type In = InputChannels;
 type Out = RoutingOutput;
 type Value = RouteValue;

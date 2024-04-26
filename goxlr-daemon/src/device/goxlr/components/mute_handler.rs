@@ -3,7 +3,6 @@ use log::debug;
 use ritelinked::LinkedHashMap;
 use strum::IntoEnumIterator;
 
-use crate::device::goxlr::components::buttons::ButtonHandlers;
 use goxlr_profile::MuteAction;
 use goxlr_shared::buttons::Buttons::CoughButton;
 use goxlr_shared::channels::ChannelMuteState::{Muted, Unmuted};
@@ -16,6 +15,7 @@ use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::State;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 
+use crate::device::goxlr::components::buttons::ButtonHandlers;
 use crate::device::goxlr::components::fader::DeviceFader;
 use crate::device::goxlr::components::routing_handler::RoutingHandler;
 use crate::device::goxlr::device::GoXLR;

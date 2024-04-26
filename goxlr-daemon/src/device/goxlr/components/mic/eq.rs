@@ -2,10 +2,11 @@ use anyhow::{bail, Result};
 use ritelinked::LinkedHashMap;
 use strum::IntoEnumIterator;
 
-use crate::device::goxlr::device::GoXLR;
 use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
 use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys};
 use goxlr_usb::events::commands::BasicResultCommand;
+
+use crate::device::goxlr::device::GoXLR;
 
 pub trait MicEq {
     async fn set_full_mic_eq_freq(&mut self, freq: Frequencies, value: f32) -> Result<()>;

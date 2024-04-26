@@ -1,4 +1,5 @@
 use anyhow::Result;
+
 use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::device::GoXLR;

@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter, write};
+use std::fmt::{Display, Formatter};
 
 mod common;
 mod goxlr;
@@ -36,7 +36,7 @@ struct LibUSB {
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 struct WindowsUSB {
-    pub(crate) identifier: String
+    pub(crate) identifier: String,
 }
 
 pub struct DeviceHandle {

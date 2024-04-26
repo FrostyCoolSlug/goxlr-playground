@@ -1,14 +1,17 @@
-use crate::device::goxlr::components::channel::Channels;
-use crate::device::goxlr::device::GoXLR;
+use std::cmp;
+
 use anyhow::{Context, Result};
+use log::warn;
+use strum::IntoEnumIterator;
+
 use goxlr_shared::channels::OutputChannels;
 use goxlr_shared::device::GoXLRFeature;
 use goxlr_shared::faders::FaderSources;
 use goxlr_shared::submix::Mix;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
-use log::warn;
-use std::cmp;
-use strum::IntoEnumIterator;
+
+use crate::device::goxlr::components::channel::Channels;
+use crate::device::goxlr::device::GoXLR;
 
 /*
     Ok, for some background on GoXLR sub-mix behaviour...

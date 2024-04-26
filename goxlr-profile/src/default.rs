@@ -3,6 +3,7 @@ use strum::IntoEnumIterator;
 
 use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels};
 use goxlr_shared::colours::Colour;
+use goxlr_shared::colours::FaderDisplayMode::Meter;
 use goxlr_shared::compressor::{CompressorAttackTime, CompressorRatio, CompressorReleaseTime};
 use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
 use goxlr_shared::faders::FaderSources;
@@ -28,7 +29,7 @@ impl Default for Profile {
             MuteAction::Press => vec![],
         };
 
-        let display_mode = vec![];
+        let display_mode = vec![Meter];
 
         let green = Colour {
             red: 0,
@@ -143,7 +144,7 @@ impl Default for Profile {
         // Bump headphones volume to 100%..
         channels[FaderSources::Headphones].volume.mix_a = 255;
         channels[FaderSources::Microphone].volume.mix_a = 255;
-        channels[FaderSources::MicrophoneMonitor].volume.mix_a = 255 / 100 * 70;
+        channels[FaderSources::MicrophoneMonitor].volume.mix_a = 255;
 
         let base_colour: EnumMap<FaderSources, Colour> = enum_map! {
                 FaderSources::Microphone => Colour {
@@ -205,9 +206,9 @@ impl Default for Profile {
                     blue: 255,
                 },
                 FaderSources::MicrophoneMonitor => Colour {
-                    red: 255,
+                    red: 0,
                     green: 0,
-                    blue: 255,
+                    blue: 0,
                 },
         };
 
@@ -226,7 +227,7 @@ impl Default for Profile {
                 Fader::A => FaderSources::System,
                 Fader::B => FaderSources::Game,
                 Fader::C => FaderSources::LineIn,
-                Fader::D => FaderSources::MicrophoneMonitor
+                Fader::D => FaderSources::LineOut
             },
         };
         let page3 = FaderPage {
@@ -234,7 +235,7 @@ impl Default for Profile {
                 Fader::A => FaderSources::Sample,
                 Fader::B => FaderSources::Chat,
                 Fader::C => FaderSources::Console,
-                Fader::D => FaderSources::Microphone
+                Fader::D => FaderSources::Headphones
             },
         };
 

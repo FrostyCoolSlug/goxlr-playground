@@ -1,10 +1,8 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use log::debug;
 
-use crate::device::goxlr::components::mute_handler::MuteHandler;
 use goxlr_shared::device::GoXLRFeature;
 use goxlr_shared::faders::FaderSources;
-use goxlr_shared::submix::Mix;
 use goxlr_usb::events::commands::BasicResultCommand;
 use goxlr_usb::events::commands::ChannelSource;
 

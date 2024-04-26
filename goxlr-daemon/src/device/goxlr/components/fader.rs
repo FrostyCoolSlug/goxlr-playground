@@ -1,11 +1,11 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use goxlr_scribbles::get_scribble;
 use log::debug;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::MuteState;
-use goxlr_shared::colours::{Colour, FaderColour};
+use goxlr_shared::colours::Colour;
 use goxlr_shared::device::{DeviceType, GoXLRFeature};
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::scribbles::Scribble;
@@ -38,6 +38,10 @@ impl DeviceFader for GoXLR {
     /// Some settings may not need to be immediately applied (such as colours and mute state) as
     /// it makes more sense to apply them all at once if assigning multiple faders.
     async fn assign_fader(&mut self, fader: Fader, source: FaderSources) -> Result<()> {
+        if source == FaderSources::MicrophoneMonitor {
+            bail!("Cannot assign MicrophoneMonitor to a Fader!");
+        }
+
         // Get the details for the source..
         let details = self.profile.channels[source].clone();
         let command_source = ChannelSource::FromFaderSource(source);

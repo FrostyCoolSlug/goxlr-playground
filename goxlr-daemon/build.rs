@@ -11,7 +11,7 @@ fn main() {
     };
 
     if cfg!(target_os = "windows") {
-        command.args(&["/C", "npm"]);
+        command.args(["/C", "npm"]);
     }
 
     command
@@ -27,7 +27,7 @@ fn main() {
     };
 
     if cfg!(target_os = "windows") {
-        command.args(&["/C", "npm"]);
+        command.args(["/C", "npm"]);
     }
     command
         .arg("run")
@@ -39,10 +39,8 @@ fn main() {
     let content = Path::new("./web-content");
     if content.exists() {
         fs::remove_dir_all(content).expect("Error Deleting Directory!");
-    } else {
-        if cfg!(not(target_os = "windows")) {
-            fs::create_dir(content).expect("Er?");
-        }
+    } else if cfg!(not(target_os = "windows")) {
+        fs::create_dir(content).expect("Er?");
     }
     fs::rename("../goxlr-webui/dist/", content).expect("BLARP");
 }

@@ -1,10 +1,11 @@
 use anyhow::{bail, Result};
+use ritelinked::LinkedHashMap;
 
-use crate::device::goxlr::device::GoXLR;
 use goxlr_shared::gate::GateTimes;
 use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys};
 use goxlr_usb::events::commands::BasicResultCommand;
-use ritelinked::LinkedHashMap;
+
+use crate::device::goxlr::device::GoXLR;
 
 pub trait Gate {
     async fn set_gate_enabled(&mut self, enabled: bool) -> Result<()>;

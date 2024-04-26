@@ -1,8 +1,8 @@
 use anyhow::{bail, Result};
-use goxlr_profile::FaderPage;
 use log::{debug, warn};
 use strum::IntoEnumIterator;
 
+use goxlr_profile::FaderPage;
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_usb::events::commands::BasicResultCommand;
 
@@ -150,6 +150,9 @@ impl FaderPages for GoXLR {
 
         if page > page_count - 1 {
             bail!("Invalid Page Number: {}, Max: {}", page, page_count);
+        }
+        if channel == FaderSources::MicrophoneMonitor {
+            bail!("Microphone Monitor cannot be assigned to a fader!");
         }
 
         // Is this channel already assigned to this page?

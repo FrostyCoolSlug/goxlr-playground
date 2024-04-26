@@ -1,7 +1,9 @@
-use crate::device::goxlr::device::GoXLR;
 use anyhow::Result;
+
 use goxlr_shared::microphone::MicrophoneType;
 use goxlr_usb::events::commands::BasicResultCommand;
+
+use crate::device::goxlr::device::GoXLR;
 
 pub trait MicType {
     async fn set_mic_type(&mut self, mic_type: MicrophoneType) -> Result<()>;

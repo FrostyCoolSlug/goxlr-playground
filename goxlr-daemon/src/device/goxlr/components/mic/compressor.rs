@@ -1,9 +1,11 @@
-use crate::device::goxlr::device::GoXLR;
 use anyhow::{bail, Result};
+use ritelinked::LinkedHashMap;
+
 use goxlr_shared::compressor::{CompressorAttackTime, CompressorRatio, CompressorReleaseTime};
 use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys};
 use goxlr_usb::events::commands::BasicResultCommand;
-use ritelinked::LinkedHashMap;
+
+use crate::device::goxlr::device::GoXLR;
 
 pub trait Compressor {
     async fn set_compressor_threshold(&mut self, threshold: i8) -> Result<()>;

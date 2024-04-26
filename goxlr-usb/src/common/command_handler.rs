@@ -1,21 +1,19 @@
 use std::io::Cursor;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
 use enum_map::EnumMap;
 use enumset::EnumSet;
-use log::debug;
 use ritelinked::LinkedHashMap;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::{InputChannels, RoutingOutput};
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
-use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::faders::Fader;
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::ButtonDisplayStates;
-use goxlr_shared::submix::Mix;
 use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 
 use crate::common::executor::ExecutableGoXLR;
@@ -138,6 +136,9 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     async fn assign_fader(&mut self, fader: DeviceFader, source: Channel) -> Result<()> {
         // This could be simpler by doing: data = [source as u8, 0x00, 0x00, 0x00]
         // But I'm trying to make it clearer how data is handled.
+        if source == Channel::MicrophoneMonitor {
+            bail!("Microphone Monitor can not be assigned to a fader.");
+        }
 
         let mut data = [0; 4];
         LittleEndian::write_u32(&mut data, source as u32);
@@ -265,8 +266,9 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         for channel in mix {
             if channel == MixOutputChannel::Headphones {
                 self.set_monitor_mix(headphones).await?;
+            } else {
+                mix_array[channel as usize - 1] = channel as u8 * 2;
             }
-            mix_array[channel as usize] = channel as u8 * 2;
         }
         Ok(mix_array)
     }
