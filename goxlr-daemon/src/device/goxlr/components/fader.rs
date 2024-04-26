@@ -1,15 +1,18 @@
 use anyhow::{Context, Result};
 use goxlr_scribbles::get_scribble;
 use log::debug;
+use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::MuteState;
+use goxlr_shared::colours::{Colour, FaderColour};
 use goxlr_shared::device::{DeviceType, GoXLRFeature};
 use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_shared::scribbles::Scribble;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 
 use crate::device::goxlr::components::buttons::ButtonHandlers;
+use crate::device::goxlr::components::load_profile::LoadProfile;
 use crate::device::goxlr::components::mute_handler::MuteHandler;
 use crate::device::goxlr::components::profile::Profile;
 use crate::device::goxlr::device::GoXLR;
@@ -84,9 +87,7 @@ impl DeviceFader for GoXLR {
 
         debug!("Colours: Screen, Fader and Mute Button for {:?}", fader);
         // Start setting up colours..
-        let fader_colours = self.colour_scheme.get_fader_target(fader);
-        fader_colours.colour1 = details.display.fader_colours.top_colour;
-        fader_colours.colour2 = details.display.fader_colours.bottom_colour;
+        self.set_fader_colours(source, false).await?;
 
         // While in the colour structure, scribbles have two colours, there's only one actually used.
         let scribble = Scribble::from(fader).into();
@@ -117,13 +118,65 @@ impl DeviceFader for GoXLR {
     }
 
     /// Called when the mute state gets updated (probably from mute_handler.rs) to update the
-    /// button state.
+    /// button and fader state.
     async fn update_mute_state(&mut self, source: FaderSources, state: MuteState) -> Result<()> {
         self.profile.channels[source].mute_state = state;
         if let Some(button) = self.get_button_for_channel(source) {
             let state = self.get_mute_button_state(source);
             self.button_states.set_state(button, state);
             self.apply_button_states().await?;
+        }
+        self.set_fader_colours(source, true).await
+    }
+}
+
+trait DeviceFaderLocal {
+    /// Gets the assigned fader for a source
+    fn get_fader_for_channel(&mut self, source: FaderSources) -> Option<Fader>;
+    fn update_colours(&mut self, c1: Colour, c2: Colour, current: Fader) -> bool;
+
+    async fn set_fader_colours(&mut self, source: FaderSources, apply: bool) -> Result<()>;
+}
+
+impl DeviceFaderLocal for GoXLR {
+    fn get_fader_for_channel(&mut self, source: FaderSources) -> Option<Fader> {
+        let current_page = self.profile.pages.current;
+        let current_page = &self.profile.pages.page_list[current_page];
+        Fader::iter().find(|&fader| current_page.faders[fader] == source)
+    }
+
+    fn update_colours(&mut self, c1: Colour, c2: Colour, fader: Fader) -> bool {
+        let current = self.colour_scheme.get_fader_target(fader);
+        if current.colour1 != c1 || current.colour2 != c2 {
+            // We need to refresh our faders
+            current.colour1 = c1;
+            current.colour2 = c2;
+
+            return true;
+        }
+        false
+    }
+
+    async fn set_fader_colours(&mut self, source: FaderSources, apply: bool) -> Result<()> {
+        // Now we check whether we should dim the fader..
+        if let Some(fader) = self.get_fader_for_channel(source) {
+            if self.is_muted_to_all(source) {
+                let dimmed = Colour::black();
+
+                if self.update_colours(dimmed, dimmed, fader) && apply {
+                    self.apply_colours().await?;
+                }
+            } else {
+                // Get the original profile colours, and check if our map has them..
+                let channel = &self.profile.channels[source].display;
+
+                let bottom = channel.fader_colours.bottom_colour;
+                let top = channel.fader_colours.top_colour;
+
+                if self.update_colours(top, bottom, fader) && apply {
+                    self.apply_colours().await?;
+                }
+            }
         }
         Ok(())
     }

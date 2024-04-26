@@ -7,6 +7,7 @@ use goxlr_shared::faders::{Fader, FaderSources};
 use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::components::fader::DeviceFader;
+use crate::device::goxlr::components::load_profile::LoadProfile;
 use crate::device::goxlr::device::GoXLR;
 
 /// This trait is responsible for fader paging, anything that need to happen (including changing
@@ -47,8 +48,7 @@ impl FaderPages for GoXLR {
         }
 
         if apply_states {
-            let command = BasicResultCommand::SetColour(self.colour_scheme);
-            self.send_no_result(command).await?;
+            self.apply_colours().await?;
 
             let command = BasicResultCommand::SetButtonStates(self.button_states);
             self.send_no_result(command).await?;
@@ -175,7 +175,7 @@ impl FaderPages for GoXLR {
 
     async fn set_change_page_with_buttons(&mut self, enabled: bool) -> Result<()> {
         self.profile.configuration.change_page_with_buttons = enabled;
-        
+
         Ok(())
     }
 }

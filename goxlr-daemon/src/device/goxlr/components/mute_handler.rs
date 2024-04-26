@@ -41,6 +41,9 @@ pub(crate) trait MuteHandler {
 
     /// Returns the current state of the Cough button..
     fn get_cough_button_state(&self) -> State;
+
+    /// Returns whether a current source is 'Muted to All'
+    fn is_muted_to_all(&self, source: Source) -> bool;
 }
 
 impl MuteHandler for GoXLR {
@@ -199,6 +202,26 @@ impl MuteHandler for GoXLR {
             MuteState::Held => State::Blinking,
         }
     }
+
+    fn is_muted_to_all(&self, source: Source) -> bool {
+        let state = self.profile.channels[source].mute_state;
+        if state == MuteState::Unmuted {
+            // Are we muted by the cough button?
+            if let Some(targets) = self.add_cough_mute(source, None) {
+                if targets.is_empty() {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Ok, get the Target List for this state, including the cough button..
+        let action = MuteAction::from(state);
+        let targets = self.get_targets_for_action(source, action);
+
+        // If the target list is empty, we're muted to all.
+        targets.is_empty()
+    }
 }
 
 pub(crate) trait MuteHandlerCrate {
@@ -232,15 +255,7 @@ impl MuteHandlerCrate for GoXLR {
             MuteState::Pressed | MuteState::Held => {
                 // Same applies here, we don't know the muted state of the device..
                 let action = MuteAction::from(state);
-                let targets = self.profile.channels[source].mute_actions[action].clone();
-
-                // Apply the Cough Button Settings (if needed)
-                let cough_targets = self.add_cough_mute(source, Some(targets.clone()));
-                let targets = if let Some(targets) = cough_targets {
-                    targets
-                } else {
-                    targets
-                };
+                let targets = self.get_targets_for_action(source, action);
 
                 // Should we unmute existing channels?
                 if !targets.is_empty() {
@@ -266,7 +281,8 @@ trait MuteHandlerLocal {
     async fn send_mic_mute_state(&self, muted: bool) -> Result<()>;
     async fn apply_mute_changes(&self, changes: MuteChanges) -> Result<()>;
 
-    fn add_cough_mute(&mut self, source: Source, current: Option<Target>) -> Option<Target>;
+    fn get_targets_for_action(&self, source: Source, mute_action: MuteAction) -> Target;
+    fn add_cough_mute(&self, source: Source, current: Option<Target>) -> Option<Target>;
     fn restore_routing_from_profile(&mut self, source: Source) -> Result<MuteChanges>;
 }
 
@@ -391,7 +407,19 @@ impl MuteHandlerLocal for GoXLR {
         Ok(())
     }
 
-    fn add_cough_mute(&mut self, source: Source, current: Option<Target>) -> Option<Target> {
+    fn get_targets_for_action(&self, source: Source, mute_action: MuteAction) -> Target {
+        let targets = self.profile.channels[source].mute_actions[mute_action].clone();
+
+        // Apply the Cough Button Settings (if needed)
+        let cough_targets = self.add_cough_mute(source, Some(targets.clone()));
+        if let Some(targets) = cough_targets {
+            targets
+        } else {
+            targets
+        }
+    }
+
+    fn add_cough_mute(&self, source: Source, current: Option<Target>) -> Option<Target> {
         let cough_source = self.profile.cough.channel_assignment;
         let cough_state = self.profile.cough.mute_state;
 

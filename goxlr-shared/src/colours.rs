@@ -106,12 +106,22 @@ impl From<Scribble> for TwoColourTargets {
     }
 }
 
-#[derive(Default, Debug, Copy, Clone)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Colour {
     pub red: u32,
     pub green: u32,
     pub blue: u32,
+}
+
+impl Colour {
+    pub fn black() -> Colour {
+        Colour {
+            red: 0,
+            green: 0,
+            blue: 0,
+        }
+    }
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

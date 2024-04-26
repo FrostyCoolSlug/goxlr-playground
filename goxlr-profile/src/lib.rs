@@ -33,29 +33,30 @@ pub struct Profile {
     pub cough: CoughSettings,
 
     /// The Routing Configuration
-    ///
-    /// Note, we don't use RoutingOutput here, as the HardTune setting is entirely transient thus
-    /// shouldn't be stored in the profile. You can use .into() to get it's RoutingOutput equivalent.
     pub routing: EnumMap<InputChannels, EnumMap<OutputChannels, bool>>,
 
-    /// The General 'Configuration' of the device, this holds various settings such as (hold time)
-    /// and any other settings that don't really fit anywhere else.
+    /// The General 'Configuration' of the device
     pub configuration: Configuration,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Outputs {
+    /// The Mix this Output is Assigned to when Sub Mixing is enabled
     pub mix_assignment: Mix,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FaderPages {
+    /// The Currently Active Fader Page
     pub current: usize,
+
+    /// A list of all current Fader Pages
     pub page_list: Vec<FaderPage>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FaderPage {
+    /// A map of the Faders, and which Channels are assigned to them on this Page
     pub faders: EnumMap<Fader, FaderSources>,
 }
 
@@ -129,7 +130,7 @@ pub struct Screen {
     /// A path to the icon to be displayed
     pub image: Option<PathBuf>,
 
-    /// The text dislayed on the screen (central if no icon, at the bottom if icon)
+    /// The text displayed on the screen (central if no icon, at the bottom if icon)
     pub text: Option<String>,
 
     /// The Charater to display in the top left corner of the screen

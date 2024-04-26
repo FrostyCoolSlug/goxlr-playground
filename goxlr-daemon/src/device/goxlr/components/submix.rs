@@ -63,7 +63,7 @@ impl SubMix for GoXLR {
         self.send_no_result(command).await?;
 
         // Now sync the Mix::A volume
-        self.sync_channel_volume(channel).await
+        self.sync_mix_volume(channel).await
     }
 
     async fn set_sub_mix_linked(&mut self, channel: FaderSources, linked: bool) -> Result<()> {

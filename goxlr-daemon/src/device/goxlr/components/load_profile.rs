@@ -21,6 +21,8 @@ use crate::device::goxlr::device::GoXLR;
 /// for the GoXLR type immediately after. This code assumes that self.profile is accurate.
 pub(crate) trait LoadProfile {
     async fn load_profile(&mut self) -> Result<()>;
+
+    async fn apply_colours(&self) -> Result<()>;
 }
 
 impl LoadProfile for GoXLR {
@@ -48,6 +50,12 @@ impl LoadProfile for GoXLR {
 
         debug!("Completed Profile Load");
         Ok(())
+    }
+
+    async fn apply_colours(&self) -> Result<()> {
+        debug!("Applying Colour Scheme..");
+        let command = BasicResultCommand::SetColour(self.colour_scheme);
+        self.send_no_result(command).await
     }
 }
 
@@ -154,8 +162,7 @@ impl LoadProfileLocal for GoXLR {
         swear_button.colour1 = self.profile.swear.colours.active_colour;
         swear_button.colour2 = self.profile.swear.colours.inactive_colour;
 
-        let command = BasicResultCommand::SetColour(self.colour_scheme);
-        self.send_no_result(command).await
+        self.apply_colours().await
     }
 
     async fn apply_routing(&self) -> Result<()> {
