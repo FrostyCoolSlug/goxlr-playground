@@ -4,13 +4,16 @@ use enum_map::{enum_map, Enum, EnumMap};
 use serde::{Deserialize, Serialize};
 
 use goxlr_shared::buttons::InactiveButtonBehaviour;
-use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels};
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::output::OutputChannels;
 use goxlr_shared::colours::{Colour, FaderColour, FaderDisplayMode, TwoColour};
 use goxlr_shared::compressor::{CompressorAttackTime, CompressorRatio, CompressorReleaseTime};
 use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
-use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::faders::Fader;
 use goxlr_shared::gate::GateTimes;
 use goxlr_shared::microphone::MicrophoneType;
+use goxlr_shared::mute::MuteState;
 use goxlr_shared::submix::Mix;
 
 mod default;
@@ -21,7 +24,7 @@ pub struct Profile {
     pub pages: FaderPages,
 
     /// All the Assignable Channels, and their settings..
-    pub channels: EnumMap<FaderSources, FaderChannel>,
+    pub channels: EnumMap<FaderChannels, FaderChannel>,
 
     /// Configuration for the Output Settings..
     pub outputs: EnumMap<OutputChannels, Outputs>,
@@ -57,17 +60,17 @@ pub struct FaderPages {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FaderPage {
     /// A map of the Faders, and which Channels are assigned to them on this Page
-    pub faders: EnumMap<Fader, FaderSources>,
+    pub faders: EnumMap<Fader, FaderChannels>,
 }
 
 impl Default for FaderPage {
     fn default() -> Self {
         Self {
             faders: enum_map! {
-                Fader::A => FaderSources::Microphone,
-                Fader::B => FaderSources::Chat,
-                Fader::C => FaderSources::Music,
-                Fader::D => FaderSources::System
+                Fader::A => FaderChannels::Microphone,
+                Fader::B => FaderChannels::Chat,
+                Fader::C => FaderChannels::Music,
+                Fader::D => FaderChannels::System
             },
         }
     }
@@ -208,7 +211,7 @@ pub struct CoughSettings {
     pub cough_behaviour: CoughBehaviour,
 
     /// The current Channel Assigned to the button (Defaults to Mic)
-    pub channel_assignment: FaderSources,
+    pub channel_assignment: FaderChannels,
 
     /// The current channel Mute State
     pub mute_state: MuteState,

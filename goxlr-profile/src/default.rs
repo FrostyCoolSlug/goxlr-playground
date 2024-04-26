@@ -1,13 +1,16 @@
 use enum_map::{enum_map, EnumMap};
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::output::OutputChannels;
 use strum::IntoEnumIterator;
 
-use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels};
 use goxlr_shared::colours::Colour;
 use goxlr_shared::colours::FaderDisplayMode::Meter;
 use goxlr_shared::compressor::{CompressorAttackTime, CompressorRatio, CompressorReleaseTime};
 use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
-use goxlr_shared::faders::FaderSources;
+
 use goxlr_shared::gate::GateTimes;
+use goxlr_shared::mute::MuteState;
 
 use crate::{
     ButtonColourSet, Compressor, CoughBehaviour, CoughSettings, EqualizerValue, FaderChannel,
@@ -127,93 +130,86 @@ impl Default for Profile {
 
         // We're just going to clone this config out to all the channels, these would realistically
         // all be very different..
-        let mut channels: EnumMap<FaderSources, FaderChannel> = enum_map! {
-                FaderSources::Microphone => channel.clone(),
-                FaderSources::Chat  => channel2.clone(),
-                FaderSources::Music => channel3.clone(),
-                FaderSources::Game => channel4.clone(),
-                FaderSources::Console => channel5.clone(),
-                FaderSources::LineIn => channel6.clone(),
-                FaderSources::System => channel.clone(),
-                FaderSources::Sample => channel2.clone(),
-                FaderSources::Headphones => channel3.clone(),
-                FaderSources::LineOut => channel4.clone(),
-                FaderSources::MicrophoneMonitor => channel5.clone(),
+        let mut channels: EnumMap<FaderChannels, FaderChannel> = enum_map! {
+                FaderChannels::Microphone => channel.clone(),
+                FaderChannels::Chat  => channel2.clone(),
+                FaderChannels::Music => channel3.clone(),
+                FaderChannels::Game => channel4.clone(),
+                FaderChannels::Console => channel5.clone(),
+                FaderChannels::LineIn => channel6.clone(),
+                FaderChannels::System => channel.clone(),
+                FaderChannels::Sample => channel2.clone(),
+                FaderChannels::Headphones => channel3.clone(),
+                FaderChannels::LineOut => channel4.clone(),
         };
 
         // Bump headphones volume to 100%..
-        channels[FaderSources::Headphones].volume.mix_a = 255;
-        channels[FaderSources::Microphone].volume.mix_a = 255;
-        channels[FaderSources::MicrophoneMonitor].volume.mix_a = 255;
+        channels[FaderChannels::Headphones].volume.mix_a = 255;
+        channels[FaderChannels::Microphone].volume.mix_a = 255;
 
-        let base_colour: EnumMap<FaderSources, Colour> = enum_map! {
-                FaderSources::Microphone => Colour {
+        let base_colour: EnumMap<FaderChannels, Colour> = enum_map! {
+                FaderChannels::Microphone => Colour {
                     red: 255,
                     green: 246,
                     blue: 84,
                 },
-                FaderSources::Chat  => Colour {
+                FaderChannels::Chat  => Colour {
                     red: 36,
                     green: 255,
                     blue: 43,
 
                 },
-                FaderSources::Music => Colour {
+                FaderChannels::Music => Colour {
                     red:42,
                     green: 255,
                     blue: 112,
 
                 },
-                FaderSources::Game => Colour {
+                FaderChannels::Game => Colour {
                     red: 255,
                     green: 19,
                     blue: 142,
 
                 },
-                FaderSources::Console => Colour {
+                FaderChannels::Console => Colour {
                     red: 86,
                     green: 14,
                     blue: 255,
 
                 },
-                FaderSources::LineIn => Colour {
+                FaderChannels::LineIn => Colour {
                     red: 255,
                     green: 0,
                     blue: 0,
 
                 },
-                FaderSources::System => Colour {
+                FaderChannels::System => Colour {
                     red: 0,
                     green: 255,
                     blue: 0,
 
                 },
-                FaderSources::Sample => Colour {
+                FaderChannels::Sample => Colour {
                     red: 0,
                     green: 0,
                     blue: 255,
 
                 },
-                FaderSources::Headphones => Colour {
+                FaderChannels::Headphones => Colour {
                     red: 255,
                     green: 36,
                     blue: 13,
 
                 },
-                FaderSources::LineOut => Colour {
+                FaderChannels::LineOut => Colour {
                     red: 255,
                     green: 0,
                     blue: 255,
                 },
-                FaderSources::MicrophoneMonitor => Colour {
-                    red: 0,
-                    green: 0,
-                    blue: 0,
-                },
         };
 
         // In the interests of testing, set the scribble to the name of the channel..
-        for channel in FaderSources::iter() {
+        for channel in FaderChannels::iter() {
             channels[channel].display.screen_display.text = Some(format!("{:?}", channel));
             channels[channel].display.screen_display.colour = base_colour[channel];
             channels[channel].display.mute_colours.active_colour = base_colour[channel];
@@ -224,18 +220,18 @@ impl Default for Profile {
         let page = FaderPage::default();
         let page2 = FaderPage {
             faders: enum_map! {
-                Fader::A => FaderSources::System,
-                Fader::B => FaderSources::Game,
-                Fader::C => FaderSources::LineIn,
-                Fader::D => FaderSources::LineOut
+                Fader::A => FaderChannels::System,
+                Fader::B => FaderChannels::Game,
+                Fader::C => FaderChannels::LineIn,
+                Fader::D => FaderChannels::LineOut
             },
         };
         let page3 = FaderPage {
             faders: enum_map! {
-                Fader::A => FaderSources::Sample,
-                Fader::B => FaderSources::Chat,
-                Fader::C => FaderSources::Console,
-                Fader::D => FaderSources::Headphones
+                Fader::A => FaderChannels::Sample,
+                Fader::B => FaderChannels::Chat,
+                Fader::C => FaderChannels::Console,
+                Fader::D => FaderChannels::Headphones
             },
         };
 
@@ -262,11 +258,11 @@ impl Default for Profile {
         routing[InputChannels::Sample][OutputChannels::ChatMic] = true;
 
         // Mute Behaviours..
-        channels[FaderSources::System].mute_actions[MuteAction::Press] =
+        channels[FaderChannels::System].mute_actions[MuteAction::Press] =
             vec![OutputChannels::Headphones, OutputChannels::LineOut];
-        channels[FaderSources::System].mute_actions[MuteAction::Hold] =
+        channels[FaderChannels::System].mute_actions[MuteAction::Hold] =
             vec![OutputChannels::Headphones, OutputChannels::StreamMix];
-        channels[FaderSources::Chat].mute_actions[MuteAction::Hold] =
+        channels[FaderChannels::Chat].mute_actions[MuteAction::Hold] =
             vec![OutputChannels::StreamMix];
 
         // General Configuration
@@ -296,7 +292,7 @@ impl Default for Profile {
 
         let cough = CoughSettings {
             cough_behaviour: CoughBehaviour::Press,
-            channel_assignment: FaderSources::System,
+            channel_assignment: FaderChannels::System,
             mute_state: MuteState::Unmuted,
             mute_actions: mute_action,
 

@@ -6,9 +6,9 @@ use strum::IntoEnumIterator;
 
 use goxlr_profile::CoughBehaviour;
 use goxlr_shared::buttons::Buttons;
-use goxlr_shared::channels::MuteState;
 use goxlr_shared::encoders::Encoders;
 use goxlr_shared::faders::Fader;
+use goxlr_shared::mute::MuteState;
 use goxlr_shared::states::State;
 
 use crate::device::goxlr::components::buttons::ButtonHandlers;

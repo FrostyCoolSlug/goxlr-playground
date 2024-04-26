@@ -1,4 +1,5 @@
-use goxlr_shared::channels::{InputChannels, RoutingOutput};
+use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::output::RoutingOutput;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum RoutingOutputDevice {

@@ -1,15 +1,15 @@
 use anyhow::{Context, Result};
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::channels::volume::VolumeChannels;
 use log::debug;
 
 use goxlr_shared::device::GoXLRFeature;
-use goxlr_shared::faders::FaderSources;
 use goxlr_usb::events::commands::BasicResultCommand;
-use goxlr_usb::events::commands::ChannelSource;
 
 use crate::device::goxlr::components::submix::SubMix;
 use crate::device::goxlr::device::GoXLR;
 
-type Source = FaderSources;
+type Source = FaderChannels;
 
 pub(crate) trait Channels {
     /// Sets and applies a Channel Volume in the Profile
@@ -32,11 +32,14 @@ impl Channels for GoXLR {
         let volume = self.profile.channels[source].volume.mix_a;
 
         debug!("Setting Volume for {:?} from to {:?}", source, volume);
-        let target = ChannelSource::FromFaderSource(source);
+        let target = VolumeChannels::from(source);
         let command = BasicResultCommand::SetVolume(target, volume);
         self.send_no_result(command).await?;
 
-        self.sync_sub_mix_volume(source).await
+        if source.has_sub_mix() {
+            self.sync_sub_mix_volume(source).await?;
+        }
+        Ok(())
     }
 
     async fn sync_mix_volume(&mut self, source: Source) -> Result<()> {
@@ -56,7 +59,7 @@ impl Channels for GoXLR {
                 return Ok(());
             }
 
-            let target = ChannelSource::FromFaderSource(source);
+            let target = VolumeChannels::from(source);
             let command = BasicResultCommand::SetVolume(target, linked_volume);
             return self.send_no_result(command).await;
         }

@@ -1,7 +1,7 @@
 // Ok, so externally for this, we can simply use InputChannels enum, rather than having
 // a second one to handle. We'll map it correctly here.
 
-use goxlr_shared::channels::InputChannels;
+use goxlr_shared::channels::input::InputChannels;
 use goxlr_shared::submix::Mix;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

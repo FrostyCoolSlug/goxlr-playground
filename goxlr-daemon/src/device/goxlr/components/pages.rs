@@ -3,7 +3,8 @@ use log::{debug, warn};
 use strum::IntoEnumIterator;
 
 use goxlr_profile::FaderPage;
-use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::faders::Fader;
 use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::components::fader::DeviceFader;
@@ -27,7 +28,7 @@ pub(crate) trait FaderPages {
         &mut self,
         page: usize,
         fader: Fader,
-        channel: FaderSources,
+        channel: FaderChannels,
     ) -> Result<()>;
     async fn set_change_page_with_buttons(&mut self, enabled: bool) -> Result<()>;
 }
@@ -143,16 +144,13 @@ impl FaderPages for GoXLR {
         &mut self,
         page: usize,
         fader: Fader,
-        channel: FaderSources,
+        channel: FaderChannels,
     ) -> Result<()> {
         let current_page_number = self.profile.pages.current;
         let page_count = self.profile.pages.page_list.len();
 
         if page > page_count - 1 {
             bail!("Invalid Page Number: {}, Max: {}", page, page_count);
-        }
-        if channel == FaderSources::MicrophoneMonitor {
-            bail!("Microphone Monitor cannot be assigned to a fader!");
         }
 
         // Is this channel already assigned to this page?

@@ -4,7 +4,7 @@ use json_patch::Patch;
 use serde::{Deserialize, Serialize};
 
 use goxlr_profile::{MicProfile, Profile};
-use goxlr_shared::faders::FaderSources;
+use goxlr_shared::channels::fader::FaderChannels;
 
 use crate::commands::channels::ChannelCommand;
 use crate::commands::configuration::ConfigurationCommand;
@@ -12,9 +12,9 @@ use crate::commands::mic::MicrophoneCommand;
 use crate::commands::pages::PageCommand;
 
 pub mod channels;
+pub mod configuration;
 pub mod mic;
 pub mod pages;
-pub mod configuration;
 
 /// This is the base IPC request structure, it's async driven so each request will require a
 /// response 'oneshot' channel for receiving a reply, this allows us to better manage a request /
@@ -80,7 +80,7 @@ pub enum GoXLRCommandResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Channels {
-    pub channel: FaderSources,
+    pub channel: FaderChannels,
     pub command: ChannelCommand,
 }
 

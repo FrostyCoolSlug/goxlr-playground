@@ -1,13 +1,15 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use goxlr_scribbles::get_scribble;
 use log::debug;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons;
-use goxlr_shared::channels::MuteState;
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::channels::volume::VolumeChannels;
 use goxlr_shared::colours::Colour;
 use goxlr_shared::device::{DeviceType, GoXLRFeature};
-use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::faders::Fader;
+use goxlr_shared::mute::MuteState;
 use goxlr_shared::scribbles::Scribble;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
 
@@ -17,18 +19,14 @@ use crate::device::goxlr::components::mute_handler::MuteHandler;
 use crate::device::goxlr::components::profile::Profile;
 use crate::device::goxlr::device::GoXLR;
 
-const SUBMIX_MITIGATION: &[FaderSources] = &[
-    FaderSources::Headphones,
-    FaderSources::LineOut,
-    FaderSources::MicrophoneMonitor,
-];
+const SUBMIX_MITIGATION: &[FaderChannels] = &[FaderChannels::Headphones, FaderChannels::LineOut];
 
 /// This trait is responsible for the management of faders, everything from the top of the
 /// scribble display, to the bottom of the mute button. Any changes which are to occur to them
 /// should make their way through here.
 pub(crate) trait DeviceFader {
-    async fn assign_fader(&mut self, fader: Fader, source: FaderSources) -> Result<()>;
-    async fn update_mute_state(&mut self, source: FaderSources, state: MuteState) -> Result<()>;
+    async fn assign_fader(&mut self, fader: Fader, source: FaderChannels) -> Result<()>;
+    async fn update_mute_state(&mut self, source: FaderChannels, state: MuteState) -> Result<()>;
 }
 
 impl DeviceFader for GoXLR {
@@ -37,11 +35,7 @@ impl DeviceFader for GoXLR {
     ///
     /// Some settings may not need to be immediately applied (such as colours and mute state) as
     /// it makes more sense to apply them all at once if assigning multiple faders.
-    async fn assign_fader(&mut self, fader: Fader, source: FaderSources) -> Result<()> {
-        if source == FaderSources::MicrophoneMonitor {
-            bail!("Cannot assign MicrophoneMonitor to a Fader!");
-        }
-
+    async fn assign_fader(&mut self, fader: Fader, source: FaderChannels) -> Result<()> {
         // Get the details for the source..
         let details = self.profile.channels[source].clone();
         let command_source = ChannelSource::FromFaderSource(source);
@@ -78,7 +72,9 @@ impl DeviceFader for GoXLR {
             if device.features.contains(&GoXLRFeature::Submix) {
                 let volume = details.volume.mix_a;
                 debug!("Mitigating, Setting Volume of {:?} to {:?}", source, volume);
-                let command = BasicResultCommand::SetVolume(command_source, volume);
+                let volume_source = VolumeChannels::from(source);
+
+                let command = BasicResultCommand::SetVolume(volume_source, volume);
                 self.send_no_result(command).await?;
             }
         }
@@ -123,7 +119,7 @@ impl DeviceFader for GoXLR {
 
     /// Called when the mute state gets updated (probably from mute_handler.rs) to update the
     /// button and fader state.
-    async fn update_mute_state(&mut self, source: FaderSources, state: MuteState) -> Result<()> {
+    async fn update_mute_state(&mut self, source: FaderChannels, state: MuteState) -> Result<()> {
         self.profile.channels[source].mute_state = state;
         if let Some(button) = self.get_button_for_channel(source) {
             let state = self.get_mute_button_state(source);
@@ -136,17 +132,17 @@ impl DeviceFader for GoXLR {
 
 trait DeviceFaderLocal {
     /// Gets the assigned fader for a source
-    fn get_fader_for_channel(&mut self, source: FaderSources) -> Option<Fader>;
+    fn get_fader_for_channel(&mut self, source: FaderChannels) -> Option<Fader>;
 
     /// Updates colours for a fader if they don't match provided colours (true on change)
     fn update_colours(&mut self, c1: Colour, c2: Colour, current: Fader) -> bool;
 
     /// Applies fader colours based on config
-    async fn set_fader_colours(&mut self, source: FaderSources, apply: bool) -> Result<()>;
+    async fn set_fader_colours(&mut self, source: FaderChannels, apply: bool) -> Result<()>;
 }
 
 impl DeviceFaderLocal for GoXLR {
-    fn get_fader_for_channel(&mut self, source: FaderSources) -> Option<Fader> {
+    fn get_fader_for_channel(&mut self, source: FaderChannels) -> Option<Fader> {
         let current_page = self.profile.pages.current;
         let current_page = &self.profile.pages.page_list[current_page];
         Fader::iter().find(|&fader| current_page.faders[fader] == source)
@@ -164,7 +160,7 @@ impl DeviceFaderLocal for GoXLR {
         false
     }
 
-    async fn set_fader_colours(&mut self, source: FaderSources, apply: bool) -> Result<()> {
+    async fn set_fader_colours(&mut self, source: FaderChannels, apply: bool) -> Result<()> {
         // Now we check whether we should dim the fader..
         if let Some(fader) = self.get_fader_for_channel(source) {
             if self.is_muted_to_all(source) {

@@ -4,9 +4,11 @@ use strum::IntoEnumIterator;
 
 use goxlr_profile::CoughBehaviour;
 use goxlr_shared::buttons::Buttons::CoughButton;
-use goxlr_shared::channels::{InputChannels, MuteState, OutputChannels, RoutingOutput};
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::output::{OutputChannels, RoutingOutput};
 use goxlr_shared::colours::TwoColourTargets;
-use goxlr_shared::faders::FaderSources;
+use goxlr_shared::mute::MuteState;
 use goxlr_shared::routing::RouteValue;
 use goxlr_usb::events::commands::BasicResultCommand;
 
@@ -129,7 +131,7 @@ impl LoadProfileLocal for GoXLR {
     async fn load_volumes(&mut self) -> Result<()> {
         debug!("Loading Volumes..");
 
-        for source in FaderSources::iter() {
+        for source in FaderChannels::iter() {
             self.apply_channel_volume(source).await?;
         }
 
@@ -139,7 +141,7 @@ impl LoadProfileLocal for GoXLR {
     async fn load_mute_states(&mut self) -> Result<()> {
         debug!("Loading Mute States");
 
-        for source in FaderSources::iter() {
+        for source in FaderChannels::iter() {
             self.set_mute_initial(source).await?;
         }
         Ok(())

@@ -1,10 +1,11 @@
 use anyhow::{bail, Result};
 use enum_map::EnumMap;
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::output::{OutputChannels, RoutingOutput};
 use log::debug;
 use strum::IntoEnumIterator;
 
-use goxlr_shared::channels::{InputChannels, OutputChannels, RoutingOutput};
-use goxlr_shared::faders::FaderSources;
 use goxlr_shared::routing::RouteValue;
 use goxlr_usb::events::commands::BasicResultCommand;
 
@@ -30,7 +31,7 @@ pub(crate) trait RoutingHandler {
     async fn apply_routing_for_channel(&self, source: In) -> Result<()>;
 
     /// Global method for checking whether a target is valid for routing
-    fn is_valid_routing_target(channel: FaderSources) -> bool;
+    fn is_valid_routing_target(channel: FaderChannels) -> bool;
 }
 
 impl RoutingHandler for GoXLR {
@@ -97,16 +98,12 @@ impl RoutingHandler for GoXLR {
 
     /// Headphone, LineOut and MicrophoneMonitor *ARE* valid mute targets, but they're
     /// not valid routing targets. This helper method allows code to check.
-    fn is_valid_routing_target(channel: FaderSources) -> bool {
-        if channel == FaderSources::Headphones {
+    fn is_valid_routing_target(channel: FaderChannels) -> bool {
+        if channel == FaderChannels::Headphones {
             return false;
         }
 
-        if channel == FaderSources::LineOut {
-            return false;
-        }
-
-        if channel == FaderSources::MicrophoneMonitor {
+        if channel == FaderChannels::LineOut {
             return false;
         }
 

@@ -11,10 +11,11 @@ use tokio::{join, select, task, time};
 
 use goxlr_profile::{MicProfile, Profile};
 use goxlr_shared::buttons::Buttons;
-use goxlr_shared::channels::ChannelMuteState;
+use goxlr_shared::channels::fader::FaderChannels;
 use goxlr_shared::colours::ColourScheme;
 use goxlr_shared::device::DeviceInfo;
-use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::faders::Fader;
+use goxlr_shared::mute::ChannelMuteState;
 use goxlr_shared::routing::RoutingTable;
 use goxlr_shared::states::ButtonDisplayStates;
 use goxlr_usb::events::commands::{BasicResultCommand, CommandSender};
@@ -43,8 +44,8 @@ pub(crate) struct GoXLR {
     pub colour_scheme: ColourScheme,
     pub button_states: ButtonDisplayStates,
     pub routing_state: RoutingTable,
-    pub mute_state: EnumMap<FaderSources, Option<ChannelMuteState>>,
-    pub fader_state: EnumMap<Fader, Option<FaderSources>>,
+    pub mute_state: EnumMap<FaderChannels, Option<ChannelMuteState>>,
+    pub fader_state: EnumMap<Fader, Option<FaderChannels>>,
 
     // For tracking button 'held' state..
     pub button_down_states: EnumMap<Buttons, Option<ButtonState>>,
@@ -147,7 +148,8 @@ impl GoXLR {
         self.command_sender = Some(command_send);
 
         // Let the device runner know we're up and running
-        let run_msg = RunnerMessage::UpdateState(self.config.device.clone(), RunnerState::Running(serial));
+        let run_msg =
+            RunnerMessage::UpdateState(self.config.device.clone(), RunnerState::Running(serial));
         let _ = self.config.manager_sender.send(run_msg).await;
 
         // Load the profile.

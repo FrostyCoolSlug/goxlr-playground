@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
 use crate::buttons::Buttons;
-use crate::channels::InputChannels;
 use crate::interaction::InteractiveFaders;
 
 /// A Simple list of the faders, with A being the far left
@@ -41,39 +40,6 @@ impl From<Buttons> for Fader {
             _ => {
                 panic!("Button isn't attached to a fader!");
             }
-        }
-    }
-}
-
-/// A list of channels which can be assigned to a fader.
-#[derive(Debug, Copy, Clone, Enum, EnumIter, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "clap", derive(ValueEnum))]
-pub enum FaderSources {
-    Microphone,
-    Chat,
-    Music,
-    Game,
-    Console,
-    LineIn,
-    System,
-    Sample,
-    Headphones,
-    LineOut,
-    MicrophoneMonitor,
-}
-
-impl From<InputChannels> for FaderSources {
-    fn from(value: InputChannels) -> Self {
-        match value {
-            InputChannels::Microphone => FaderSources::Microphone,
-            InputChannels::Chat => FaderSources::Chat,
-            InputChannels::Music => FaderSources::Music,
-            InputChannels::Game => FaderSources::Game,
-            InputChannels::Console => FaderSources::Console,
-            InputChannels::LineIn => FaderSources::LineIn,
-            InputChannels::System => FaderSources::System,
-            InputChannels::Sample => FaderSources::Sample,
         }
     }
 }

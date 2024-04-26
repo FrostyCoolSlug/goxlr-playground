@@ -1,4 +1,4 @@
-use crate::types::mic_keys::MicParamKeys;
+use crate::types::mic_keys::DeviceMicParamKeys;
 
 pub(crate) enum MicrophoneType {
     XLR = 0x01,
@@ -7,11 +7,11 @@ pub(crate) enum MicrophoneType {
 }
 
 impl MicrophoneType {
-    pub fn get_gain_param(&self) -> MicParamKeys {
+    pub fn get_gain_param(&self) -> DeviceMicParamKeys {
         match self {
-            MicrophoneType::XLR => MicParamKeys::XLRGain,
-            MicrophoneType::Phantom => MicParamKeys::PhantomGain,
-            MicrophoneType::Jack => MicParamKeys::JackGain,
+            MicrophoneType::XLR => DeviceMicParamKeys::XLRGain,
+            MicrophoneType::Phantom => DeviceMicParamKeys::PhantomGain,
+            MicrophoneType::Jack => DeviceMicParamKeys::JackGain,
         }
     }
 

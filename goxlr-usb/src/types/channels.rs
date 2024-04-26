@@ -1,11 +1,14 @@
-use goxlr_shared::channels::{ChannelMuteState, InputChannels, OutputChannels, VolumeChannels};
-use goxlr_shared::faders::FaderSources;
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::output::OutputChannels;
+use goxlr_shared::channels::volume::VolumeChannels;
+use goxlr_shared::mute::{ChannelMuteState, MuteState};
 
 /// While this technically matches FaderSources, it's imperative that this order is maintained, as
 /// it's the order the GoXLR expects (hence why it's hidden away inside the 'USB' crate). In the
 /// event something messages with the ordering of any things that map here, this will remain safe!
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub(crate) enum AssignableChannel {
+pub(crate) enum ChannelList {
     Microphone = 0x00,
     LineIn = 0x01,
     Console = 0x02,
@@ -19,27 +22,27 @@ pub(crate) enum AssignableChannel {
     LineOut = 0x0A,
 }
 
-impl From<InputChannels> for AssignableChannel {
+impl From<InputChannels> for ChannelList {
     fn from(value: InputChannels) -> Self {
         match value {
-            InputChannels::Microphone => AssignableChannel::Microphone,
-            InputChannels::Chat => AssignableChannel::Chat,
-            InputChannels::Music => AssignableChannel::Music,
-            InputChannels::Game => AssignableChannel::Game,
-            InputChannels::Console => AssignableChannel::Console,
-            InputChannels::LineIn => AssignableChannel::LineIn,
-            InputChannels::System => AssignableChannel::System,
-            InputChannels::Sample => AssignableChannel::Sample,
+            InputChannels::Microphone => ChannelList::Microphone,
+            InputChannels::Chat => ChannelList::Chat,
+            InputChannels::Music => ChannelList::Music,
+            InputChannels::Game => ChannelList::Game,
+            InputChannels::Console => ChannelList::Console,
+            InputChannels::LineIn => ChannelList::LineIn,
+            InputChannels::System => ChannelList::System,
+            InputChannels::Sample => ChannelList::Sample,
         }
     }
 }
 
-impl From<OutputChannels> for AssignableChannel {
+impl From<OutputChannels> for ChannelList {
     fn from(value: OutputChannels) -> Self {
         match value {
-            OutputChannels::Headphones => AssignableChannel::Headphones,
-            OutputChannels::ChatMic => AssignableChannel::Chat,
-            OutputChannels::LineOut => AssignableChannel::LineOut,
+            OutputChannels::Headphones => ChannelList::Headphones,
+            OutputChannels::ChatMic => ChannelList::Chat,
+            OutputChannels::LineOut => ChannelList::LineOut,
 
             // Panicking isn't the best option here, but there shouldn't be attempts to
             // adjust the volume / assignment / mute state of channels which can't be adjusted!
@@ -48,28 +51,37 @@ impl From<OutputChannels> for AssignableChannel {
     }
 }
 
-impl From<FaderSources> for AssignableChannel {
-    fn from(value: FaderSources) -> Self {
+impl From<FaderChannels> for ChannelList {
+    fn from(value: FaderChannels) -> Self {
         match value {
-            FaderSources::Microphone => AssignableChannel::Microphone,
-            FaderSources::Chat => AssignableChannel::Chat,
-            FaderSources::Music => AssignableChannel::Music,
-            FaderSources::Game => AssignableChannel::Game,
-            FaderSources::Console => AssignableChannel::Console,
-            FaderSources::LineIn => AssignableChannel::LineIn,
-            FaderSources::System => AssignableChannel::System,
-            FaderSources::Sample => AssignableChannel::Sample,
-            FaderSources::Headphones => AssignableChannel::Headphones,
-            FaderSources::LineOut => AssignableChannel::LineOut,
-            FaderSources::MicrophoneMonitor => AssignableChannel::MicrophoneMonitor,
+            FaderChannels::Microphone => ChannelList::Microphone,
+            FaderChannels::Chat => ChannelList::Chat,
+            FaderChannels::Music => ChannelList::Music,
+            FaderChannels::Game => ChannelList::Game,
+            FaderChannels::Console => ChannelList::Console,
+            FaderChannels::LineIn => ChannelList::LineIn,
+            FaderChannels::System => ChannelList::System,
+            FaderChannels::Sample => ChannelList::Sample,
+            FaderChannels::Headphones => ChannelList::Headphones,
+            FaderChannels::LineOut => ChannelList::LineOut,
         }
     }
 }
 
-impl From<VolumeChannels> for AssignableChannel {
-    fn from(value: VolumeChannels) -> AssignableChannel {
+impl From<VolumeChannels> for ChannelList {
+    fn from(value: VolumeChannels) -> ChannelList {
         match value {
-            VolumeChannels::MicrophoneMonitor => AssignableChannel::MicrophoneMonitor,
+            VolumeChannels::MicrophoneMonitor => ChannelList::MicrophoneMonitor,
+            VolumeChannels::Microphone => ChannelList::Microphone,
+            VolumeChannels::Chat => ChannelList::Chat,
+            VolumeChannels::Music => ChannelList::Music,
+            VolumeChannels::Game => ChannelList::Game,
+            VolumeChannels::Console => ChannelList::Console,
+            VolumeChannels::LineIn => ChannelList::LineIn,
+            VolumeChannels::System => ChannelList::System,
+            VolumeChannels::Sample => ChannelList::Sample,
+            VolumeChannels::Headphones => ChannelList::Headphones,
+            VolumeChannels::LineOut => ChannelList::LineOut,
         }
     }
 }

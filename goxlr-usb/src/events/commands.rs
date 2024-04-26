@@ -1,15 +1,17 @@
 use anyhow::Result;
 use enum_map::EnumMap;
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::output::{OutputChannels, RoutingOutput};
+use goxlr_shared::channels::volume::VolumeChannels;
 use ritelinked::LinkedHashMap;
 use tokio::sync::oneshot;
 
-use goxlr_shared::channels::{
-    ChannelMuteState, InputChannels, OutputChannels, RoutingOutput, VolumeChannels,
-};
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
-use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::faders::Fader;
 use goxlr_shared::interaction::CurrentStates;
 use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys, MicrophoneType};
+use goxlr_shared::mute::ChannelMuteState;
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::ButtonDisplayStates;
 
@@ -18,7 +20,7 @@ use goxlr_shared::states::ButtonDisplayStates;
 #[derive(Debug, Clone)]
 pub enum BasicResultCommand {
     SetColour(ColourScheme),
-    SetVolume(ChannelSource, u8),
+    SetVolume(VolumeChannels, u8),
     SetMuteState(ChannelSource, ChannelMuteState),
     AssignFader(Fader, ChannelSource),
     ApplyRouting(InputChannels, EnumMap<RoutingOutput, RouteValue>),
@@ -40,7 +42,7 @@ pub enum BasicResultCommand {
 pub enum ChannelSource {
     FromInputChannel(InputChannels),
     FromOutputChannel(OutputChannels),
-    FromFaderSource(FaderSources),
+    FromFaderSource(FaderChannels),
     FromVolumeChannel(VolumeChannels),
 }
 

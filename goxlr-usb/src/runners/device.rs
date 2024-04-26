@@ -9,8 +9,9 @@ use std::sync::atomic::Ordering as AtomicOrder;
 use std::sync::Arc;
 
 use anyhow::{bail, Result};
-use goxlr_shared::channels::OutputChannels;
+use goxlr_shared::channels::output::OutputChannels;
 use log::{debug, trace};
+use ritelinked::LinkedHashMap;
 use strum::IntoEnumIterator;
 use tokio::select;
 use tokio::sync::{mpsc, oneshot};
@@ -25,9 +26,10 @@ use crate::events::interaction::InteractionEvent;
 use crate::handlers::state_tracker::StateTracker;
 use crate::platform::common::device::{GoXLRConfiguration, GoXLRDevice};
 use crate::platform::{from_device, FullGoXLRDevice};
-use crate::types::channels::{AssignableChannel, MixOutputChannel};
+use crate::types::channels::{ChannelList, MixOutputChannel};
 use crate::types::encoders::DeviceEncoder;
 use crate::types::faders::DeviceFader;
+use crate::types::mic_keys::{DeviceMicEffectKeys, DeviceMicParamKeys};
 use crate::USBLocation;
 
 // This is an obnoxiously long type, shorten it!
@@ -121,7 +123,7 @@ impl GoXLRUSBDevice {
                     let _ = responder.send(device.apply_colour_scheme(scheme).await);
                 }
                 BasicResultCommand::SetVolume(source, volume) => {
-                    let channel = self.source_to_channel(source);
+                    let channel = self.source_to_channel(ChannelSource::FromVolumeChannel(source));
                     let _ = responder.send(device.set_volume(channel, volume).await);
                 }
                 BasicResultCommand::SetMuteState(source, state) => {
@@ -166,10 +168,18 @@ impl GoXLRUSBDevice {
                     let _ = responder.send(device.set_microphone_gain(mic_type, gain).await);
                 }
                 BasicResultCommand::SetMicParams(params) => {
-                    let _ = responder.send(device.set_mic_params(params).await);
+                    let mut map = LinkedHashMap::new();
+                    params.iter().for_each(|(k, v)| {
+                        map.insert(DeviceMicParamKeys::from(*k), *v);
+                    });
+                    let _ = responder.send(device.set_mic_params(map).await);
                 }
                 BasicResultCommand::SetMicEffects(effects) => {
-                    let _ = responder.send(device.set_mic_effects(effects).await);
+                    let mut map = LinkedHashMap::new();
+                    effects.iter().for_each(|(k, v)| {
+                        map.insert(DeviceMicEffectKeys::from(*k), *v);
+                    });
+                    let _ = responder.send(device.set_mic_effects(map).await);
                 }
             },
             CommandSender::GetMicLevel(responder) => {
@@ -202,7 +212,7 @@ impl GoXLRUSBDevice {
         }
     }
 
-    fn source_to_channel(&self, source: ChannelSource) -> AssignableChannel {
+    fn source_to_channel(&self, source: ChannelSource) -> ChannelList {
         match source {
             ChannelSource::FromInputChannel(source) => source.into(),
             ChannelSource::FromOutputChannel(source) => source.into(),

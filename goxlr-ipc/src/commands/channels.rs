@@ -1,4 +1,4 @@
-use goxlr_shared::channels::MuteState;
+use goxlr_shared::mute::MuteState;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

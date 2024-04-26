@@ -1,4 +1,5 @@
-use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::faders::Fader;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,5 +14,5 @@ pub enum PageCommand {
 pub struct SetFader {
     pub page_number: u8,
     pub fader: Fader,
-    pub channel: FaderSources,
+    pub channel: FaderChannels,
 }

@@ -5,12 +5,12 @@ use crate::device::goxlr::components::mute_handler::MuteHandler;
 use crate::device::goxlr::components::submix::SubMix;
 use goxlr_ipc::commands::channels::ChannelCommand;
 use goxlr_ipc::commands::GoXLRCommandResponse;
-use goxlr_shared::faders::FaderSources;
+use goxlr_shared::channels::fader::FaderChannels;
 
 use crate::device::goxlr::device::GoXLR;
 use crate::device::goxlr::ipc::handler::Response;
 
-type Source = FaderSources;
+type Source = FaderChannels;
 type Command = ChannelCommand;
 
 pub trait IPCChannelHandler {

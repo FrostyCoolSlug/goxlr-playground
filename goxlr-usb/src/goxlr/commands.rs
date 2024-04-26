@@ -1,4 +1,4 @@
-use crate::types::channels::AssignableChannel;
+use crate::types::channels::ChannelList;
 use crate::types::encoders::DeviceEncoder;
 use crate::types::faders::DeviceFader;
 use crate::types::routing::RoutingInputChannel;
@@ -8,8 +8,8 @@ use crate::types::submix::SubMixChannelName;
 pub(crate) enum Command {
     ResetCommandIndex,
     SystemInfo(SystemInfoCommand),
-    SetChannelState(AssignableChannel),
-    SetChannelVolume(AssignableChannel),
+    SetChannelState(ChannelList),
+    SetChannelVolume(ChannelList),
     SetEncoderValue(DeviceEncoder),
     SetEncoderMode(DeviceEncoder),
     SetFader(DeviceFader),
@@ -26,7 +26,7 @@ pub(crate) enum Command {
 
     SetAnimationMode,
 
-    SetSubChannelVolume(AssignableChannel),
+    SetSubChannelVolume(ChannelList),
     SetChannelMixes,
     SetMonitoredMix,
 

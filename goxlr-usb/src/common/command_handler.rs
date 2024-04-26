@@ -5,11 +5,13 @@ use async_trait::async_trait;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
 use enum_map::EnumMap;
 use enumset::EnumSet;
+use log::debug;
 use ritelinked::LinkedHashMap;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons;
-use goxlr_shared::channels::{InputChannels, RoutingOutput};
+use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::output::RoutingOutput;
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
 use goxlr_shared::faders::Fader;
 use goxlr_shared::routing::RouteValue;
@@ -19,10 +21,10 @@ use goxlr_shared::version::{FirmwareVersions, VersionNumber};
 use crate::common::executor::ExecutableGoXLR;
 use crate::goxlr::commands::{Command, HardwareInfoCommand};
 use crate::types::buttons::{CurrentButtonStates, DeviceButton};
-use crate::types::channels::{AssignableChannel, ChannelState, MixOutputChannel};
+use crate::types::channels::{ChannelList, ChannelState, MixOutputChannel};
 use crate::types::colours::ColourStruct;
 use crate::types::faders::DeviceFader;
-use crate::types::mic_keys::{MicEffectKeys, MicParamKeys};
+use crate::types::mic_keys::{DeviceMicEffectKeys, DeviceMicParamKeys};
 use crate::types::microphone::MicrophoneType;
 use crate::types::routing::RoutingChannel::{Left, Right};
 use crate::types::routing::{RoutingInputChannel, RoutingOutputDevice};
@@ -30,7 +32,7 @@ use crate::types::states::ButtonDisplay;
 use crate::types::submix::DeviceMix;
 
 type RoutingValues = EnumMap<RoutingOutput, RouteValue>;
-type Channel = AssignableChannel;
+type Channel = ChannelList;
 
 type EffectKeys = goxlr_shared::microphone::MicEffectKeys;
 type ParamKeys = goxlr_shared::microphone::MicParamKeys;
@@ -292,7 +294,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         let mut cursor = Cursor::new(&mut data);
 
         let has_phantom = mic_type.has_phantom() as u32;
-        cursor.write_u32::<LittleEndian>(MicParamKeys::MicType as u32)?;
+        cursor.write_u32::<LittleEndian>(DeviceMicParamKeys::MicType as u32)?;
         cursor.write_u32::<LittleEndian>(has_phantom)?;
 
         // Now write the Gain...
@@ -302,11 +304,16 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         Ok(())
     }
 
-    async fn set_mic_params(&mut self, params: LinkedHashMap<ParamKeys, f32>) -> Result<()> {
+    async fn set_mic_params(
+        &mut self,
+        params: LinkedHashMap<DeviceMicParamKeys, f32>,
+    ) -> Result<()> {
         let mut data = Vec::with_capacity(params.len() * 8);
         let mut cursor = Cursor::new(&mut data);
+
+        debug!("{:#?}", params);
         for (key, value) in params {
-            let key = MicParamKeys::from(key);
+            let key = DeviceMicParamKeys::from(key);
             cursor.write_u32::<LittleEndian>(key as u32)?;
             cursor.write_f32::<LittleEndian>(value)?;
         }
@@ -317,11 +324,14 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         Ok(())
     }
 
-    async fn set_mic_effects(&mut self, effects: LinkedHashMap<EffectKeys, i32>) -> Result<()> {
+    async fn set_mic_effects(
+        &mut self,
+        effects: LinkedHashMap<DeviceMicEffectKeys, i32>,
+    ) -> Result<()> {
         let mut data = Vec::with_capacity(effects.len() * 8);
         let mut cursor = Cursor::new(&mut data);
         for (key, value) in effects {
-            let key = MicEffectKeys::from(key);
+            let key = DeviceMicEffectKeys::from(key);
             cursor.write_u32::<LittleEndian>(key as u32)?;
             cursor.write_i32::<LittleEndian>(value)?;
         }

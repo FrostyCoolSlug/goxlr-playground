@@ -5,12 +5,12 @@ use strum::IntoEnumIterator;
 
 use goxlr_profile::MuteAction;
 use goxlr_shared::buttons::Buttons::CoughButton;
-use goxlr_shared::channels::ChannelMuteState::{Muted, Unmuted};
-use goxlr_shared::channels::{
-    ChannelMuteState, InputChannels, MuteState, OutputChannels, RoutingOutput,
-};
-use goxlr_shared::faders::FaderSources;
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::output::{OutputChannels, RoutingOutput};
 use goxlr_shared::microphone::MicEffectKeys;
+use goxlr_shared::mute::ChannelMuteState::{Muted, Unmuted};
+use goxlr_shared::mute::{ChannelMuteState, MuteState};
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::State;
 use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
@@ -20,7 +20,7 @@ use crate::device::goxlr::components::fader::DeviceFader;
 use crate::device::goxlr::components::routing_handler::RoutingHandler;
 use crate::device::goxlr::device::GoXLR;
 
-type Source = FaderSources;
+type Source = FaderChannels;
 type Target = Vec<OutputChannels>;
 
 pub(crate) trait MuteHandler {
@@ -337,7 +337,7 @@ impl MuteHandlerLocal for GoXLR {
         debug!("Muting Channel {:?} to All", source);
 
         // The Microphone also has an 'Effect' which needs to be set when muting / unmuting
-        if source == FaderSources::Microphone {
+        if source == FaderChannels::Microphone {
             self.send_mic_mute_state(true).await?;
         }
 
@@ -356,7 +356,7 @@ impl MuteHandlerLocal for GoXLR {
         }
 
         // The Microphone also has an 'Effect' which needs to be set when muting / unmuting
-        if source == FaderSources::Microphone {
+        if source == FaderChannels::Microphone {
             self.send_mic_mute_state(false).await?;
         }
 

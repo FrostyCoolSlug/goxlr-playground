@@ -1,6 +1,6 @@
+use crate::channels::input::InputChannels;
+use crate::channels::output::RoutingOutput;
 use enum_map::{Enum, EnumMap};
-
-use crate::channels::{InputChannels, RoutingOutput};
 
 // Types to help keep things tidy..
 type Row = EnumMap<RoutingOutput, RouteValue>;
