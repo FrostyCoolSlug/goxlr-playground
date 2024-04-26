@@ -132,7 +132,7 @@ impl LoadProfileLocal for GoXLR {
         debug!("Loading Volumes..");
 
         for source in FaderChannels::iter() {
-            self.apply_channel_volume(source).await?;
+            self.apply_channel_volume(source.into()).await?;
         }
 
         Ok(())

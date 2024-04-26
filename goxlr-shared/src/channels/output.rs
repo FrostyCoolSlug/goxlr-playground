@@ -1,12 +1,15 @@
-#[cfg(feature = "clap")]
-use clap::ValueEnum;
 use enum_map::Enum;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Enum, EnumIter)]
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "clap")]
+use clap::ValueEnum;
+
+#[derive(Debug, Copy, Clone, Hash, Enum, EnumIter, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum OutputChannels {
     Headphones,
     StreamMix,
@@ -15,8 +18,9 @@ pub enum OutputChannels {
     Sampler,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Enum, EnumIter)]
+#[derive(Debug, Copy, Clone, Hash, Enum, EnumIter, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum RoutingOutput {
     Headphones,
     StreamMix,

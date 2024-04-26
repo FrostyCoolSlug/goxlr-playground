@@ -36,8 +36,7 @@ impl DeviceFader for GoXLR {
     /// Some settings may not need to be immediately applied (such as colours and mute state) as
     /// it makes more sense to apply them all at once if assigning multiple faders.
     async fn assign_fader(&mut self, fader: Fader, source: FaderChannels) -> Result<()> {
-        // Get the details for the source..
-        let details = self.profile.channels[source].clone();
+        //let details = self.profile.channels[source].clone();
         let command_source = ChannelSource::FromFaderSource(source);
 
         debug!("Checking assign of {:?} to {:?}", source, fader);
@@ -70,35 +69,38 @@ impl DeviceFader for GoXLR {
         if SUBMIX_MITIGATION.contains(&source) {
             let device = self.device.as_ref().context("Device Not Found!")?;
             if device.features.contains(&GoXLRFeature::Submix) {
-                let volume = details.volume.mix_a;
-                debug!("Mitigating, Setting Volume of {:?} to {:?}", source, volume);
-                let volume_source = VolumeChannels::from(source);
+                let volume = self.profile.channels.volumes[source.into()];
 
-                let command = BasicResultCommand::SetVolume(volume_source, volume);
+                debug!("Mitigating, Setting Volume of {:?} to {:?}", source, volume);
+
+                let command = BasicResultCommand::SetVolume(source.into(), volume);
                 self.send_no_result(command).await?;
             }
         }
 
+        // Get the faders style
+        let style = self.profile.channels.configs[source].display.clone();
+
         // Set the Faders Colour Style..
-        let display_mode = details.display.fader_display_mode;
+        let display_mode = style.fader_display_mode;
         debug!("Setting Fader {:?} display to {:?}", fader, display_mode);
         let command = BasicResultCommand::SetFaderStyle(fader, display_mode);
         self.send_no_result(command).await?;
 
         debug!("Colours: Screen, Fader and Mute Button for {:?}", fader);
         // Start setting up colours..
-        self.set_fader_colours(source, false).await?;
+        self.set_fader_colours(source.clone(), false).await?;
 
         // While in the colour structure, scribbles have two colours, there's only one actually used.
         let scribble = Scribble::from(fader).into();
         let scribble_colour = self.colour_scheme.get_two_colour_target(scribble);
-        scribble_colour.colour1 = details.display.screen_display.colour;
+        scribble_colour.colour1 = style.screen_display.colour;
 
         // Set the colours for the mute button..
         let mute_button = Buttons::from_fader(fader);
         let mute_colours = self.colour_scheme.get_two_colour_target(mute_button.into());
-        mute_colours.colour1 = details.display.mute_colours.active_colour;
-        mute_colours.colour2 = details.display.mute_colours.inactive_colour;
+        mute_colours.colour1 = style.mute_colours.active_colour;
+        mute_colours.colour2 = style.mute_colours.inactive_colour;
 
         let device = self.device.as_ref().context("Device Not Found!")?;
         if device.device_type != DeviceType::Mini {
@@ -120,7 +122,7 @@ impl DeviceFader for GoXLR {
     /// Called when the mute state gets updated (probably from mute_handler.rs) to update the
     /// button and fader state.
     async fn update_mute_state(&mut self, source: FaderChannels, state: MuteState) -> Result<()> {
-        self.profile.channels[source].mute_state = state;
+        self.profile.channels.configs[source.into()].mute_state = state;
         if let Some(button) = self.get_button_for_channel(source) {
             let state = self.get_mute_button_state(source);
             self.button_states.set_state(button, state);
@@ -171,7 +173,7 @@ impl DeviceFaderLocal for GoXLR {
                 }
             } else {
                 // Get the original profile colours, and check if our map has them..
-                let channel = &self.profile.channels[source].display;
+                let channel = &self.profile.channels.configs[source].display;
 
                 let bottom = channel.fader_colours.bottom_colour;
                 let top = channel.fader_colours.top_colour;

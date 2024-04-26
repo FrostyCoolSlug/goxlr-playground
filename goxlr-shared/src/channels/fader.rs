@@ -1,13 +1,15 @@
-use crate::channels::input::InputChannels;
-#[cfg(feature = "clap")]
-use clap::ValueEnum;
 use enum_map::Enum;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+use crate::channels::volume::VolumeChannels;
+#[cfg(feature = "clap")]
+use clap::ValueEnum;
+
 /// Channels which can be assigned to Faders
-#[derive(Debug, Copy, Clone, Enum, EnumIter, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, Enum, EnumIter, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum FaderChannels {
@@ -23,27 +25,19 @@ pub enum FaderChannels {
     LineOut,
 }
 
-/// A list of channels which can be assigned to a fader.
-impl FaderChannels {
-    pub fn has_sub_mix(&self) -> bool {
-        if self == &FaderChannels::Headphones || self == &FaderChannels::LineOut {
-            return false;
-        }
-        true
-    }
-}
-
-impl From<InputChannels> for FaderChannels {
-    fn from(value: InputChannels) -> Self {
-        match value {
-            InputChannels::Chat => FaderChannels::Chat,
-            InputChannels::Music => FaderChannels::Music,
-            InputChannels::Game => FaderChannels::Game,
-            InputChannels::Console => FaderChannels::Console,
-            InputChannels::LineIn => FaderChannels::LineIn,
-            InputChannels::System => FaderChannels::System,
-            InputChannels::Sample => FaderChannels::Sample,
-            _ => panic!("Not a valid Fader source!"),
+impl Into<VolumeChannels> for FaderChannels {
+    fn into(self) -> VolumeChannels {
+        match self {
+            FaderChannels::Microphone => VolumeChannels::Microphone,
+            FaderChannels::Chat => VolumeChannels::Chat,
+            FaderChannels::Music => VolumeChannels::Music,
+            FaderChannels::Game => VolumeChannels::Game,
+            FaderChannels::Console => VolumeChannels::Console,
+            FaderChannels::LineIn => VolumeChannels::LineIn,
+            FaderChannels::System => VolumeChannels::System,
+            FaderChannels::Sample => VolumeChannels::Sample,
+            FaderChannels::Headphones => VolumeChannels::Headphones,
+            FaderChannels::LineOut => VolumeChannels::LineOut,
         }
     }
 }

@@ -59,13 +59,11 @@ impl SubMix for GoXLR {
     }
 
     async fn set_sub_mix_volume(&mut self, channel: FaderChannels, volume: u8) -> Result<()> {
-        self.profile.channels[channel].volume.mix_b = volume;
+        self.profile.channels.sub_mix[channel.into()].volume = volume;
 
-        if channel.has_sub_mix() {
-            let source = ChannelSource::FromFaderSource(channel);
-            let command = BasicResultCommand::SetSubMixVolume(source, volume);
-            self.send_no_result(command).await?;
-        }
+        let source = ChannelSource::FromFaderSource(channel);
+        let command = BasicResultCommand::SetSubMixVolume(source, volume);
+        self.send_no_result(command).await?;
 
         // Now sync the Mix::A volume
         self.sync_mix_volume(channel).await
@@ -73,17 +71,17 @@ impl SubMix for GoXLR {
 
     async fn set_sub_mix_linked(&mut self, channel: FaderChannels, linked: bool) -> Result<()> {
         if !linked {
-            self.profile.channels[channel].volume.linked = None;
+            self.profile.channels.sub_mix[channel.into()].linked = None;
             return Ok(());
         }
 
         // Ok, grab the mix volumes, but force them both to be > 0..
-        let a_volume = cmp::max(self.profile.channels[channel].volume.mix_a, 1);
-        let b_volume = cmp::max(self.profile.channels[channel].volume.mix_b, 1);
+        let a_volume = cmp::max(self.profile.channels.volumes[channel.into()], 1);
+        let b_volume = cmp::max(self.profile.channels.sub_mix[channel.into()].volume, 1);
         let ratio = b_volume as f64 / a_volume as f64;
 
         // Disable the link between the channels..
-        self.profile.channels[channel].volume.linked = Some(ratio);
+        self.profile.channels.sub_mix[channel.into()].linked = Some(ratio);
         Ok(())
     }
 
@@ -91,13 +89,13 @@ impl SubMix for GoXLR {
         let device = self.device.as_ref().context("Device not Set!")?;
 
         // Grab the linked ratio (If we're None, ignore)
-        if let Some(linked) = self.profile.channels[channel].volume.linked {
+        if let Some(linked) = self.profile.channels.sub_mix[channel.into()].linked {
             // We're syncing against the main volume, so multiply by ratio
-            let mix_volume = self.profile.channels[channel].volume.mix_a;
+            let mix_volume = self.profile.channels.sub_mix[channel.into()].volume;
             let linked_volume = (mix_volume as f64 * linked) as u8;
 
             // Set the new volume in the profile..
-            self.profile.channels[channel].volume.mix_b = linked_volume;
+            self.profile.channels.sub_mix[channel.into()].volume = linked_volume;
 
             // If submixes aren't supported, simply bail.
             if !device.features.contains(&GoXLRFeature::Submix) {

@@ -1,11 +1,16 @@
-use crate::channels::fader::FaderChannels;
 use enum_map::Enum;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Enum, EnumIter)]
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+use crate::channels::fader::FaderChannels;
+#[cfg(feature = "clap")]
+use clap::ValueEnum;
+
+#[derive(Debug, Copy, Clone, Hash, Enum, EnumIter, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum InputChannels {
     Microphone,
     Chat,
@@ -28,9 +33,7 @@ impl From<FaderChannels> for InputChannels {
             FaderChannels::LineIn => InputChannels::LineIn,
             FaderChannels::System => InputChannels::System,
             FaderChannels::Sample => InputChannels::Sample,
-            FaderChannels::Headphones | FaderChannels::LineOut => {
-                panic!("Invalid Mapping from FaderSources -> InputChannel")
-            }
+            _ => panic!("Attempted to Map a Non-input channel: {:?}", value),
         }
     }
 }

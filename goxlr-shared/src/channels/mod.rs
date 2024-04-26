@@ -1,3 +1,4 @@
+pub mod channels;
 pub mod fader;
 pub mod input;
 pub mod output;

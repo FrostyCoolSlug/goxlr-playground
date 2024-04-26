@@ -4,9 +4,12 @@ use enum_map::{enum_map, Enum, EnumMap};
 use serde::{Deserialize, Serialize};
 
 use goxlr_shared::buttons::InactiveButtonBehaviour;
+use goxlr_shared::channels::channels::AllChannels;
 use goxlr_shared::channels::fader::FaderChannels;
 use goxlr_shared::channels::input::InputChannels;
 use goxlr_shared::channels::output::OutputChannels;
+use goxlr_shared::channels::sub_mix::SubMixChannels;
+use goxlr_shared::channels::volume::VolumeChannels;
 use goxlr_shared::colours::{Colour, FaderColour, FaderDisplayMode, TwoColour};
 use goxlr_shared::compressor::{CompressorAttackTime, CompressorRatio, CompressorReleaseTime};
 use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
@@ -24,7 +27,7 @@ pub struct Profile {
     pub pages: FaderPages,
 
     /// All the Assignable Channels, and their settings..
-    pub channels: EnumMap<FaderChannels, FaderChannel>,
+    pub channels: Channels,
 
     /// Configuration for the Output Settings..
     pub outputs: EnumMap<OutputChannels, Outputs>,
@@ -76,13 +79,22 @@ impl Default for FaderPage {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Channels {
+    /// Volumes for All Channels
+    pub volumes: EnumMap<VolumeChannels, u8>,
+
+    /// Configs for Channels which can be assigned to Faders
+    pub configs: EnumMap<FaderChannels, FaderChannel>,
+
+    /// Sub-mix Settings for all applicable channels
+    pub sub_mix: EnumMap<SubMixChannels, SubMixVolumes>,
+}
+
 /// This is a Channel that can be assigned to a fader. All configuration for the channel
 /// including colours, mute states and behaviours are configured here.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FaderChannel {
-    /// The current channel volume
-    pub volume: FaderVolumes,
-
     /// The current channel Mute State
     pub mute_state: MuteState,
 
@@ -93,13 +105,10 @@ pub struct FaderChannel {
     pub display: FaderDisplay,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FaderVolumes {
-    /// The Mix A Volume
-    pub mix_a: u8,
-
+#[derive(Default, Debug, Copy, Clone, Serialize, Deserialize)]
+pub struct SubMixVolumes {
     /// The Mix B Volumes
-    pub mix_b: u8,
+    pub volume: u8,
 
     /// The linked Ratio of mix_a:mix_b
     pub linked: Option<f64>,

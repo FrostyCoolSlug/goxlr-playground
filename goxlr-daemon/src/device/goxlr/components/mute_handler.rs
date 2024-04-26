@@ -86,7 +86,7 @@ impl MuteHandler for GoXLR {
 
         // Otherwise, get our targets and send it
         let action = MuteAction::from(state);
-        let targets = self.profile.channels[source].mute_actions[action].clone();
+        let targets = self.profile.channels.configs[source].mute_actions[action].clone();
 
         if let Some(targets) = self.add_cough_mute(source, Some(targets.clone())) {
             let changes = self.mute_to_targets(source, targets).await?;
@@ -110,7 +110,7 @@ impl MuteHandler for GoXLR {
     async fn handle_mute_press(&mut self, source: Source) -> Result<()> {
         debug!("Handling Mute Press for {:?}", source);
 
-        let current = self.profile.channels[source].mute_state;
+        let current = self.profile.channels.configs[source].mute_state;
         if current != MuteState::Unmuted {
             debug!("{:?} currently muted, handling unmute..", source);
 
@@ -126,7 +126,7 @@ impl MuteHandler for GoXLR {
         }
 
         debug!("Channel {:?} not muted, muting", source);
-        let targets = self.profile.channels[source].mute_actions[MuteAction::Press].clone();
+        let targets = self.profile.channels.configs[source].mute_actions[MuteAction::Press].clone();
         let changes = self.mute_to_targets(source, targets).await?;
 
         self.apply_mute_changes(changes).await?;
@@ -137,12 +137,12 @@ impl MuteHandler for GoXLR {
     async fn handle_mute_hold(&mut self, source: Source) -> Result<()> {
         debug!("Handling Mute Hold for {:?}", source);
 
-        let current_state = self.profile.channels[source].mute_state;
+        let current_state = self.profile.channels.configs[source].mute_state;
         if current_state == MuteState::Held {
             return Ok(());
         }
 
-        let targets = self.profile.channels[source].mute_actions[MuteAction::Hold].clone();
+        let targets = self.profile.channels.configs[source].mute_actions[MuteAction::Hold].clone();
         let change = self.mute_to_targets(source, targets).await?;
 
         self.apply_mute_changes(change).await?;
@@ -161,7 +161,7 @@ impl MuteHandler for GoXLR {
         let cough_source = self.profile.cough.channel_assignment;
 
         // Get the current mute state of this channel..
-        let channel_state = self.profile.channels[cough_source].mute_state;
+        let channel_state = self.profile.channels.configs[cough_source].mute_state;
 
         // Update the state of the Mute Button..
         if hold && current != MuteState::Held {
@@ -186,7 +186,7 @@ impl MuteHandler for GoXLR {
     }
 
     fn get_mute_button_state(&self, source: Source) -> State {
-        let channel = self.profile.channels[source].clone();
+        let channel = self.profile.channels.configs[source].clone();
 
         match channel.mute_state {
             MuteState::Unmuted => State::from(channel.display.mute_colours.inactive_behaviour),
@@ -204,7 +204,7 @@ impl MuteHandler for GoXLR {
     }
 
     fn is_muted_to_all(&self, source: Source) -> bool {
-        let state = self.profile.channels[source].mute_state;
+        let state = self.profile.channels.configs[source].mute_state;
         if state == MuteState::Unmuted {
             // Are we muted by the cough button?
             if let Some(targets) = self.add_cough_mute(source, None) {
@@ -233,7 +233,7 @@ impl MuteHandlerCrate for GoXLR {
     /// For this method, we assume that all the mute settings are incorrect, and we go through and
     /// update the routing table, and mute states to ensure they match the 'base' level.
     async fn set_mute_initial(&mut self, source: Source) -> Result<()> {
-        let state = self.profile.channels[source].mute_state;
+        let state = self.profile.channels.configs[source].mute_state;
         match state {
             MuteState::Unmuted => {
                 // Our channel is directly unmuted, check the Cough button to see if it's involved
@@ -301,16 +301,16 @@ impl MuteHandlerLocal for GoXLR {
         }
 
         // Grab the current routing row for this source..
-        let original = self.get_routing_input_row(InputChannels::from(source));
+        let original = self.get_routing_input_row(source.into());
 
         let mut restore = self.restore_routing_from_profile(source)?;
-        let source = InputChannels::from(source);
+        let source = source.into();
 
         let mut route_change = false;
 
         // Now, we simply iterate over our targets, and set their new state
         for target in targets {
-            let route = RoutingOutput::from(target);
+            let route = target.into();
 
             if self.set_route(source, route, RouteValue::Off)? && !route_change {
                 debug!("Activating Transient Mute {:?} to {:?}", source, route);
@@ -408,7 +408,7 @@ impl MuteHandlerLocal for GoXLR {
     }
 
     fn get_targets_for_action(&self, source: Source, mute_action: MuteAction) -> Target {
-        let targets = self.profile.channels[source].mute_actions[mute_action].clone();
+        let targets = self.profile.channels.configs[source].mute_actions[mute_action].clone();
 
         // Apply the Cough Button Settings (if needed)
         let cough_targets = self.add_cough_mute(source, Some(targets.clone()));
