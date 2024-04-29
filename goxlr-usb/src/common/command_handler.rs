@@ -248,6 +248,8 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     }
 
     async fn set_monitor_mix(&mut self, mix: DeviceMix) -> Result<()> {
+        let command = Command::SetMonitoredMix;
+        self.request_data(command, &[mix as u8]).await?;
         Ok(())
     }
 
