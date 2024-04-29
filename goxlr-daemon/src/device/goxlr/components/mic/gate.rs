@@ -7,6 +7,11 @@ use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::device::GoXLR;
 
+static GATE_ATTENUATION: [i8; 26] = [
+    -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16, -17, -18, -19, -20, -21, -22, -23, -24, -25,
+    -26, -27, -28, -30, -32, -61,
+];
+
 pub trait Gate {
     async fn set_gate_enabled(&mut self, enabled: bool) -> Result<()>;
     async fn set_gate_threshold(&mut self, threshold: i8) -> Result<()>;
@@ -102,7 +107,6 @@ impl GateCrate for GoXLR {
         let threshold = self.mic_profile.gate.threshold as i32;
         let attack = self.mic_profile.gate.attack as i32;
         let release = self.mic_profile.gate.release as i32;
-        let attenuation = self.mic_profile.gate.attenuation as i32;
 
         // Fill out all the Gate Values...
         map.insert(MicEffectKeys::GateMode, 2_i32);
@@ -110,7 +114,7 @@ impl GateCrate for GoXLR {
         map.insert(MicEffectKeys::GateThreshold, threshold);
         map.insert(MicEffectKeys::GateAttack, attack);
         map.insert(MicEffectKeys::GateRelease, release);
-        map.insert(MicEffectKeys::GateAttenuation, attenuation);
+        map.insert(MicEffectKeys::GateAttenuation, self.get_gate_attenuation());
 
         map
     }
@@ -131,5 +135,22 @@ impl GateCrate for GoXLR {
         map.insert(MicParamKeys::GateAttenuation, attenuation);
 
         map
+    }
+}
+
+trait GateLocal {
+    fn get_gate_attenuation(&self) -> i32;
+}
+
+impl GateLocal for GoXLR {
+    fn get_gate_attenuation(&self) -> i32 {
+        let percent = self.mic_profile.gate.attenuation;
+        let index = percent as f32 * 0.24;
+
+        if percent > 99 {
+            return GATE_ATTENUATION[25] as i32;
+        }
+
+        GATE_ATTENUATION[index as usize] as i32
     }
 }

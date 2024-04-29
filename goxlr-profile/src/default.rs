@@ -382,7 +382,7 @@ impl Default for MicProfile {
         };
 
         let gains = enum_map! {
-            MicrophoneType::XLR => 55,
+            MicrophoneType::XLR => 45,
             MicrophoneType::Phantom => 35,
             MicrophoneType::Jack => 40,
         };
@@ -404,7 +404,7 @@ impl Default for MicProfile {
             deess: 0,
             gate: Gate {
                 enabled: true,
-                threshold: -40,
+                threshold: -53,
                 attack: GateTimes::Time10ms,
                 release: GateTimes::Time200ms,
                 attenuation: 100,

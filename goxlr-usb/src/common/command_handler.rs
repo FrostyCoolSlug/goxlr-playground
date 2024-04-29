@@ -39,8 +39,8 @@ type SubChannel = SubMixChannelList;
 type MicType = goxlr_shared::microphone::MicrophoneType;
 type OutMix = Vec<MixOutputChannel>;
 
-type MicEffects = LinkedHashMap<MicEffectKeys, i32>;
-type MicParams = LinkedHashMap<MicParamKeys, f32>;
+type MicEffects = LinkedHashMap<DeviceMicEffectKeys, i32>;
+type MicParams = LinkedHashMap<DeviceMicParamKeys, f32>;
 
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
 /// all the specific command executors.
@@ -306,10 +306,14 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         cursor.write_u32::<LittleEndian>(mic_type.get_gain_param() as u32)?;
         cursor.write_u32::<LittleEndian>(gain as u32 * 65536)?;
 
+        let command = Command::SetMicrophoneParameters;
+        self.request_data(command, &data).await?;
+
         Ok(())
     }
 
     async fn set_mic_params(&mut self, params: MicParams) -> Result<()> {
+        debug!("Params: {:#?}", params);
         let mut data = Vec::with_capacity(params.len() * 8);
         let mut cursor = Cursor::new(&mut data);
 
@@ -325,6 +329,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     }
 
     async fn set_mic_effects(&mut self, effects: MicEffects) -> Result<()> {
+        debug!("Effects: {:#?}", effects);
         let mut data = Vec::with_capacity(effects.len() * 8);
         let mut cursor = Cursor::new(&mut data);
         for (key, value) in effects {
