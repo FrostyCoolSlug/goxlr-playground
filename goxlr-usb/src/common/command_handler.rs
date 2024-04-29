@@ -14,6 +14,7 @@ use goxlr_shared::channels::input::InputChannels;
 use goxlr_shared::channels::output::RoutingOutput;
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
 use goxlr_shared::faders::Fader;
+use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys};
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::ButtonDisplayStates;
 use goxlr_shared::version::{FirmwareVersions, VersionNumber};
@@ -37,6 +38,9 @@ type SubChannel = SubMixChannelList;
 
 type MicType = goxlr_shared::microphone::MicrophoneType;
 type OutMix = Vec<MixOutputChannel>;
+
+type MicEffects = LinkedHashMap<MicEffectKeys, i32>;
+type MicParams = LinkedHashMap<MicParamKeys, f32>;
 
 /// This extension applies to anything that's implemented ExecutableGoXLR, and contains
 /// all the specific command executors.
@@ -305,14 +309,10 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         Ok(())
     }
 
-    async fn set_mic_params(
-        &mut self,
-        params: LinkedHashMap<DeviceMicParamKeys, f32>,
-    ) -> Result<()> {
+    async fn set_mic_params(&mut self, params: MicParams) -> Result<()> {
         let mut data = Vec::with_capacity(params.len() * 8);
         let mut cursor = Cursor::new(&mut data);
 
-        debug!("{:#?}", params);
         for (key, value) in params {
             cursor.write_u32::<LittleEndian>(key as u32)?;
             cursor.write_f32::<LittleEndian>(value)?;
@@ -324,17 +324,14 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         Ok(())
     }
 
-    async fn set_mic_effects(
-        &mut self,
-        effects: LinkedHashMap<DeviceMicEffectKeys, i32>,
-    ) -> Result<()> {
+    async fn set_mic_effects(&mut self, effects: MicEffects) -> Result<()> {
         let mut data = Vec::with_capacity(effects.len() * 8);
         let mut cursor = Cursor::new(&mut data);
         for (key, value) in effects {
             cursor.write_u32::<LittleEndian>(key as u32)?;
             cursor.write_i32::<LittleEndian>(value)?;
         }
-        let command = Command::SetMicrophoneParameters;
+        let command = Command::SetMicrophoneEffects;
         self.request_data(command, &data).await?;
 
         Ok(())

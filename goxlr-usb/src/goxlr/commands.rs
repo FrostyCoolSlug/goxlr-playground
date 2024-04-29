@@ -15,8 +15,10 @@ pub(crate) enum Command {
     SetFader(DeviceFader),
     SetRouting(RoutingInputChannel),
     SetButtonStates(),
-    SetEffectParameters,
+
+    SetMicrophoneEffects,
     SetMicrophoneParameters,
+
     GetMicrophoneLevel,
     SetColourMap(),
     SetFaderDisplayMode(DeviceFader),
@@ -54,7 +56,7 @@ impl Command {
             Command::GetHardwareInfo(sub) => (0x80f << 12) | *sub as u32,
             Command::GetMicrophoneLevel => 0x80c << 12,
             Command::SetMicrophoneParameters => 0x80b << 12,
-            Command::SetEffectParameters => 0x801 << 12,
+            Command::SetMicrophoneEffects => 0x801 << 12,
 
             // Animation Related Commands
             Command::SetAnimationMode => 0x816 << 12,
