@@ -15,7 +15,6 @@ use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys, MicrophoneType};
 use goxlr_shared::mute::ChannelMuteState;
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::ButtonDisplayStates;
-use goxlr_shared::submix::Mix;
 
 /// This is a helper enum for commands that will simply return a Result<()> with no additional
 /// data, it helps simplify wrapping these type of commands together.

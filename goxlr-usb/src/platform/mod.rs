@@ -1,7 +1,7 @@
 use crate::common::command_handler::GoXLRCommands;
 use crate::platform::common::device::{GoXLRConfiguration, GoXLRDevice};
 use crate::USBLocation;
-use anyhow::{bail, Result};
+use anyhow::Result;
 
 // This file will select which backend to use depending on platform, internally they'll all
 // behave the same way.

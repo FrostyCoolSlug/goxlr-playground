@@ -35,8 +35,6 @@ type RoutingValues = EnumMap<RoutingOutput, RouteValue>;
 type Channel = ChannelList;
 type SubChannel = SubMixChannelList;
 
-type EffectKeys = goxlr_shared::microphone::MicEffectKeys;
-type ParamKeys = goxlr_shared::microphone::MicParamKeys;
 type MicType = goxlr_shared::microphone::MicrophoneType;
 type OutMix = Vec<MixOutputChannel>;
 
@@ -254,8 +252,8 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
     }
 
     async fn set_submix_mix(&mut self, mix_a: OutMix, mix_b: OutMix) -> Result<()> {
-        let mut a: [u8; 4] = self.build_mix_array(mix_a, DeviceMix::A).await?;
-        let mut b: [u8; 4] = self.build_mix_array(mix_b, DeviceMix::B).await?;
+        let a: [u8; 4] = self.build_mix_array(mix_a, DeviceMix::A).await?;
+        let b: [u8; 4] = self.build_mix_array(mix_b, DeviceMix::B).await?;
 
         let mix = [a, b].concat();
         let command = Command::SetChannelMixes;
@@ -314,7 +312,6 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
 
         debug!("{:#?}", params);
         for (key, value) in params {
-            let key = DeviceMicParamKeys::from(key);
             cursor.write_u32::<LittleEndian>(key as u32)?;
             cursor.write_f32::<LittleEndian>(value)?;
         }
@@ -332,7 +329,6 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         let mut data = Vec::with_capacity(effects.len() * 8);
         let mut cursor = Cursor::new(&mut data);
         for (key, value) in effects {
-            let key = DeviceMicEffectKeys::from(key);
             cursor.write_u32::<LittleEndian>(key as u32)?;
             cursor.write_i32::<LittleEndian>(value)?;
         }

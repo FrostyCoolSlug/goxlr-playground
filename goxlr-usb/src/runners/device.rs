@@ -9,7 +9,6 @@ use std::sync::atomic::Ordering as AtomicOrder;
 use std::sync::Arc;
 
 use anyhow::{bail, Result};
-use goxlr_shared::channels::output::OutputChannels;
 use log::{debug, trace};
 use ritelinked::LinkedHashMap;
 use strum::IntoEnumIterator;
@@ -20,13 +19,12 @@ use goxlr_shared::device::{DeviceInfo, DeviceType, GoXLRFeature};
 use goxlr_shared::interaction::{ButtonStates, CurrentStates};
 use goxlr_shared::version::VersionNumber;
 
-use crate::common::command_handler::GoXLRCommands;
 use crate::events::commands::{BasicResultCommand, CommandSender};
 use crate::events::interaction::InteractionEvent;
 use crate::handlers::state_tracker::StateTracker;
-use crate::platform::common::device::{GoXLRConfiguration, GoXLRDevice};
+use crate::platform::common::device::GoXLRConfiguration;
 use crate::platform::{from_device, FullGoXLRDevice};
-use crate::types::channels::{ChannelList, MixOutputChannel};
+use crate::types::channels::MixOutputChannel;
 use crate::types::encoders::DeviceEncoder;
 use crate::types::faders::DeviceFader;
 use crate::types::mic_keys::{DeviceMicEffectKeys, DeviceMicParamKeys};
@@ -150,11 +148,11 @@ impl GoXLRUSBDevice {
                 BasicResultCommand::SetSubMixMix(mix_a, mix_b) => {
                     // We need to map the outputs defined into MixOutputs...
                     let mut a: Vec<MixOutputChannel> = vec![];
-                    type MOC = MixOutputChannel;
-                    mix_a.iter().for_each(|value| a.push(MOC::from(*value)));
+                    type Output = MixOutputChannel;
+                    mix_a.iter().for_each(|value| a.push(Output::from(*value)));
 
                     let mut b: Vec<MixOutputChannel> = vec![];
-                    mix_b.iter().for_each(|value| b.push(MOC::from(*value)));
+                    mix_b.iter().for_each(|value| b.push(Output::from(*value)));
 
                     let _ = responder.send(device.set_submix_mix(a, b).await);
                 }
@@ -163,17 +161,17 @@ impl GoXLRUSBDevice {
                 }
                 BasicResultCommand::SetMicParams(params) => {
                     let mut map = LinkedHashMap::new();
-                    type DMP = DeviceMicParamKeys;
+                    type MicParams = DeviceMicParamKeys;
                     params.iter().for_each(|(key, value)| {
-                        map.insert(DMP::from(*key), *value);
+                        map.insert(MicParams::from(*key), *value);
                     });
                     let _ = responder.send(device.set_mic_params(map).await);
                 }
                 BasicResultCommand::SetMicEffects(effects) => {
                     let mut map = LinkedHashMap::new();
-                    type DME = DeviceMicEffectKeys;
+                    type MicEffects = DeviceMicEffectKeys;
                     effects.iter().for_each(|(key, value)| {
-                        map.insert(DME::from(*key), *value);
+                        map.insert(MicEffects::from(*key), *value);
                     });
                     let _ = responder.send(device.set_mic_effects(map).await);
                 }
@@ -206,10 +204,6 @@ impl GoXLRUSBDevice {
                 }
             }
         }
-    }
-
-    fn output_source_to_mix(&self, source: OutputChannels) -> MixOutputChannel {
-        source.into()
     }
 
     pub async fn get_device_info(

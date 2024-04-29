@@ -10,8 +10,6 @@ use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::device::GoXLR;
 
-type Source = FaderChannels;
-
 pub(crate) trait Channels {
     /// Sets and applies a Channel Volume in the Profile
     async fn set_channel_volume(&mut self, source: VolumeChannels, volume: u8) -> Result<()>;

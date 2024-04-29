@@ -85,7 +85,7 @@ impl DeviceFader for GoXLR {
 
         debug!("Colours: Screen, Fader and Mute Button for {:?}", fader);
         // Start setting up colours..
-        self.set_fader_colours(source.clone(), false).await?;
+        self.set_fader_colours(source, false).await?;
 
         // While in the colour structure, scribbles have two colours, there's only one actually used.
         let scribble = Scribble::from(fader).into();
@@ -118,7 +118,7 @@ impl DeviceFader for GoXLR {
     /// Called when the mute state gets updated (probably from mute_handler.rs) to update the
     /// button and fader state.
     async fn update_mute_state(&mut self, source: FaderChannels, state: MuteState) -> Result<()> {
-        self.profile.channels.configs[source.into()].mute_state = state;
+        self.profile.channels.configs[source].mute_state = state;
         if let Some(button) = self.get_button_for_channel(source) {
             let state = self.get_mute_button_state(source);
             self.button_states.set_state(button, state);

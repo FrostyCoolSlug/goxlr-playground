@@ -47,7 +47,6 @@ async fn main() -> Result<()> {
             SubCommands::Microphone { command } => {
                 handle_microphone(serial, client, command).await?;
             }
-
             SubCommands::Channels { command } => {
                 handle_channels(serial, client, command).await?;
             }

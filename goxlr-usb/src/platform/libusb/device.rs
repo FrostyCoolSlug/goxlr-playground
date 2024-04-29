@@ -1,16 +1,10 @@
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::Result;
 use async_trait::async_trait;
 use goxlr_shared::device::DeviceType;
 use log::{debug, info};
-use rusb::{
-    Device, DeviceDescriptor, DeviceHandle, Direction, GlobalContext, Language, Recipient,
-    RequestType,
-};
-use tokio::sync::mpsc;
+use rusb::{Device, DeviceDescriptor, DeviceHandle, GlobalContext};
 use tokio::task::JoinHandle;
 use tokio::{select, task, time};
 
@@ -20,7 +14,7 @@ use crate::platform::common::initialiser::InitialisableGoXLR;
 use crate::platform::FullGoXLRDevice;
 use crate::runners::device::InternalDeviceMessage;
 use crate::util::stop::Stop;
-use crate::{USBLocation, PID_GOXLR_MINI};
+use crate::PID_GOXLR_MINI;
 
 pub(crate) struct LibUSBGoXLR {
     config: GoXLRConfiguration,

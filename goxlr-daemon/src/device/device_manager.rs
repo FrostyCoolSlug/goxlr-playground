@@ -364,7 +364,7 @@ impl DeviceManager {
             DeviceMessage::GetStatus(tx) => {
                 let _ = tx.send(self.last_status.clone());
             }
-            DeviceMessage::RunDaemon(command, tx) => {
+            DeviceMessage::RunDaemon(_command, tx) => {
                 let _ = tx.send(DaemonResponse::Ok);
                 update = true;
             }

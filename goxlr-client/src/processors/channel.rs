@@ -4,7 +4,6 @@ use goxlr_ipc::client::Client;
 use goxlr_ipc::commands::channels::ChannelCommands as IPCChannelCommand;
 use goxlr_ipc::commands::channels::{ChannelVolume, MuteCommand};
 use goxlr_ipc::commands::{DaemonRequest, DeviceCommand, GoXLRCommand};
-use goxlr_shared::channels::fader::FaderChannels;
 
 use crate::cli::{ChannelCommands, FaderCommands, VolumeCommands};
 
@@ -34,7 +33,7 @@ pub async fn handle_channels(
                 client.send(command).await?;
             }
         },
-        ChannelCommands::SubMix { channel, command } => match command {},
+        ChannelCommands::SubMix { .. } => {}
     }
 
     Ok(())

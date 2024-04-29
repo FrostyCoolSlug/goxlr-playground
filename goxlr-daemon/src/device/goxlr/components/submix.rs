@@ -1,7 +1,6 @@
 use std::cmp;
 
 use anyhow::{Context, Result};
-use goxlr_shared::channels::fader::FaderChannels;
 use goxlr_shared::channels::output::OutputChannels;
 use goxlr_shared::channels::sub_mix::SubMixChannels;
 use log::warn;
@@ -11,7 +10,6 @@ use goxlr_shared::device::GoXLRFeature;
 use goxlr_shared::submix::Mix;
 use goxlr_usb::events::commands::BasicResultCommand;
 
-use crate::device::goxlr::components::channel::Channels;
 use crate::device::goxlr::device::GoXLR;
 
 /*
@@ -60,7 +58,7 @@ impl SubMix for GoXLR {
     }
 
     async fn set_sub_mix_volume(&mut self, channel: SubMixChannels, volume: u8) -> Result<()> {
-        self.profile.channels.sub_mix[channel.into()].volume = volume;
+        self.profile.channels.sub_mix[channel].volume = volume;
 
         let command = BasicResultCommand::SetSubMixVolume(channel, volume);
         self.send_no_result(command).await?;
@@ -73,17 +71,17 @@ impl SubMix for GoXLR {
 
     async fn set_sub_mix_linked(&mut self, channel: SubMixChannels, linked: bool) -> Result<()> {
         if !linked {
-            self.profile.channels.sub_mix[channel.into()].linked = None;
+            self.profile.channels.sub_mix[channel].linked = None;
             return Ok(());
         }
 
         // Ok, grab the mix volumes, but force them both to be > 0..
         let a_volume = cmp::max(self.profile.channels.volumes[channel.into()], 1);
-        let b_volume = cmp::max(self.profile.channels.sub_mix[channel.into()].volume, 1);
+        let b_volume = cmp::max(self.profile.channels.sub_mix[channel].volume, 1);
         let ratio = b_volume as f64 / a_volume as f64;
 
         // Disable the link between the channels..
-        self.profile.channels.sub_mix[channel.into()].linked = Some(ratio);
+        self.profile.channels.sub_mix[channel].linked = Some(ratio);
         Ok(())
     }
 
@@ -91,13 +89,13 @@ impl SubMix for GoXLR {
         let device = self.device.as_ref().context("Device not Set!")?;
 
         // Grab the linked ratio (If we're None, ignore)
-        if let Some(linked) = self.profile.channels.sub_mix[channel.into()].linked {
+        if let Some(linked) = self.profile.channels.sub_mix[channel].linked {
             // We're syncing against the main volume, so multiply by ratio
-            let mix_volume = self.profile.channels.sub_mix[channel.into()].volume;
+            let mix_volume = self.profile.channels.sub_mix[channel].volume;
             let linked_volume = (mix_volume as f64 * linked) as u8;
 
             // Set the new volume in the profile..
-            self.profile.channels.sub_mix[channel.into()].volume = linked_volume;
+            self.profile.channels.sub_mix[channel].volume = linked_volume;
 
             // If submixes aren't supported, simply bail.
             if !device.features.contains(&GoXLRFeature::Submix) {
