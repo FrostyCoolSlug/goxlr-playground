@@ -58,9 +58,9 @@ impl ExecutableGoXLR for LibUSBGoXLR {
 
         // The mini is a little slower than the full device, set poll times to reflect that.
         let sleep_time = if self.descriptor.product_id() == PID_GOXLR_MINI {
-            Duration::from_millis(10)
+            Duration::from_millis(5)
         } else {
-            Duration::from_millis(3)
+            Duration::from_millis(1)
         };
         sleep(sleep_time).await;
 
@@ -76,7 +76,9 @@ impl ExecutableGoXLR for LibUSBGoXLR {
             let response_value = self.read_control(read_control);
             if response_value == Err(Pipe) {
                 if i < 19 {
-                    debug!("Response not arrived yet for {:?}, sleeping and retrying (Attempt {} of 20)", command, i + 1);
+                    if i > 3 {
+                        debug!("Response not arrived yet for {:?}, sleeping and retrying (Attempt {} of 20)", command, i + 1);
+                    }
                     sleep(sleep_time).await;
                     continue;
                 } else {
