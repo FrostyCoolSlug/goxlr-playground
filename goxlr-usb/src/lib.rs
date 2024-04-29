@@ -1,5 +1,8 @@
 use std::fmt::{Display, Formatter};
 
+// Re-export the goxlr-shared crate..
+pub use goxlr_shared as shared;
+
 mod common;
 mod goxlr;
 mod platform;
