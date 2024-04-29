@@ -6,6 +6,8 @@ use strum::IntoEnumIterator;
 
 use goxlr_profile::CoughBehaviour;
 use goxlr_shared::buttons::Buttons;
+use goxlr_shared::channels::sub_mix::SubMixChannels;
+use goxlr_shared::channels::CanFrom;
 use goxlr_shared::encoders::Encoders;
 use goxlr_shared::faders::Fader;
 use goxlr_shared::mute::MuteState;
@@ -154,8 +156,10 @@ impl Interactions for GoXLR {
         debug!("Fader Moved: {:?} to {:?}", channel, value);
         self.profile.channels.volumes[channel.into()] = value;
 
-        // Sync the Sub Mix Volume..
-        self.sync_sub_mix_volume(channel).await?;
+        // IF SubMix is supported, sync the channel
+        if SubMixChannels::can_from(channel) {
+            self.sync_sub_mix_volume(channel.into()).await?;
+        }
 
         Ok(())
     }

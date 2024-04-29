@@ -5,6 +5,9 @@ use strum::EnumIter;
 use serde::{Deserialize, Serialize};
 
 use crate::channels::fader::FaderChannels;
+use crate::channels::CanFrom;
+
+use crate::channels::volume::VolumeChannels;
 #[cfg(feature = "clap")]
 use clap::ValueEnum;
 
@@ -20,6 +23,54 @@ pub enum SubMixChannels {
     LineIn,
     System,
     Sample,
+}
+
+impl CanFrom<VolumeChannels> for SubMixChannels {
+    fn can_from(value: VolumeChannels) -> bool {
+        matches!(
+            value,
+            VolumeChannels::Microphone
+                | VolumeChannels::Chat
+                | VolumeChannels::Music
+                | VolumeChannels::Game
+                | VolumeChannels::Console
+                | VolumeChannels::LineIn
+                | VolumeChannels::System
+                | VolumeChannels::Sample
+        )
+    }
+}
+
+impl From<VolumeChannels> for SubMixChannels {
+    fn from(value: VolumeChannels) -> Self {
+        match value {
+            VolumeChannels::Microphone => SubMixChannels::Microphone,
+            VolumeChannels::Chat => SubMixChannels::Chat,
+            VolumeChannels::Music => SubMixChannels::Music,
+            VolumeChannels::Game => SubMixChannels::Game,
+            VolumeChannels::Console => SubMixChannels::Console,
+            VolumeChannels::LineIn => SubMixChannels::LineIn,
+            VolumeChannels::System => SubMixChannels::System,
+            VolumeChannels::Sample => SubMixChannels::Sample,
+            _ => panic!("Attempted to look up Non-SubMix Channel: {:?}", value),
+        }
+    }
+}
+
+impl CanFrom<FaderChannels> for SubMixChannels {
+    fn can_from(value: FaderChannels) -> bool {
+        matches!(
+            value,
+            FaderChannels::Microphone
+                | FaderChannels::Chat
+                | FaderChannels::Music
+                | FaderChannels::Game
+                | FaderChannels::Console
+                | FaderChannels::LineIn
+                | FaderChannels::System
+                | FaderChannels::Sample
+        )
+    }
 }
 
 impl From<FaderChannels> for SubMixChannels {

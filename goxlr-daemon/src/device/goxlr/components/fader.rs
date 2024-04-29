@@ -5,13 +5,12 @@ use strum::IntoEnumIterator;
 
 use goxlr_shared::buttons::Buttons;
 use goxlr_shared::channels::fader::FaderChannels;
-use goxlr_shared::channels::volume::VolumeChannels;
 use goxlr_shared::colours::Colour;
 use goxlr_shared::device::{DeviceType, GoXLRFeature};
 use goxlr_shared::faders::Fader;
 use goxlr_shared::mute::MuteState;
 use goxlr_shared::scribbles::Scribble;
-use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
+use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::components::buttons::ButtonHandlers;
 use crate::device::goxlr::components::load_profile::LoadProfile;
@@ -36,9 +35,6 @@ impl DeviceFader for GoXLR {
     /// Some settings may not need to be immediately applied (such as colours and mute state) as
     /// it makes more sense to apply them all at once if assigning multiple faders.
     async fn assign_fader(&mut self, fader: Fader, source: FaderChannels) -> Result<()> {
-        //let details = self.profile.channels[source].clone();
-        let command_source = ChannelSource::FromFaderSource(source);
-
         debug!("Checking assign of {:?} to {:?}", source, fader);
         let assign = if let Some(state) = self.fader_state[fader] {
             if state != source {
@@ -57,7 +53,7 @@ impl DeviceFader for GoXLR {
             return Ok(());
         }
 
-        let command = BasicResultCommand::AssignFader(fader, command_source);
+        let command = BasicResultCommand::AssignFader(fader, source);
         self.send_no_result(command).await?;
 
         // Update the Cache after assignment

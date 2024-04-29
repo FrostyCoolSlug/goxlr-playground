@@ -1,10 +1,13 @@
 use clap::{Parser, Subcommand};
-use goxlr_shared::channels::MuteState;
+use goxlr_shared::channels::fader::FaderChannels;
+use goxlr_shared::channels::sub_mix::SubMixChannels;
+use goxlr_shared::channels::volume::VolumeChannels;
 use goxlr_shared::compressor::{CompressorAttackTime, CompressorRatio, CompressorReleaseTime};
 use goxlr_shared::eq_frequencies::{Frequencies, MiniFrequencies};
-use goxlr_shared::faders::{Fader, FaderSources};
+use goxlr_shared::faders::Fader;
 use goxlr_shared::gate::GateTimes;
 use goxlr_shared::microphone::MicrophoneType;
+use goxlr_shared::mute::MuteState;
 
 #[derive(Parser, Debug)]
 #[command(about, version, author)]
@@ -29,9 +32,6 @@ pub enum SubCommands {
     },
 
     Channels {
-        #[arg(value_enum)]
-        channel: FaderSources,
-
         #[command(subcommand)]
         command: ChannelCommands,
     },
@@ -41,11 +41,46 @@ pub enum SubCommands {
         command: PageCommands,
     },
 }
+
 #[derive(Debug, Subcommand)]
 pub enum ChannelCommands {
-    Volume { volume: u8 },
-    Mute { mute_state: MuteState },
+    Volumes {
+        #[arg(value_enum)]
+        channel: VolumeChannels,
+
+        #[command(subcommand)]
+        command: VolumeCommands,
+    },
+
+    Faders {
+        #[arg(value_enum)]
+        channel: FaderChannels,
+
+        #[command(subcommand)]
+        command: FaderCommands,
+    },
+
+    SubMix {
+        #[arg(value_enum)]
+        channel: SubMixChannels,
+
+        #[command(subcommand)]
+        command: SubMixCommands,
+    },
 }
+
+#[derive(Debug, Subcommand)]
+pub enum VolumeCommands {
+    Volume { volume: u8 },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum FaderCommands {
+    Mute { state: MuteState },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SubMixCommands {}
 
 #[derive(Debug, Subcommand)]
 pub enum PageCommands {
@@ -59,7 +94,7 @@ pub enum PageCommands {
     SetFader {
         page_number: u8,
         fader: Fader,
-        channel: FaderSources,
+        channel: FaderChannels,
     },
 }
 

@@ -13,7 +13,7 @@ use goxlr_shared::mute::ChannelMuteState::{Muted, Unmuted};
 use goxlr_shared::mute::{ChannelMuteState, MuteState};
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::State;
-use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
+use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::components::buttons::ButtonHandlers;
 use crate::device::goxlr::components::fader::DeviceFader;
@@ -371,8 +371,7 @@ impl MuteHandlerLocal for GoXLR {
 
     async fn send_mute_state(&mut self, source: Source, state: ChannelMuteState) -> Result<()> {
         // Prepare the GoXLR Command..
-        let command_source = ChannelSource::FromFaderSource(source);
-        let command = BasicResultCommand::SetMuteState(command_source, state);
+        let command = BasicResultCommand::SetMuteState(source, state);
 
         // Check our existing mute state map, to see if we're changing it..
         if let Some(current_state) = self.mute_state[source] {

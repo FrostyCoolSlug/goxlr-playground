@@ -5,6 +5,7 @@ use strum::EnumIter;
 use serde::{Deserialize, Serialize};
 
 use crate::channels::fader::FaderChannels;
+use crate::channels::CanFrom;
 #[cfg(feature = "clap")]
 use clap::ValueEnum;
 
@@ -20,6 +21,22 @@ pub enum InputChannels {
     LineIn,
     System,
     Sample,
+}
+
+impl CanFrom<FaderChannels> for InputChannels {
+    fn can_from(value: FaderChannels) -> bool {
+        matches!(
+            value,
+            FaderChannels::Microphone
+                | FaderChannels::Chat
+                | FaderChannels::Music
+                | FaderChannels::Game
+                | FaderChannels::Console
+                | FaderChannels::LineIn
+                | FaderChannels::System
+                | FaderChannels::Sample
+        )
+    }
 }
 
 impl From<FaderChannels> for InputChannels {

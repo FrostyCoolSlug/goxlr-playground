@@ -4,9 +4,8 @@ use json_patch::Patch;
 use serde::{Deserialize, Serialize};
 
 use goxlr_profile::{MicProfile, Profile};
-use goxlr_shared::channels::fader::FaderChannels;
 
-use crate::commands::channels::ChannelCommand;
+use crate::commands::channels::ChannelCommands;
 use crate::commands::configuration::ConfigurationCommand;
 use crate::commands::mic::MicrophoneCommand;
 use crate::commands::pages::PageCommand;
@@ -65,7 +64,7 @@ pub struct DeviceCommand {
 pub enum GoXLRCommand {
     Configuration(ConfigurationCommand),
     Microphone(MicrophoneCommand),
-    Channels(Channels),
+    Channels(ChannelCommands),
     Pages(PageCommand),
 }
 
@@ -76,12 +75,6 @@ pub enum GoXLRCommandResponse {
     Ok,
     MicLevel(f64),
     Error(String),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Channels {
-    pub channel: FaderChannels,
-    pub command: ChannelCommand,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

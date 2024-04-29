@@ -21,7 +21,7 @@ use goxlr_shared::interaction::{ButtonStates, CurrentStates};
 use goxlr_shared::version::VersionNumber;
 
 use crate::common::command_handler::GoXLRCommands;
-use crate::events::commands::{BasicResultCommand, ChannelSource, CommandSender};
+use crate::events::commands::{BasicResultCommand, CommandSender};
 use crate::events::interaction::InteractionEvent;
 use crate::handlers::state_tracker::StateTracker;
 use crate::platform::common::device::{GoXLRConfiguration, GoXLRDevice};
@@ -122,17 +122,15 @@ impl GoXLRUSBDevice {
                 BasicResultCommand::SetColour(scheme) => {
                     let _ = responder.send(device.apply_colour_scheme(scheme).await);
                 }
-                BasicResultCommand::SetVolume(source, volume) => {
-                    let channel = self.source_to_channel(ChannelSource::FromVolumeChannel(source));
-                    let _ = responder.send(device.set_volume(channel, volume).await);
+                BasicResultCommand::SetVolume(channel, volume) => {
+                    let _ = responder.send(device.set_volume(channel.into(), volume).await);
                 }
-                BasicResultCommand::SetMuteState(source, state) => {
-                    let channel = self.source_to_channel(source);
+                BasicResultCommand::SetMuteState(channel, state) => {
+                    let channel = channel.into();
                     let _ = responder.send(device.set_mute_state(channel, state.into()).await);
                 }
-                BasicResultCommand::AssignFader(fader, source) => {
-                    let channel = self.source_to_channel(source);
-                    let _ = responder.send(device.assign_fader(fader.into(), channel).await);
+                BasicResultCommand::AssignFader(fader, channel) => {
+                    let _ = responder.send(device.assign_fader(fader.into(), channel.into()).await);
                 }
                 BasicResultCommand::ApplyRouting(input, table) => {
                     let _ = responder.send(device.apply_routing(input, table).await);
@@ -147,20 +145,16 @@ impl GoXLRUSBDevice {
                     let _ = responder.send(device.set_scribble(fader, data).await);
                 }
                 BasicResultCommand::SetSubMixVolume(source, volume) => {
-                    let source = self.source_to_channel(source);
-                    let _ = responder.send(device.set_submix_volume(source, volume).await);
+                    let _ = responder.send(device.set_submix_volume(source.into(), volume).await);
                 }
                 BasicResultCommand::SetSubMixMix(mix_a, mix_b) => {
                     // We need to map the outputs defined into MixOutputs...
-                    let mut a = vec![];
-                    mix_a
-                        .iter()
-                        .for_each(|value| a.push(MixOutputChannel::from(*value)));
+                    let mut a: Vec<MixOutputChannel> = vec![];
+                    type MOC = MixOutputChannel;
+                    mix_a.iter().for_each(|value| a.push(MOC::from(*value)));
 
-                    let mut b = vec![];
-                    mix_b
-                        .iter()
-                        .for_each(|value| b.push(MixOutputChannel::from(*value)));
+                    let mut b: Vec<MixOutputChannel> = vec![];
+                    mix_b.iter().for_each(|value| b.push(MOC::from(*value)));
 
                     let _ = responder.send(device.set_submix_mix(a, b).await);
                 }
@@ -169,15 +163,17 @@ impl GoXLRUSBDevice {
                 }
                 BasicResultCommand::SetMicParams(params) => {
                     let mut map = LinkedHashMap::new();
-                    params.iter().for_each(|(k, v)| {
-                        map.insert(DeviceMicParamKeys::from(*k), *v);
+                    type DMP = DeviceMicParamKeys;
+                    params.iter().for_each(|(key, value)| {
+                        map.insert(DMP::from(*key), *value);
                     });
                     let _ = responder.send(device.set_mic_params(map).await);
                 }
                 BasicResultCommand::SetMicEffects(effects) => {
                     let mut map = LinkedHashMap::new();
-                    effects.iter().for_each(|(k, v)| {
-                        map.insert(DeviceMicEffectKeys::from(*k), *v);
+                    type DME = DeviceMicEffectKeys;
+                    effects.iter().for_each(|(key, value)| {
+                        map.insert(DME::from(*key), *value);
                     });
                     let _ = responder.send(device.set_mic_effects(map).await);
                 }
@@ -209,15 +205,6 @@ impl GoXLRUSBDevice {
                     }
                 }
             }
-        }
-    }
-
-    fn source_to_channel(&self, source: ChannelSource) -> ChannelList {
-        match source {
-            ChannelSource::FromInputChannel(source) => source.into(),
-            ChannelSource::FromOutputChannel(source) => source.into(),
-            ChannelSource::FromFaderSource(source) => source.into(),
-            ChannelSource::FromVolumeChannel(source) => source.into(),
         }
     }
 

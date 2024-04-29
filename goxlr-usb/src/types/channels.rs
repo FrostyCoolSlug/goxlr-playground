@@ -2,7 +2,7 @@ use goxlr_shared::channels::fader::FaderChannels;
 use goxlr_shared::channels::input::InputChannels;
 use goxlr_shared::channels::output::OutputChannels;
 use goxlr_shared::channels::volume::VolumeChannels;
-use goxlr_shared::mute::{ChannelMuteState, MuteState};
+use goxlr_shared::mute::ChannelMuteState;
 
 /// While this technically matches FaderSources, it's imperative that this order is maintained, as
 /// it's the order the GoXLR expects (hence why it's hidden away inside the 'USB' crate). In the
@@ -101,7 +101,7 @@ impl From<ChannelMuteState> for ChannelState {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub(crate) enum MixOutputChannel {
     Headphones = 0x00,
     StreamMix = 0x01,

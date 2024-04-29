@@ -2,10 +2,11 @@
 // a second one to handle. We'll map it correctly here.
 
 use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::sub_mix::SubMixChannels;
 use goxlr_shared::submix::Mix;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum SubMixChannelName {
+pub enum SubMixChannelList {
     Microphone = 0x10,
     LineIn = 0x11,
     Console = 0x12,
@@ -16,17 +17,32 @@ pub enum SubMixChannelName {
     Music = 0x17,
 }
 
-impl From<InputChannels> for SubMixChannelName {
+impl From<SubMixChannels> for SubMixChannelList {
+    fn from(value: SubMixChannels) -> Self {
+        match value {
+            SubMixChannels::Microphone => SubMixChannelList::Microphone,
+            SubMixChannels::Chat => SubMixChannelList::Chat,
+            SubMixChannels::Music => SubMixChannelList::Music,
+            SubMixChannels::Game => SubMixChannelList::Game,
+            SubMixChannels::Console => SubMixChannelList::Console,
+            SubMixChannels::LineIn => SubMixChannelList::LineIn,
+            SubMixChannels::System => SubMixChannelList::System,
+            SubMixChannels::Sample => SubMixChannelList::Sample,
+        }
+    }
+}
+
+impl From<InputChannels> for SubMixChannelList {
     fn from(value: InputChannels) -> Self {
         match value {
-            InputChannels::Microphone => SubMixChannelName::Microphone,
-            InputChannels::Chat => SubMixChannelName::Chat,
-            InputChannels::Music => SubMixChannelName::Music,
-            InputChannels::Game => SubMixChannelName::Game,
-            InputChannels::Console => SubMixChannelName::Console,
-            InputChannels::LineIn => SubMixChannelName::LineIn,
-            InputChannels::System => SubMixChannelName::System,
-            InputChannels::Sample => SubMixChannelName::Sample,
+            InputChannels::Microphone => SubMixChannelList::Microphone,
+            InputChannels::Chat => SubMixChannelList::Chat,
+            InputChannels::Music => SubMixChannelList::Music,
+            InputChannels::Game => SubMixChannelList::Game,
+            InputChannels::Console => SubMixChannelList::Console,
+            InputChannels::LineIn => SubMixChannelList::LineIn,
+            InputChannels::System => SubMixChannelList::System,
+            InputChannels::Sample => SubMixChannelList::Sample,
         }
     }
 }

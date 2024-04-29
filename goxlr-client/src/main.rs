@@ -48,8 +48,8 @@ async fn main() -> Result<()> {
                 handle_microphone(serial, client, command).await?;
             }
 
-            SubCommands::Channels { channel, command } => {
-                handle_channels(serial, client, channel, command).await?;
+            SubCommands::Channels { command } => {
+                handle_channels(serial, client, command).await?;
             }
             SubCommands::Pages { command } => {
                 handle_pages(serial, client, command).await?;

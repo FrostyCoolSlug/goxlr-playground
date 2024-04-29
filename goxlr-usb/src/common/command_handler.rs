@@ -29,10 +29,11 @@ use crate::types::microphone::MicrophoneType;
 use crate::types::routing::RoutingChannel::{Left, Right};
 use crate::types::routing::{RoutingInputChannel, RoutingOutputDevice};
 use crate::types::states::ButtonDisplay;
-use crate::types::submix::DeviceMix;
+use crate::types::submix::{DeviceMix, SubMixChannelList};
 
 type RoutingValues = EnumMap<RoutingOutput, RouteValue>;
 type Channel = ChannelList;
+type SubChannel = SubMixChannelList;
 
 type EffectKeys = goxlr_shared::microphone::MicEffectKeys;
 type ParamKeys = goxlr_shared::microphone::MicParamKeys;
@@ -241,7 +242,7 @@ pub(crate) trait GoXLRCommands: ExecutableGoXLR {
         Ok(())
     }
 
-    async fn set_submix_volume(&mut self, channel: Channel, volume: u8) -> Result<()> {
+    async fn set_submix_volume(&mut self, channel: SubChannel, volume: u8) -> Result<()> {
         let command = Command::SetSubChannelVolume(channel);
         self.request_data(command, &[volume]).await?;
 

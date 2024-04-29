@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::channels::fader::FaderChannels;
 use crate::channels::volume::VolumeChannels;
+use crate::channels::CanFrom;
 #[cfg(feature = "clap")]
 use clap::ValueEnum;
 
@@ -27,6 +28,12 @@ pub enum AllChannels {
     LineOut,
 }
 
+impl CanFrom<VolumeChannels> for AllChannels {
+    fn can_from(_: VolumeChannels) -> bool {
+        true
+    }
+}
+
 impl From<VolumeChannels> for AllChannels {
     fn from(value: VolumeChannels) -> Self {
         match value {
@@ -42,6 +49,12 @@ impl From<VolumeChannels> for AllChannels {
             VolumeChannels::LineOut => AllChannels::LineOut,
             VolumeChannels::MicrophoneMonitor => AllChannels::MicrophoneMonitor,
         }
+    }
+}
+
+impl CanFrom<FaderChannels> for AllChannels {
+    fn can_from(_: FaderChannels) -> bool {
+        true
     }
 }
 

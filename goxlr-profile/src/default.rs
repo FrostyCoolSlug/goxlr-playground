@@ -1,5 +1,5 @@
 use enum_map::{enum_map, EnumMap};
-use goxlr_shared::channels::channels::AllChannels;
+use goxlr_shared::channels::channel::AllChannels;
 use goxlr_shared::channels::fader::FaderChannels;
 use goxlr_shared::channels::input::InputChannels;
 use goxlr_shared::channels::output::OutputChannels;

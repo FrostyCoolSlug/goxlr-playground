@@ -2,7 +2,7 @@ use crate::types::channels::ChannelList;
 use crate::types::encoders::DeviceEncoder;
 use crate::types::faders::DeviceFader;
 use crate::types::routing::RoutingInputChannel;
-use crate::types::submix::SubMixChannelName;
+use crate::types::submix::SubMixChannelList;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Command {
@@ -26,7 +26,7 @@ pub(crate) enum Command {
 
     SetAnimationMode,
 
-    SetSubChannelVolume(ChannelList),
+    SetSubChannelVolume(SubMixChannelList),
     SetChannelMixes,
     SetMonitoredMix,
 
@@ -59,8 +59,7 @@ impl Command {
             // Animation Related Commands
             Command::SetAnimationMode => 0x816 << 12,
 
-            // I'm doing a +0x0F here, because there appears to be a bit reset going on..
-            Command::SetSubChannelVolume(channel) => (0x806 << 12) | *channel as u32 + 0x0f,
+            Command::SetSubChannelVolume(channel) => (0x806 << 12) | *channel as u32,
             Command::SetChannelMixes => 0x817 << 12,
             Command::SetMonitoredMix => 0x818 << 12,
 

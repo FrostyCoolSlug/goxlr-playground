@@ -5,6 +5,9 @@ use strum::EnumIter;
 use serde::{Deserialize, Serialize};
 
 use crate::channels::fader::FaderChannels;
+
+use crate::channels::sub_mix::SubMixChannels;
+use crate::channels::CanFrom;
 #[cfg(feature = "clap")]
 use clap::ValueEnum;
 
@@ -26,6 +29,13 @@ pub enum VolumeChannels {
     MicrophoneMonitor,
 }
 
+impl CanFrom<FaderChannels> for VolumeChannels {
+    fn can_from(_: FaderChannels) -> bool {
+        // All FaderChannels can be Mapped to VolumeChannels
+        true
+    }
+}
+
 impl From<FaderChannels> for VolumeChannels {
     fn from(value: FaderChannels) -> Self {
         match value {
@@ -39,6 +49,27 @@ impl From<FaderChannels> for VolumeChannels {
             FaderChannels::Sample => VolumeChannels::Sample,
             FaderChannels::Headphones => VolumeChannels::Headphones,
             FaderChannels::LineOut => VolumeChannels::LineOut,
+        }
+    }
+}
+
+impl CanFrom<SubMixChannels> for VolumeChannels {
+    fn can_from(_: SubMixChannels) -> bool {
+        true
+    }
+}
+
+impl From<SubMixChannels> for VolumeChannels {
+    fn from(value: SubMixChannels) -> Self {
+        match value {
+            SubMixChannels::Microphone => VolumeChannels::Microphone,
+            SubMixChannels::Chat => VolumeChannels::Chat,
+            SubMixChannels::Music => VolumeChannels::Music,
+            SubMixChannels::Game => VolumeChannels::Game,
+            SubMixChannels::Console => VolumeChannels::Console,
+            SubMixChannels::LineIn => VolumeChannels::LineIn,
+            SubMixChannels::System => VolumeChannels::System,
+            SubMixChannels::Sample => VolumeChannels::Sample,
         }
     }
 }

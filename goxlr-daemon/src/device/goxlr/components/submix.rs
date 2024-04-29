@@ -3,12 +3,13 @@ use std::cmp;
 use anyhow::{Context, Result};
 use goxlr_shared::channels::fader::FaderChannels;
 use goxlr_shared::channels::output::OutputChannels;
+use goxlr_shared::channels::sub_mix::SubMixChannels;
 use log::warn;
 use strum::IntoEnumIterator;
 
 use goxlr_shared::device::GoXLRFeature;
 use goxlr_shared::submix::Mix;
-use goxlr_usb::events::commands::{BasicResultCommand, ChannelSource};
+use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::components::channel::Channels;
 use crate::device::goxlr::device::GoXLR;
@@ -37,10 +38,10 @@ use crate::device::goxlr::device::GoXLR;
 pub trait SubMix {
     async fn set_sub_mix_enabled(&mut self, enabled: bool) -> Result<()>;
     async fn set_sub_mix_mix(&mut self, channel: OutputChannels, mix: Mix) -> Result<()>;
-    async fn set_sub_mix_volume(&mut self, channel: FaderChannels, volume: u8) -> Result<()>;
-    async fn set_sub_mix_linked(&mut self, channel: FaderChannels, linked: bool) -> Result<()>;
+    async fn set_sub_mix_volume(&mut self, channel: SubMixChannels, volume: u8) -> Result<()>;
+    async fn set_sub_mix_linked(&mut self, channel: SubMixChannels, linked: bool) -> Result<()>;
 
-    async fn sync_sub_mix_volume(&mut self, channel: FaderChannels) -> Result<()>;
+    async fn sync_sub_mix_volume(&mut self, channel: SubMixChannels) -> Result<()>;
     async fn load_sub_mix_assignments(&mut self) -> Result<()>;
 }
 
@@ -58,18 +59,19 @@ impl SubMix for GoXLR {
         self.load_sub_mix_assignments().await
     }
 
-    async fn set_sub_mix_volume(&mut self, channel: FaderChannels, volume: u8) -> Result<()> {
+    async fn set_sub_mix_volume(&mut self, channel: SubMixChannels, volume: u8) -> Result<()> {
         self.profile.channels.sub_mix[channel.into()].volume = volume;
 
-        let source = ChannelSource::FromFaderSource(channel);
-        let command = BasicResultCommand::SetSubMixVolume(source, volume);
+        let command = BasicResultCommand::SetSubMixVolume(channel, volume);
         self.send_no_result(command).await?;
 
         // Now sync the Mix::A volume
-        self.sync_mix_volume(channel).await
+        //self.sync_mix_volume(channel).await
+
+        Ok(())
     }
 
-    async fn set_sub_mix_linked(&mut self, channel: FaderChannels, linked: bool) -> Result<()> {
+    async fn set_sub_mix_linked(&mut self, channel: SubMixChannels, linked: bool) -> Result<()> {
         if !linked {
             self.profile.channels.sub_mix[channel.into()].linked = None;
             return Ok(());
@@ -85,7 +87,7 @@ impl SubMix for GoXLR {
         Ok(())
     }
 
-    async fn sync_sub_mix_volume(&mut self, channel: FaderChannels) -> Result<()> {
+    async fn sync_sub_mix_volume(&mut self, channel: SubMixChannels) -> Result<()> {
         let device = self.device.as_ref().context("Device not Set!")?;
 
         // Grab the linked ratio (If we're None, ignore)
@@ -102,8 +104,7 @@ impl SubMix for GoXLR {
                 return Ok(());
             }
 
-            let target = ChannelSource::FromFaderSource(channel);
-            let command = BasicResultCommand::SetSubMixVolume(target, linked_volume);
+            let command = BasicResultCommand::SetSubMixVolume(channel, linked_volume);
             return self.send_no_result(command).await;
         }
 
