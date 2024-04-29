@@ -82,7 +82,7 @@ impl Gate for GoXLR {
         self.mic_profile.gate.attenuation = attenuation;
 
         let key = MicEffectKeys::GateAttenuation;
-        let effect = LinkedHashMap::from_iter([(key, attenuation as i32)]);
+        let effect = LinkedHashMap::from_iter([(key, self.get_gate_attenuation())]);
         let command = BasicResultCommand::SetMicEffects(effect);
         self.send_no_result(command).await?;
 
