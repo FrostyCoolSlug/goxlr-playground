@@ -3,9 +3,9 @@ use goxlr_shared::channels::CanFrom;
 use log::debug;
 
 use crate::device::goxlr::components::submix::SubMix;
-use goxlr_shared::channels::fader::FaderChannels;
 use goxlr_shared::channels::sub_mix::SubMixChannels;
 use goxlr_shared::channels::volume::VolumeChannels;
+use goxlr_shared::device::GoXLRFeature;
 use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::device::GoXLR;
@@ -34,8 +34,6 @@ impl Channels for GoXLR {
         let command = BasicResultCommand::SetVolume(source, volume);
         self.send_no_result(command).await?;
 
-        // TODO: Only apply this on SubMix supported Channels!
-
         if SubMixChannels::can_from(source) {
             self.sync_sub_mix_volume(source.into()).await?;
         }
@@ -44,25 +42,24 @@ impl Channels for GoXLR {
     }
 
     async fn sync_mix_volume(&mut self, source: VolumeChannels) -> Result<()> {
-        // Make sure submixes are even available on this device...
         let device = self.device.as_ref().context("Device not Set!")?;
 
         // Grab the linked ratio (If we're None, ignore)
-        // if let Some(linked) = self.profile.channels.sub_mix[source.into()].linked {
-        //     // Because we're SubMix to Volume, we need to divide by the linked value
-        //     let mix_volume = self.profile.channels.sub_mix[source.into()].volume;
-        //     let linked_volume = (mix_volume as f64 / linked) as u8;
-        //
-        //     self.profile.channels.volumes[source.into()] = linked_volume;
-        //
-        //     // Bail at this point if Sub Mixes aren't supported.
-        //     if !device.features.contains(&GoXLRFeature::Submix) {
-        //         return Ok(());
-        //     }
-        //
-        //     let command = BasicResultCommand::SetVolume(source.into(), linked_volume);
-        //     return self.send_no_result(command).await;
-        // }
+        if let Some(linked) = self.profile.channels.sub_mix[source.into()].linked {
+            // Because we're SubMix to Volume, we need to divide by the linked value
+            let mix_volume = self.profile.channels.sub_mix[source.into()].volume;
+            let linked_volume = (mix_volume as f64 / linked) as u8;
+
+            self.profile.channels.volumes[source] = linked_volume;
+
+            // Bail at this point if Sub Mixes aren't supported.
+            if !device.features.contains(&GoXLRFeature::Submix) {
+                return Ok(());
+            }
+
+            let command = BasicResultCommand::SetVolume(source, linked_volume);
+            return self.send_no_result(command).await;
+        }
 
         // Volumes aren't linked, do nothing :)
         Ok(())

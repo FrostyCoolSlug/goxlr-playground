@@ -3,9 +3,12 @@ use std::cmp;
 use anyhow::{Context, Result};
 use goxlr_shared::channels::output::OutputChannels;
 use goxlr_shared::channels::sub_mix::SubMixChannels;
+use goxlr_shared::channels::volume::VolumeChannels;
+use goxlr_shared::channels::CanFrom;
 use log::warn;
 use strum::IntoEnumIterator;
 
+use crate::device::goxlr::components::channel::Channels;
 use goxlr_shared::device::GoXLRFeature;
 use goxlr_shared::submix::Mix;
 use goxlr_usb::events::commands::BasicResultCommand;
@@ -64,7 +67,9 @@ impl SubMix for GoXLR {
         self.send_no_result(command).await?;
 
         // Now sync the Mix::A volume
-        //self.sync_mix_volume(channel).await
+        if VolumeChannels::can_from(channel) {
+            self.sync_mix_volume(channel.into()).await?;
+        }
 
         Ok(())
     }
