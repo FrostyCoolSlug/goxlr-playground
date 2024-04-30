@@ -64,7 +64,7 @@ impl DeviceFader for GoXLR {
         // spike to 100%, the code here immediately resets their volume back to where it should be.
         if SUBMIX_MITIGATION.contains(&source) {
             let device = self.device.as_ref().context("Device Not Found!")?;
-            if device.features.contains(&GoXLRFeature::Submix) {
+            if device.features.contains(&GoXLRFeature::SubMix) {
                 let volume = self.profile.channels.volumes[source.into()];
 
                 debug!("Mitigating, Setting Volume of {:?} to {:?}", source, volume);

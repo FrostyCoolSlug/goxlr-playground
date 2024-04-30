@@ -240,7 +240,7 @@ impl GoXLRUSBDevice {
             features.push(GoXLRFeature::Animation);
         }
         if version_newer_or_equal_to(&version, submix) {
-            features.push(GoXLRFeature::Submix);
+            features.push(GoXLRFeature::SubMix);
         }
 
         Ok(DeviceInfo {

@@ -4,6 +4,7 @@ use json_patch::Patch;
 use serde::{Deserialize, Serialize};
 
 use goxlr_profile::{MicProfile, Profile};
+use goxlr_shared::device::DeviceInfo;
 
 use crate::commands::channels::ChannelCommands;
 use crate::commands::configuration::ConfigurationCommand;
@@ -82,13 +83,14 @@ pub struct DaemonStatus {
     pub devices: BTreeMap<String, DeviceStatus>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeviceStatus {
+    pub hardware: DeviceInfo,
     pub serial: String,
     pub config: Profiles,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Profiles {
     pub profile: Profile,
     pub mic_profile: MicProfile,

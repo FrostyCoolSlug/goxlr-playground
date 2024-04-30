@@ -104,7 +104,7 @@ impl SubMix for GoXLR {
             self.profile.channels.sub_mix[channel].volume = linked_volume;
 
             // If submixes aren't supported, simply bail.
-            if !device.features.contains(&GoXLRFeature::Submix) {
+            if !device.features.contains(&GoXLRFeature::SubMix) {
                 return Ok(());
             }
 
@@ -117,7 +117,7 @@ impl SubMix for GoXLR {
 
     async fn load_sub_mix_assignments(&mut self) -> Result<()> {
         let device = self.device.as_ref().context("Device Not Set!")?;
-        if !device.features.contains(&GoXLRFeature::Submix) {
+        if !device.features.contains(&GoXLRFeature::SubMix) {
             warn!("Sub Mixing Not Available, not loading...");
             return Ok(());
         }

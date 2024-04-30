@@ -104,13 +104,22 @@ pub struct FaderChannel {
     pub display: FaderDisplay,
 }
 
-#[derive(Default, Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct SubMixVolumes {
     /// The Mix B Volumes
     pub volume: u8,
 
     /// The linked Ratio of mix_a:mix_b
     pub linked: Option<f64>,
+}
+
+impl Default for SubMixVolumes {
+    fn default() -> Self {
+        Self {
+            volume: 0,
+            linked: Some(1.),
+        }
+    }
 }
 
 /// A struct that defines top to bottom how a fader is displayed on the Device

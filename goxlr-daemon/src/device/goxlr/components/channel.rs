@@ -53,7 +53,7 @@ impl Channels for GoXLR {
             self.profile.channels.volumes[source] = linked_volume;
 
             // Bail at this point if Sub Mixes aren't supported.
-            if !device.features.contains(&GoXLRFeature::Submix) {
+            if !device.features.contains(&GoXLRFeature::SubMix) {
                 return Ok(());
             }
 
