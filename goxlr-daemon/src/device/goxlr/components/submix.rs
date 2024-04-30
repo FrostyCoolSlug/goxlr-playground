@@ -5,7 +5,7 @@ use goxlr_shared::channels::output::OutputChannels;
 use goxlr_shared::channels::sub_mix::SubMixChannels;
 use goxlr_shared::channels::volume::VolumeChannels;
 use goxlr_shared::channels::CanFrom;
-use log::warn;
+use log::{debug, warn};
 use strum::IntoEnumIterator;
 
 use crate::device::goxlr::components::channel::Channels;
@@ -91,12 +91,13 @@ impl SubMix for GoXLR {
     }
 
     async fn sync_sub_mix_volume(&mut self, channel: SubMixChannels) -> Result<()> {
+        debug!("Syncing Submix");
         let device = self.device.as_ref().context("Device not Set!")?;
 
         // Grab the linked ratio (If we're None, ignore)
         if let Some(linked) = self.profile.channels.sub_mix[channel].linked {
             // We're syncing against the main volume, so multiply by ratio
-            let mix_volume = self.profile.channels.sub_mix[channel].volume;
+            let mix_volume = self.profile.channels.volumes[channel.into()];
             let linked_volume = (mix_volume as f64 * linked) as u8;
 
             // Set the new volume in the profile..
