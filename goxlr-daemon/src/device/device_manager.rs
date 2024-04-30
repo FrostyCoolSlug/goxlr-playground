@@ -14,11 +14,12 @@ use tokio::{join, select, task, time};
 use goxlr_ipc::commands::{
     DaemonResponse, DaemonStatus, DeviceStatus, GoXLRCommand, GoXLRCommandResponse, Profiles,
 };
+use goxlr_shared::device::DeviceInfo;
 use goxlr_usb::runners::pnp::PnPDeviceMessage;
 use goxlr_usb::runners::pnp::{start_pnp_runner, PnPConfiguration};
 use goxlr_usb::USBLocation;
 
-use crate::device::device_manager::ManagerMessage::{Execute, GetConfig};
+use crate::device::device_manager::ManagerMessage::{Execute, GetConfig, GetDevice};
 use crate::device::goxlr::device::start_goxlr;
 use crate::device::goxlr::device_config::GoXLRDeviceConfiguration;
 use crate::device::messaging::DeviceMessage;
@@ -186,7 +187,7 @@ impl DeviceManager {
         let state = DeviceState {
             stop,
             state: RunnerState::Starting,
-            messanger: manager_send,
+            messenger: manager_send,
         };
 
         self.states.insert(location, state);
@@ -318,30 +319,36 @@ impl DeviceManager {
             if let Some(device) = self.states.get(usb) {
                 let (cmd_tx, cmd_rx) = oneshot::channel();
 
-                let result = device.messanger.send(GetConfig(cmd_tx)).await;
+                let result = device.messenger.send(GetConfig(cmd_tx)).await;
                 if let Err(e) = result {
                     warn!("Unable to Fetch Device Config: {}", e);
+                    continue;
                 }
 
-                let response = cmd_rx.await;
-                match response {
-                    Ok(profile) => {
-                        status.devices.insert(
-                            serial.clone(),
-                            DeviceStatus {
-                                serial: serial.clone(),
-                                config: profile,
-                            },
-                        );
-                    }
-                    Err(error) => {
-                        debug!(
-                            "Error Fetching Profile Information for {}: {}",
-                            serial, error
-                        );
-                        continue;
-                    }
+                let profile = cmd_rx.await.ok();
+
+                let (cmd_tx, cmd_rx) = oneshot::channel();
+                let result = device.messenger.send(GetDevice(cmd_tx)).await;
+                if let Err(e) = result {
+                    warn!("Unable to Fetch Device Config: {}", e);
+                    continue;
                 }
+
+                let device = cmd_rx.await.ok();
+
+                if profile.is_none() || device.is_none() {
+                    warn!("Error Obtaining Profile or Device");
+                    continue;
+                }
+
+                status.devices.insert(
+                    serial.clone(),
+                    DeviceStatus {
+                        hardware: device.unwrap(),
+                        serial: serial.clone(),
+                        config: profile.unwrap(),
+                    },
+                );
             }
         }
 
@@ -373,7 +380,7 @@ impl DeviceManager {
                     if let Some(device) = self.states.get(usb) {
                         let (cmd_tx, cmd_rx) = oneshot::channel();
 
-                        let result = device.messanger.send(Execute(command, cmd_tx)).await;
+                        let result = device.messenger.send(Execute(command, cmd_tx)).await;
                         if let Err(e) = result {
                             let _ = tx.send(GoXLRCommandResponse::Error(e.to_string()));
                             return false;
@@ -412,13 +419,14 @@ pub async fn start_device_manager(
 #[derive(Debug)]
 pub enum ManagerMessage {
     GetConfig(oneshot::Sender<Profiles>),
+    GetDevice(oneshot::Sender<DeviceInfo>),
     Execute(GoXLRCommand, oneshot::Sender<GoXLRCommandResponse>),
 }
 
 struct DeviceState {
     stop: Stop,
     state: RunnerState,
-    messanger: mpsc::Sender<ManagerMessage>,
+    messenger: mpsc::Sender<ManagerMessage>,
 }
 
 #[derive(Debug)]

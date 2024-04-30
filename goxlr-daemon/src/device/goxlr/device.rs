@@ -184,6 +184,9 @@ impl GoXLR {
 
                                 let _ = tx.send(profiles);
                             },
+                            ManagerMessage::GetDevice(tx) => {
+                                let _ = tx.send(self.device.as_ref().unwrap().clone());
+                            }
                             ManagerMessage::Execute(command, tx) => {
                                 debug!("Handling IPC Command: {:?}", command);
 
@@ -198,7 +201,8 @@ impl GoXLR {
                                 // so we'll let the manager know to send a patch.
                                 debug!("Device Sending Status Change..");
                                 let _ = self.send_device_update().await;
-                            }
+                            },
+
                         }
                     }
                     Some(event) = event_recv.recv() => {
