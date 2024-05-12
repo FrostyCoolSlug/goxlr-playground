@@ -12,6 +12,7 @@ export default {
   },
 
   props: {
+    height: { type: Number, required: false, default: 440 },
     currentValue: { type: Number, required: true },
     colour1: { type: String, default: '#00ffff' },
     colour2: { type: String, default: '#252927' }
@@ -48,11 +49,11 @@ export default {
     aria-label=""
     aria-value=""
     :current-value="localFieldValue"
-    :max-value="100"
+    :max-value="255"
     :min-value="0"
     :selected-colour="colour1"
     :deselected-colour="colour2"
-    :height="220"
+    :height="height"
   />
 </template>
 

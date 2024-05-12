@@ -96,7 +96,6 @@ export default {
     },
     glow_value() {
       let rgb = this.hexToRgb(this.selectedColour)
-      console.log(this.selectedColour)
       return `0 0 0 10px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)`
     },
 

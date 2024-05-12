@@ -1,36 +1,16 @@
 body {
-  background-color: #252927;
-  padding: 0;
-  margin: 0;
+    background-color: #252927;
+    padding: 0;
+    margin: 0;
 }
 
-@font-face {
-  src: url('./LeagueMono-NarrowRegular.ttf');
-  font-family:'LeagueMonoNarrow';
-  font-style: normal;
-  font-stretch: 1% 500%; /* Required by Chrome */
-}
-
-@font-face {
-  src: url('./LeagueMono-Condensed.ttf');
-  font-family:'LeagueMonoCondensed';
-  font-style: normal;
-  font-stretch: 1% 500%; /* Required by Chrome */
-}
-
-@font-face {
-  src: url('./LeagueMono.ttf');
-  font-family:'LeagueMono';
-  font-style: normal;
-  font-stretch: 1% 500%; /* Required by Chrome */
-}
 
 #app {
-  font-family: LeagueMonoNarrow, sans-serif;
-
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
-  margin-top: 10px;
-  user-select: none;
+    font-family: sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #fff;
+    font-size: 0.8em;
+    margin-top: 10px;
+    user-select: none;
 }

@@ -1,6 +1,8 @@
-use crate::{LibUSB, PID_GOXLR_FULL, PID_GOXLR_MINI, USBLocation, VID_GOXLR, WindowsUSB};
+use crate::platform::common::device::GoXLRConfiguration;
+use crate::{LibUSB, USBLocation, WindowsUSB, PID_GOXLR_FULL, PID_GOXLR_MINI, VID_GOXLR};
 use anyhow::{anyhow, bail, Result};
 use byteorder::{ByteOrder, LittleEndian};
+use goxlr_shared::version::VersionNumber;
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 use log::{debug, error, info, warn};
@@ -21,8 +23,6 @@ use windows::Win32::Foundation::{HANDLE, WAIT_TIMEOUT};
 use windows::Win32::System::Threading::{CreateEventA, WaitForSingleObject};
 use winreg::enums::HKEY_CLASSES_ROOT;
 use winreg::RegKey;
-use goxlr_shared::version::VersionNumber;
-use crate::platform::common::device::GoXLRConfiguration;
 
 // Define the Types of the various methods..
 type EnumerateDevices = unsafe extern "C" fn() -> u32;
@@ -35,9 +35,9 @@ type GetDeviceInstanceIdString = unsafe extern "C" fn(u32, *const u16, u32) -> u
 type GetDeviceProperties = unsafe extern "C" fn(u32, *mut Properties) -> u32;
 type GetUsbConfigDescriptor = unsafe extern "C" fn(u32, *mut u8, u32, &u32) -> u32;
 type VendorRequestOut =
-unsafe extern "C" fn(u32, u32, u32, u32, u32, u16, u16, *const u8, *mut u8, u32) -> u32;
+    unsafe extern "C" fn(u32, u32, u32, u32, u32, u16, u16, *const u8, *mut u8, u32) -> u32;
 type VendorRequestIn =
-unsafe extern "C" fn(u32, u32, u32, u32, u32, u16, u16, *mut u8, *mut u8, u32) -> u32;
+    unsafe extern "C" fn(u32, u32, u32, u32, u32, u16, u16, *mut u8, *mut u8, u32) -> u32;
 type RegisterDeviceNotification = unsafe extern "C" fn(u32, u32, HANDLE, u32) -> u32;
 type RegisterPnpNotification = unsafe extern "C" fn(HANDLE, HANDLE, u32, u32, u32) -> u32;
 type ReadDeviceNotification = unsafe extern "C" fn(u32, &u32, *mut u8, u32, &u32) -> u32;
@@ -440,7 +440,7 @@ impl TUSBAudio<'_> {
                     };
                     if event_result != 0 {
                         // We've either hit the end of the list, or something's gone wrong, break
-                        // out and double check our handle.
+                        // out and double-check our handle.
                         if event_result != 3992977442 {
                             warn!("Error Reading Event! {}", event_result);
                         }
@@ -601,7 +601,7 @@ impl TUSBAudio<'_> {
 
                             if descriptor.vendor_id() == VID_GOXLR
                                 && (descriptor.product_id() == PID_GOXLR_FULL
-                                || descriptor.product_id() == PID_GOXLR_MINI)
+                                    || descriptor.product_id() == PID_GOXLR_MINI)
                             {
                                 found_devices.push(USBLocation {
                                     lib_usb: Some(LibUSB {
