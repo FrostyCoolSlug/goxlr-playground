@@ -3,8 +3,6 @@ use std::collections::BTreeMap;
 use json_patch::Patch;
 use serde::{Deserialize, Serialize};
 
-use goxlr_profile::{MicProfile, Profile};
-
 use crate::commands::channels::ChannelCommands;
 use crate::commands::configuration::ConfigurationCommand;
 use crate::commands::mic::MicrophoneCommand;
