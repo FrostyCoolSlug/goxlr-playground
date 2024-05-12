@@ -14,7 +14,6 @@ use goxlr_shared::channels::input::InputChannels;
 use goxlr_shared::channels::output::RoutingOutput;
 use goxlr_shared::colours::{ColourScheme, FaderDisplayMode};
 use goxlr_shared::faders::Fader;
-use goxlr_shared::microphone::{MicEffectKeys, MicParamKeys};
 use goxlr_shared::routing::RouteValue;
 use goxlr_shared::states::ButtonDisplayStates;
 use goxlr_shared::version::{FirmwareVersions, VersionNumber};

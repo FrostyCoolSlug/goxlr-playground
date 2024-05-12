@@ -4,7 +4,8 @@ use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use enum_map::EnumMap;
-use goxlr_ipc::commands::{GoXLRCommandResponse, Profiles};
+use goxlr_ipc::commands::GoXLRCommandResponse;
+use goxlr_ipc::status::Configuration;
 use log::{debug, error, trace, warn};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{join, select, task, time};
@@ -177,8 +178,8 @@ impl GoXLR {
                     Some(event) = self.config.manager_recv.recv() => {
                         match event {
                             ManagerMessage::GetConfig(tx) => {
-                                let profiles = Profiles {
-                                    profile: self.profile.clone(),
+                                let profiles = Configuration {
+                                    device: self.profile.clone(),
                                     mic_profile: self.mic_profile
                                 };
 
