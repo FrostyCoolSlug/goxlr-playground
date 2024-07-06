@@ -54,7 +54,7 @@ export default {
     },
 
     getChannel: function () {
-      return store.getActiveDevice().config.profile.channels[this.getChannelName()]
+      return store.getActiveDevice().config.device.channels[this.getChannelName()]
     },
     getChannelName: function () {
       return this.channel === undefined ? this.title : this.channel

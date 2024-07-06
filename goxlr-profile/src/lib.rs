@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use goxlr_shared::buttons::InactiveButtonBehaviour;
 use goxlr_shared::channels::fader::FaderChannels;
 use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::mute::MuteActionChannels;
 use goxlr_shared::channels::output::OutputChannels;
 use goxlr_shared::channels::sub_mix::SubMixChannels;
 use goxlr_shared::channels::volume::VolumeChannels;
@@ -86,6 +87,9 @@ pub struct Channels {
     /// Configs for Channels which can be assigned to Faders
     pub configs: EnumMap<FaderChannels, FaderChannel>,
 
+    /// Configs for Faders that have configurable Mute Settings
+    pub mute_actions: EnumMap<MuteActionChannels, MuteActionChannel>,
+
     /// Sub-mix Settings for all applicable channels
     pub sub_mix: EnumMap<SubMixChannels, SubMixVolumes>,
 }
@@ -97,11 +101,15 @@ pub struct FaderChannel {
     /// The current channel Mute State
     pub mute_state: MuteState,
 
-    /// Defines what action is performed on Press and Hold
-    pub mute_actions: EnumMap<MuteAction, Vec<OutputChannels>>,
-
     /// A struct detailing how a fader is displayed on the GoXLR
     pub display: FaderDisplay,
+}
+
+/// This is a channel that can have custom mute actions, this generally only applies to inputs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MuteActionChannel {
+    /// Defines what action is performed on Press and Hold
+    pub mute_actions: EnumMap<MuteAction, Vec<OutputChannels>>,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]

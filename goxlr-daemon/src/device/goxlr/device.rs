@@ -1,6 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use anyhow::{bail, Context, Result};
 use enum_map::EnumMap;
@@ -296,9 +296,9 @@ pub async fn start_goxlr(config: GoXLRDeviceConfiguration, shutdown: Stop) {
 }
 
 /// This is a simple struct that tracks how long long a button has been pressed for..
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub(crate) struct ButtonState {
-    pub(crate) press_time: u128,
+    pub(crate) press_time: Option<Instant>,
 
     pub(crate) skip_hold: bool,
     pub(crate) skip_release: bool,

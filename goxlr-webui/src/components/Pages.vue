@@ -6,10 +6,10 @@ export default {
 
   methods: {
     getPages: function () {
-      return store.getActiveDevice().config.profile.pages.page_list
+      return store.getActiveDevice().config.device.pages.page_list
     },
     getActivePage: function () {
-      return store.getActiveDevice().config.profile.pages.current
+      return store.getActiveDevice().config.device.pages.current
     }
   }
 }

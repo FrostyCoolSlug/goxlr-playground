@@ -32,7 +32,7 @@ export default {
       }
 
       // Only assignable channels have screens..
-      let config = store.getActiveDevice().config.profile.channels.configs[this.getChannelName()]
+      let config = store.getActiveDevice().config.device.channels.configs[this.getChannelName()]
       if (config === undefined) {
         return {
           red: 102,
@@ -44,7 +44,7 @@ export default {
       return config.display.screen_display.colour
     },
     getBottomColour: function () {
-      let config = store.getActiveDevice().config.profile.channels.configs[this.getChannelName()]
+      let config = store.getActiveDevice().config.device.channels.configs[this.getChannelName()]
       if (config === undefined) {
         return {
           red: 102,
@@ -84,10 +84,10 @@ export default {
     },
 
     getVolume: function () {
-      return store.getActiveDevice().config.profile.channels.volumes[this.getChannelName()]
+      return store.getActiveDevice().config.device.channels.volumes[this.getChannelName()]
     },
     getMixVolume: function () {
-      let mix = store.getActiveDevice().config.profile.channels.sub_mix[this.getChannelName()]
+      let mix = store.getActiveDevice().config.device.channels.sub_mix[this.getChannelName()]
       if (mix === undefined) {
         return 0
       }
@@ -95,7 +95,7 @@ export default {
       return mix.volume
     },
     getMute: function () {
-      return store.getActiveDevice().config.profile.channels.configs[this.getChannelName()]
+      return store.getActiveDevice().config.device.channels.configs[this.getChannelName()]
     },
 
     getChannelName: function () {
@@ -103,18 +103,18 @@ export default {
     },
 
     submixEnabled: function () {
-      return store.getActiveDevice().config.profile.configuration.submix_enabled
+      return store.getActiveDevice().config.device.configuration.submix_enabled
     },
     hasMix: function () {
-      let mix = store.getActiveDevice().config.profile.channels.sub_mix[this.getChannelName()]
+      let mix = store.getActiveDevice().config.device.channels.sub_mix[this.getChannelName()]
       return mix !== undefined
     },
     isLinked: function () {
-      let mix = store.getActiveDevice().config.profile.channels.sub_mix[this.getChannelName()]
+      let mix = store.getActiveDevice().config.device.channels.sub_mix[this.getChannelName()]
       return mix.linked === 1
     },
     canAssign: function () {
-      let config = store.getActiveDevice().config.profile.channels.configs[this.getChannelName()]
+      let config = store.getActiveDevice().config.device.channels.configs[this.getChannelName()]
       return config !== undefined
     },
 

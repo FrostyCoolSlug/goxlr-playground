@@ -1,4 +1,4 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
 use log::debug;
@@ -33,8 +33,6 @@ pub(crate) trait Interactions {
 
 impl Interactions for GoXLR {
     async fn on_button_down(&mut self, button: Buttons) -> Result<()> {
-        let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
-
         debug!("Button Down: {:?}", button);
         let mut skip_hold = false;
         let skip_release = false;
@@ -76,7 +74,7 @@ impl Interactions for GoXLR {
 
         // Register this button as down.
         self.button_down_states[button].replace(ButtonState {
-            press_time: now,
+            press_time: Some(Instant::now()),
             skip_hold,
             skip_release,
             hold_handled: false,
@@ -177,19 +175,18 @@ impl Interactions for GoXLR {
     }
 
     async fn check_held(&mut self) -> Result<()> {
-        let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
-        let hold_time = self.profile.configuration.button_hold_time;
+        let hold_time = Duration::from_millis(self.profile.configuration.button_hold_time.into());
         for button in Buttons::iter() {
             if let Some(mut state) = self.button_down_states[button] {
-                if (now - state.press_time > hold_time.into())
-                    && !state.hold_handled
-                    && !state.skip_hold
-                {
-                    let _ = self.on_button_held(button).await;
+                // If we don't have a press time, there's nothing to handle.
+                if let Some(time) = state.press_time {
+                    if !state.hold_handled && !state.skip_hold && time.elapsed() > hold_time {
+                        let _ = self.on_button_held(button).await;
 
-                    // Set hold as handled, and store the change.
-                    state.hold_handled = true;
-                    self.button_down_states[button].replace(state);
+                        // Set hold as handled, and store the change.
+                        state.hold_handled = true;
+                        self.button_down_states[button].replace(state);
+                    }
                 }
             }
         }
@@ -233,12 +230,10 @@ impl InteractionsLocal for GoXLR {
         let enabled = self.profile.configuration.change_page_with_buttons;
 
         if pages == 1 || !enabled {
-            let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
-
             // When there's only one page, don't activate the page behaviour. Simply put the button
             // into a 'down' state and return.
             self.button_down_states[two].replace(ButtonState {
-                press_time: now,
+                press_time: Some(Instant::now()),
                 skip_hold: false,
                 skip_release: false,
                 hold_handled: false,
@@ -261,7 +256,7 @@ impl InteractionsLocal for GoXLR {
 
             // We also need to skip behaviours for ourself, so register that now..
             self.button_down_states[two].replace(ButtonState {
-                press_time: 0,
+                press_time: None,
                 skip_hold: true,
                 skip_release: true,
                 hold_handled: false,

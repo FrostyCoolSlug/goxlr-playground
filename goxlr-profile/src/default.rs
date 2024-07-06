@@ -1,6 +1,7 @@
 use enum_map::{enum_map, EnumMap};
 use goxlr_shared::channels::fader::FaderChannels;
 use goxlr_shared::channels::input::InputChannels;
+use goxlr_shared::channels::mute::MuteActionChannels;
 use goxlr_shared::channels::output::OutputChannels;
 use goxlr_shared::channels::volume::VolumeChannels;
 use strum::IntoEnumIterator;
@@ -16,7 +17,8 @@ use goxlr_shared::mute::MuteState;
 use crate::{
     ButtonColourSet, Channels, Compressor, CoughBehaviour, CoughSettings, EqualizerValue,
     FaderChannel, FaderColourSet, FaderDisplay, FaderPage, FaderPages, Gate,
-    InactiveButtonBehaviour, MicProfile, Microphone, MicrophoneType, Profile, Screen,
+    InactiveButtonBehaviour, MicProfile, Microphone, MicrophoneType, MuteActionChannel, Profile,
+    Screen,
 };
 use crate::{Configuration, Fader};
 use crate::{MuteAction, SwearSettings};
@@ -84,32 +86,35 @@ impl Default for Profile {
 
         let channel = FaderChannel {
             mute_state: MuteState::Unmuted,
-            mute_actions: mute_action.clone(),
+
             display: fader_display.clone(),
         };
+        let mute_action = MuteActionChannel {
+            mute_actions: mute_action.clone(),
+        };
+
         let channel2 = FaderChannel {
             mute_state: MuteState::Unmuted,
-            mute_actions: mute_action.clone(),
             display: fader_display.clone(),
         };
+
         let channel3 = FaderChannel {
             mute_state: MuteState::Unmuted,
-            mute_actions: mute_action.clone(),
             display: fader_display.clone(),
         };
+
         let channel4 = FaderChannel {
             mute_state: MuteState::Unmuted,
-            mute_actions: mute_action.clone(),
             display: fader_display.clone(),
         };
+
         let channel5 = FaderChannel {
             mute_state: MuteState::Unmuted,
-            mute_actions: mute_action.clone(),
             display: fader_display.clone(),
         };
+
         let channel6 = FaderChannel {
             mute_state: MuteState::Unmuted,
-            mute_actions: mute_action.clone(),
             display: fader_display.clone(),
         };
 
@@ -127,6 +132,25 @@ impl Default for Profile {
                 FaderChannels::Headphones => channel3.clone(),
                 FaderChannels::LineOut => channel4.clone(),
         };
+
+        let mut mute_action_channels: EnumMap<MuteActionChannels, MuteActionChannel> = enum_map! {
+            MuteActionChannels::Microphone => mute_action.clone(),
+            MuteActionChannels::Chat  => mute_action.clone(),
+            MuteActionChannels::Music => mute_action.clone(),
+            MuteActionChannels::Game => mute_action.clone(),
+            MuteActionChannels::Console => mute_action.clone(),
+            MuteActionChannels::LineIn => mute_action.clone(),
+            MuteActionChannels::System => mute_action.clone(),
+            MuteActionChannels::Sample => mute_action.clone(),
+        };
+
+        // Mute Behaviours..
+        mute_action_channels[MuteActionChannels::System].mute_actions[MuteAction::Press] =
+            vec![OutputChannels::Headphones, OutputChannels::LineOut];
+        mute_action_channels[MuteActionChannels::System].mute_actions[MuteAction::Hold] =
+            vec![OutputChannels::Headphones, OutputChannels::StreamMix];
+        mute_action_channels[MuteActionChannels::Chat].mute_actions[MuteAction::Hold] =
+            vec![OutputChannels::StreamMix];
 
         let base_colour: EnumMap<FaderChannels, Colour> = enum_map! {
                 FaderChannels::Microphone => Colour {
@@ -198,9 +222,13 @@ impl Default for Profile {
             fader_config[channel].display.fader_colours.bottom_colour = base_colour[channel];
         }
 
+        mute_action_channels[MuteActionChannels::LineIn].mute_actions[MuteAction::Press] =
+            vec![OutputChannels::StreamMix];
+
         let channels = Channels {
             volumes,
-            configs: fader_config.clone(),
+            configs: fader_config,
+            mute_actions: mute_action_channels,
             sub_mix: Default::default(),
         };
 
@@ -243,14 +271,6 @@ impl Default for Profile {
 
         // Samples go to Chat Mic..
         routing[InputChannels::Sample][OutputChannels::ChatMic] = true;
-
-        // Mute Behaviours..
-        fader_config[FaderChannels::System].mute_actions[MuteAction::Press] =
-            vec![OutputChannels::Headphones, OutputChannels::LineOut];
-        fader_config[FaderChannels::System].mute_actions[MuteAction::Hold] =
-            vec![OutputChannels::Headphones, OutputChannels::StreamMix];
-        fader_config[FaderChannels::Chat].mute_actions[MuteAction::Hold] =
-            vec![OutputChannels::StreamMix];
 
         // General Configuration
         let configuration = Configuration {
