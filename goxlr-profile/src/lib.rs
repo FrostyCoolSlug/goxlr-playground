@@ -109,7 +109,7 @@ pub struct FaderChannel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MuteActionChannel {
     /// Defines what action is performed on Press and Hold
-    pub mute_actions: EnumMap<MuteAction, Vec<OutputChannels>>,
+    pub actions: EnumMap<MuteAction, Vec<OutputChannels>>,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
@@ -235,8 +235,8 @@ pub struct CoughSettings {
     /// The behaviour when pressing the button
     pub cough_behaviour: CoughBehaviour,
 
-    /// The current Channel Assigned to the button (Defaults to Mic)
-    pub channel_assignment: FaderChannels,
+    /// The current Channel Assigned to the button (Defaults to Mic, cannot be an output)
+    pub channel_assignment: MuteActionChannels,
 
     /// The current channel Mute State
     pub mute_state: MuteState,

@@ -90,7 +90,7 @@ impl Default for Profile {
             display: fader_display.clone(),
         };
         let mute_action = MuteActionChannel {
-            mute_actions: mute_action.clone(),
+            actions: mute_action.clone(),
         };
 
         let channel2 = FaderChannel {
@@ -145,11 +145,11 @@ impl Default for Profile {
         };
 
         // Mute Behaviours..
-        mute_action_channels[MuteActionChannels::System].mute_actions[MuteAction::Press] =
+        mute_action_channels[MuteActionChannels::System].actions[MuteAction::Press] =
             vec![OutputChannels::Headphones, OutputChannels::LineOut];
-        mute_action_channels[MuteActionChannels::System].mute_actions[MuteAction::Hold] =
+        mute_action_channels[MuteActionChannels::System].actions[MuteAction::Hold] =
             vec![OutputChannels::Headphones, OutputChannels::StreamMix];
-        mute_action_channels[MuteActionChannels::Chat].mute_actions[MuteAction::Hold] =
+        mute_action_channels[MuteActionChannels::Chat].actions[MuteAction::Hold] =
             vec![OutputChannels::StreamMix];
 
         let base_colour: EnumMap<FaderChannels, Colour> = enum_map! {
@@ -222,7 +222,7 @@ impl Default for Profile {
             fader_config[channel].display.fader_colours.bottom_colour = base_colour[channel];
         }
 
-        mute_action_channels[MuteActionChannels::LineIn].mute_actions[MuteAction::Press] =
+        mute_action_channels[MuteActionChannels::LineIn].actions[MuteAction::Press] =
             vec![OutputChannels::StreamMix];
 
         let channels = Channels {
@@ -299,7 +299,7 @@ impl Default for Profile {
 
         let cough = CoughSettings {
             cough_behaviour: CoughBehaviour::Press,
-            channel_assignment: FaderChannels::System,
+            channel_assignment: MuteActionChannels::System,
             mute_state: MuteState::Unmuted,
             mute_actions: mute_action,
 

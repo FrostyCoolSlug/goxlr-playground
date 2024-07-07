@@ -4,6 +4,7 @@ use strum::EnumIter;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+use crate::channels::mute::MuteActionChannels;
 #[cfg(feature = "clap")]
 use clap::ValueEnum;
 
