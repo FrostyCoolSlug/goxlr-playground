@@ -233,27 +233,37 @@ impl MuteHandler for GoXLR {
         }
     }
 
+    /// This is a simple call to determine whether our channel is muted to all
     fn is_muted_to_all(&self, source: Source) -> bool {
         let state = self.profile.channels.configs[source].mute_state;
+
+        // Firstly, if we're considered Unmuted, we need to check the cough button to ensure that
+        // it's not currently muting us, and we only need to do that if can can cast to MuteSource
         if state == MuteState::Unmuted {
-            return if MuteSource::can_from(source) {
-                // Are we muted by the cough button?
-                if let Some(targets) = self.add_cough_mute(source.into(), None) {
-                    if targets.is_empty() {
-                        return true;
-                    }
-                }
-                false
-            } else {
-                true
+            return match MuteSource::can_from(source) {
+                true => match self.add_cough_mute(source.into(), None) {
+                    Some(targets) => targets.is_empty(),
+                    None => false,
+                },
+                false => false,
             };
         }
 
-        // Ok, get the Target List for this state, including the cough button..
-        let targets = self.get_targets_for_action(source.into(), state.into());
+        // If we get here, we're either Pressed or Held, in the case of non MuteSources this
+        // means Muted to All by default, otherwise get targets
+        match MuteSource::can_from(source) {
+            true => {
+                // Recast these to the correct types
+                let source = source.into();
+                let state = state.into();
 
-        // If the target list is empty, we're muted to all.
-        targets.is_empty()
+                // Send it along and check the vec size
+                self.get_targets_for_action(source, state).is_empty()
+            }
+
+            // Force Mute To All for these channels
+            false => true,
+        }
     }
 }
 
@@ -448,6 +458,7 @@ impl MuteHandlerLocal for GoXLR {
     }
 
     fn get_targets_for_action(&self, source: MuteSource, mute_action: MuteAction) -> Target {
+        let source = source.into();
         let targets = self.profile.channels.mute_actions[source].actions[mute_action].clone();
 
         // Apply the Cough Button Settings (if needed)
