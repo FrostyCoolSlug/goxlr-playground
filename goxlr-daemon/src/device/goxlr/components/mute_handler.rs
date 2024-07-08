@@ -125,23 +125,7 @@ impl MuteHandler for GoXLR {
 
         let current = self.profile.channels.configs[source].mute_state;
         if current != MuteState::Unmuted {
-            debug!("{:?} currently muted, handling unmute..", source);
-
-            // Before we 'Unmute', double-check the Cough Button..
-            let targets = match MuteSource::can_from(source) {
-                true => self.add_cough_mute(MuteSource::from(source), None),
-                false => None,
-            };
-
-            let changes = if let Some(targets) = targets {
-                debug!("Restoring Cough Mute State..");
-                self.mute_to_targets(source, targets).await?
-            } else {
-                self.unmute(source).await?
-            };
-
-            self.apply_mute_changes(changes).await?;
-            return self.update_mute_state(source, MuteState::Unmuted).await;
+            return self.handle_unmute(source).await;
         }
 
         debug!("Channel {:?} not muted, muting", source);
@@ -189,9 +173,30 @@ impl MuteHandler for GoXLR {
     }
 
     async fn handle_unmute(&mut self, source: Source) -> Result<()> {
-        let changes = self.unmute(source).await?;
-        self.apply_mute_changes(changes).await?;
-        self.update_mute_state(source, MuteState::Unmuted).await
+        // We only need to do something if this channel is actually muted..
+        let current = self.profile.channels.configs[source].mute_state;
+        if current != MuteState::Unmuted {
+            debug!("{:?} currently muted, handling unmute..", source);
+
+            // Before we 'Unmute', double-check the Cough Button..
+            let targets = match MuteSource::can_from(source) {
+                true => self.add_cough_mute(MuteSource::from(source), None),
+                false => None,
+            };
+
+            let changes = if let Some(targets) = targets {
+                debug!("Restoring Cough Mute State..");
+                self.mute_to_targets(source, targets).await?
+            } else {
+                self.unmute(source).await?
+            };
+
+            self.apply_mute_changes(changes).await?;
+            return self.update_mute_state(source, MuteState::Unmuted).await;
+        } else {
+            debug!("{:?} already unmuted, doing nothing!", source);
+        }
+        Ok(())
     }
 
     async fn handle_cough_press(&mut self, hold: bool) -> Result<()> {
