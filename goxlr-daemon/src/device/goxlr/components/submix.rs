@@ -9,6 +9,7 @@ use log::{debug, warn};
 use strum::IntoEnumIterator;
 
 use crate::device::goxlr::components::channel::Channels;
+use crate::device::goxlr::components::has_feature;
 use goxlr_shared::device::GoXLRFeature;
 use goxlr_shared::submix::Mix;
 use goxlr_usb::events::commands::BasicResultCommand;
@@ -83,7 +84,6 @@ impl SubMix for GoXLR {
 
     async fn sync_sub_mix_volume(&mut self, channel: SubMixChannels) -> Result<()> {
         debug!("Syncing Submix");
-        let device = self.device.as_ref().context("Device not Set!")?;
 
         // Grab the linked ratio (If we're None, ignore)
         if let Some(linked) = self.profile.channels.sub_mix[channel].linked {
@@ -95,7 +95,7 @@ impl SubMix for GoXLR {
             self.profile.channels.sub_mix[channel].volume = linked_volume;
 
             // If submixes aren't supported, simply bail.
-            if !device.features.contains(&GoXLRFeature::SubMix) {
+            if !has_feature(&self.device, GoXLRFeature::SubMix)? {
                 return Ok(());
             }
 
@@ -107,9 +107,7 @@ impl SubMix for GoXLR {
     }
 
     async fn load_sub_mix_assignments(&mut self) -> Result<()> {
-        let device = self.device.as_ref().context("Device Not Set!")?;
-        if !device.features.contains(&GoXLRFeature::SubMix) {
-            warn!("Sub Mixing Not Available, not loading...");
+        if !has_feature(&self.device, GoXLRFeature::SubMix)? {
             return Ok(());
         }
 

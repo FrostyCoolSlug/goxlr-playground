@@ -15,6 +15,7 @@ use goxlr_usb::events::commands::BasicResultCommand;
 
 use crate::device::goxlr::components::buttons::ButtonHandlers;
 use crate::device::goxlr::components::channel::Channels;
+use crate::device::goxlr::components::has_feature;
 use crate::device::goxlr::components::mute_handler::{MuteHandler, MuteHandlerCrate};
 use crate::device::goxlr::components::pages::FaderPages;
 use crate::device::goxlr::components::routing_handler::RoutingHandler;
@@ -105,12 +106,8 @@ impl LoadProfileLocal for GoXLR {
 
     fn setup_colours(&mut self) {
         debug!("Initialising Colour Map..");
-        if let Some(device) = &self.device {
-            let legacy = !device.features.contains(&GoXLRFeature::Animation);
-            self.colour_scheme = ColourScheme::new(legacy);
-        } else {
-            self.colour_scheme = Default::default();
-        }
+        let legacy = !has_feature(&self.device, GoXLRFeature::Animation).unwrap_or(false);
+        self.colour_scheme = ColourScheme::new(legacy);
     }
 
     fn setup_button_states(&mut self) {
