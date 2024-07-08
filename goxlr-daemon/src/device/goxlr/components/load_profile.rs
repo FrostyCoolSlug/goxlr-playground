@@ -7,7 +7,8 @@ use goxlr_shared::buttons::Buttons::CoughButton;
 use goxlr_shared::channels::fader::FaderChannels;
 use goxlr_shared::channels::input::InputChannels;
 use goxlr_shared::channels::output::{OutputChannels, RoutingOutput};
-use goxlr_shared::colours::TwoColourTargets;
+use goxlr_shared::colours::{ColourScheme, TwoColourTargets};
+use goxlr_shared::device::GoXLRFeature;
 use goxlr_shared::mute::MuteState;
 use goxlr_shared::routing::RouteValue;
 use goxlr_usb::events::commands::BasicResultCommand;
@@ -104,7 +105,12 @@ impl LoadProfileLocal for GoXLR {
 
     fn setup_colours(&mut self) {
         debug!("Initialising Colour Map..");
-        self.colour_scheme = Default::default();
+        if let Some(device) = &self.device {
+            let legacy = !device.features.contains(&GoXLRFeature::Animation);
+            self.colour_scheme = ColourScheme::new(legacy);
+        } else {
+            self.colour_scheme = Default::default();
+        }
     }
 
     fn setup_button_states(&mut self) {
