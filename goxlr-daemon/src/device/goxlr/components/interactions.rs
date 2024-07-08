@@ -23,7 +23,7 @@ use crate::device::goxlr::device::{ButtonState, GoXLR};
 pub(crate) trait Interactions {
     async fn on_button_down(&mut self, button: Buttons) -> Result<()>;
     async fn on_button_up(&mut self, button: Buttons) -> Result<()>;
-    async fn on_button_held(&mut self, button: Buttons) -> Result<()>;
+    async fn on_button_held(&mut self, button: Buttons) -> Result<(bool, bool)>;
 
     async fn on_volume_change(&mut self, fader: Fader, value: u8) -> Result<()>;
     async fn on_encoder_change(&mut self, encoder: Encoders, value: i8) -> Result<()>;
@@ -86,6 +86,7 @@ impl Interactions for GoXLR {
     async fn on_button_up(&mut self, button: Buttons) -> Result<()> {
         debug!("Button Up: {:?}", button);
         if let Some(state) = self.button_down_states[button] {
+            debug!("{:?}", state);
             if state.skip_release {
                 debug!("Skipping Button Up behaviour by request for {:?}", button);
                 self.button_down_states[button].take();
@@ -95,10 +96,8 @@ impl Interactions for GoXLR {
 
         match button {
             Buttons::FaderA | Buttons::FaderB | Buttons::FaderC | Buttons::FaderD => {
-                if !self.is_held_handled(button) {
-                    let channel = self.get_channel_for_button(button);
-                    self.handle_mute_press(channel).await?;
-                }
+                let channel = self.get_channel_for_button(button);
+                self.handle_mute_press(channel).await?;
             }
             Buttons::CoughButton => {
                 if !self.is_held_handled(button) {
@@ -126,13 +125,13 @@ impl Interactions for GoXLR {
         Ok(())
     }
 
-    async fn on_button_held(&mut self, button: Buttons) -> Result<()> {
+    async fn on_button_held(&mut self, button: Buttons) -> Result<(bool, bool)> {
         debug!("Button Held: {:?}", button);
         match button {
             Buttons::FaderA | Buttons::FaderB | Buttons::FaderC | Buttons::FaderD => {
                 // Get the source assigned to this fader..
                 let channel = self.get_channel_for_button(button);
-                self.handle_mute_hold(channel).await?;
+                return self.handle_mute_hold(channel).await;
             }
             Buttons::CoughButton => {
                 // We need to Trigger the 'Hold' behaviour..
@@ -143,7 +142,7 @@ impl Interactions for GoXLR {
             }
         }
 
-        Ok(())
+        Ok((true, false))
     }
 
     async fn on_volume_change(&mut self, fader: Fader, value: u8) -> Result<()> {
@@ -181,10 +180,11 @@ impl Interactions for GoXLR {
                 // If we don't have a press time, there's nothing to handle.
                 if let Some(time) = state.press_time {
                     if !state.hold_handled && !state.skip_hold && time.elapsed() > hold_time {
-                        let _ = self.on_button_held(button).await;
+                        let (hold_handled, skip_release) = self.on_button_held(button).await?;
 
                         // Set hold as handled, and store the change.
-                        state.hold_handled = true;
+                        state.hold_handled = hold_handled;
+                        state.skip_release = skip_release;
                         self.button_down_states[button].replace(state);
                     }
                 }

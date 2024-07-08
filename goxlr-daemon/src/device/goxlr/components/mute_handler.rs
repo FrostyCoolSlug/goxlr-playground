@@ -33,7 +33,7 @@ pub(crate) trait MuteHandler {
 
     /// Used for button handling..
     async fn handle_mute_press(&mut self, source: Source) -> Result<()>;
-    async fn handle_mute_hold(&mut self, source: Source) -> Result<()>;
+    async fn handle_mute_hold(&mut self, source: Source) -> Result<(bool, bool)>;
     async fn handle_unmute(&mut self, source: Source) -> Result<()>;
 
     /// Used for the Cough Buttons..
@@ -158,12 +158,19 @@ impl MuteHandler for GoXLR {
     }
 
     /// This is now simple, grab our new targets, and send it.
-    async fn handle_mute_hold(&mut self, source: Source) -> Result<()> {
+    async fn handle_mute_hold(&mut self, source: Source) -> Result<(bool, bool)> {
         debug!("Handling Mute Hold for {:?}", source);
+
+        if !MuteActionChannels::can_from(source) {
+            // This channel only supports muting to all, so we flag the 'Hold' as handled which,
+            // prevents fader paging kicking in, but also get told about the release.
+            return Ok((true, false));
+        }
 
         let current_state = self.profile.channels.configs[source].mute_state;
         if current_state == MuteState::Held {
-            return Ok(());
+            // We're already in a held state, flag as success and skip the release
+            return Ok((true, true));
         }
 
         let action = MuteAction::Hold;
@@ -175,7 +182,10 @@ impl MuteHandler for GoXLR {
         let change = self.mute_to_targets(source, targets).await?;
 
         self.apply_mute_changes(change).await?;
-        self.update_mute_state(source, MuteState::Held).await
+        self.update_mute_state(source, MuteState::Held).await?;
+
+        // We are done, flag handled and skip the release
+        Ok((true, true))
     }
 
     async fn handle_unmute(&mut self, source: Source) -> Result<()> {
