@@ -37,7 +37,6 @@ use crate::device::goxlr::device::GoXLR;
 */
 
 pub trait SubMix {
-    async fn set_sub_mix_enabled(&mut self, enabled: bool) -> Result<()>;
     async fn set_sub_mix_mix(&mut self, channel: OutputChannels, mix: Mix) -> Result<()>;
     async fn set_sub_mix_volume(&mut self, channel: SubMixChannels, volume: u8) -> Result<()>;
     async fn set_sub_mix_linked(&mut self, channel: SubMixChannels, linked: bool) -> Result<()>;
@@ -47,14 +46,6 @@ pub trait SubMix {
 }
 
 impl SubMix for GoXLR {
-    async fn set_sub_mix_enabled(&mut self, enabled: bool) -> Result<()> {
-        // Simply set the value in the profile
-        self.profile.configuration.submix_enabled = enabled;
-
-        // Then load the mixes
-        self.load_sub_mix_assignments().await
-    }
-
     async fn set_sub_mix_mix(&mut self, channel: OutputChannels, mix: Mix) -> Result<()> {
         self.profile.outputs[channel].mix_assignment = mix;
         self.load_sub_mix_assignments().await
@@ -120,17 +111,6 @@ impl SubMix for GoXLR {
         if !device.features.contains(&GoXLRFeature::SubMix) {
             warn!("Sub Mixing Not Available, not loading...");
             return Ok(());
-        }
-
-        // Firstly, if sub mixing is disabled, force everything to Mix A
-        if !self.profile.configuration.submix_enabled {
-            // Sub mixing isn't enabled, force everything to Mix A
-            let mut a = vec![];
-            for channel in OutputChannels::iter() {
-                a.push(channel);
-            }
-            let command = BasicResultCommand::SetSubMixMix(a, vec![]);
-            return self.send_no_result(command).await;
         }
 
         // Ok, sub mixing is enabled, assign things to the correct channel

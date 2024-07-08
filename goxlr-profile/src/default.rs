@@ -274,7 +274,6 @@ impl Default for Profile {
 
         // General Configuration
         let configuration = Configuration {
-            submix_enabled: true,
             change_page_with_buttons: true,
             button_hold_time: 1000,
         };
