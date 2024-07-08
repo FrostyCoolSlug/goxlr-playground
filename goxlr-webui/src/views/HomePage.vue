@@ -1,9 +1,13 @@
 <script setup>
 import Pages from '@/components/Pages.vue'
-import Meter from '@/components/Meter.vue'
 import ChannelColumn from '@/components/channels/ChannelColumn.vue'
-import IconRail from '@/components/card/IconRail.vue'
 import IconCard from '@/components/card/IconCard.vue'
+import { store } from '@/goxlr/store.js'
+
+function subMixEnabled() {
+  console.log(store.getActiveDevice())
+  return store.getActiveDevice().hardware.features.includes('SubMix')
+}
 </script>
 
 <template>
@@ -21,7 +25,7 @@ import IconCard from '@/components/card/IconCard.vue'
     <div class="mixer">
       <ChannelColumn title="Headphones" />
       <ChannelColumn title="Line Out" channel="LineOut" />
-      <ChannelColumn title="Mic Monitor" channel="MicrophoneMonitor" />
+      <ChannelColumn v-if="!subMixEnabled()" title="Mic Monitor" channel="MicrophoneMonitor" />
     </div>
   </div>
   <Pages />
