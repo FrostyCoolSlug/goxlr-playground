@@ -17,11 +17,26 @@ export default {
 
   data() {
     return {
-      localValue: 50
+      localValue: 50,
+      window_size: window.innerHeight
     }
   },
 
+  mounted() {
+    this.$nextTick(() => {
+      window.addEventListener('resize', this.onResize)
+    })
+  },
+
+  beforeUnmount() {
+    window.removeEventListener('resize', this.onResize)
+  },
+
   methods: {
+    onResize: function () {
+      this.window_size = window.innerHeight
+    },
+
     getTopColour: function () {
       if (isDeviceMini()) {
         return {
@@ -74,13 +89,31 @@ export default {
     },
 
     calculateHeight: function () {
-      if (!this.submixEnabled || !this.hasMix()) {
-        if (!this.canAssign()) {
-          return 535
-        }
-        return 470
+      // We'll start with a base 'full' slider height
+      let size = Math.max(this.window_size - 400, 220)
+
+      // If sub-mixes are available, cut 30px for the link icon
+      if (this.submixEnabled() && this.hasMix()) {
+        size -= 30
       }
-      return 440
+
+      // Cut 30 for the first button (if applicable)
+      if (this.hasBasicMute()) {
+        size -= 30
+      }
+
+      // Cut 30 for the Second Button (if applicable)
+      if (this.hasComplexMute()) {
+        size -= 30
+      }
+
+      // If we're showing two buttons, cut 5 more for the 'gap' between them
+      if (this.hasBasicMute() && this.hasComplexMute()) {
+        size -= 5
+      }
+
+      // Done :)
+      return size
     },
 
     getVolume: function () {
@@ -115,6 +148,14 @@ export default {
     },
     canAssign: function () {
       let config = store.getActiveDevice().config.device.channels.configs[this.getChannelName()]
+      return config !== undefined
+    },
+    hasBasicMute: function () {
+      return this.canAssign()
+    },
+    hasComplexMute: function () {
+      let ch = this.getChannelName()
+      let config = store.getActiveDevice().config.device.channels.mute_actions[ch]
       return config !== undefined
     },
 
@@ -180,7 +221,7 @@ export default {
       <img v-else src="/images/submix/unlinked-dimmed.png" alt="Unlinked" />
     </div>
     <div class="bottom"></div>
-    <div class="mute" v-if="canAssign()">
+    <div class="mute" v-if="hasComplexMute()">
       <div class="buttons">
         <div class="fill">
           <span style="display: inline-block; margin-left: 4px; margin-right: 5px">
@@ -198,6 +239,19 @@ export default {
             <img src="/images/press.svg" alt="Press" style="width: 24px; fill: #fff" />
           </span>
           <span class="label">Mute to Headphones</span>
+        </div>
+        <div>
+          <font-awesome-icon :icon="['fas', 'angle-down']" />
+        </div>
+      </div>
+    </div>
+    <div class="mute small" v-else-if="hasBasicMute()">
+      <div class="buttons">
+        <div class="fill">
+          <span style="display: inline-block; margin-left: 4px; margin-right: 5px">
+            <img src="/images/hold.svg" alt="Press" style="width: 24px; fill: #fff" />
+          </span>
+          <span>Mute to All</span>
         </div>
         <div>
           <font-awesome-icon :icon="['fas', 'angle-down']" />
@@ -256,6 +310,10 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 5px;
+}
+
+.mute.small {
+  height: 30px;
 }
 
 .buttons {
