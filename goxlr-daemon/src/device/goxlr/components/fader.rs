@@ -59,21 +59,6 @@ impl DeviceFader for GoXLR {
         // Update the Cache after assignment
         self.fader_state[fader].replace(source);
 
-        debug!("Performing Submix mitigation Check");
-        // Submix mitigation code, assigning output channels to faders can cause their volume to
-        // spike to 100%, the code here immediately resets their volume back to where it should be.
-        if SUBMIX_MITIGATION.contains(&source) {
-            let device = self.device.as_ref().context("Device Not Found!")?;
-            if device.features.contains(&GoXLRFeature::SubMix) {
-                let volume = self.profile.channels.volumes[source.into()];
-
-                debug!("Mitigating, Setting Volume of {:?} to {:?}", source, volume);
-
-                let command = BasicResultCommand::SetVolume(source.into(), volume);
-                self.send_no_result(command).await?;
-            }
-        }
-
         // Get the faders style
         let style = self.profile.channels.configs[source].display.clone();
 
